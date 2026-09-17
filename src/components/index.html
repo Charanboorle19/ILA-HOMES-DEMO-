@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real Estate — Design Concept</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0E1117;
+    --earth: #1C2B2D;
+    --gold: #C9A96E;
+    --gold-pale: #E8D5AF;
+    --sage: #3D5A47;
+    --sage-light: #5A8068;
+    --fog: #8FA39B;
+    --cream: #F5F0E8;
+    --white: #FFFFFF;
+    --glass: rgba(255,255,255,0.06);
+    --glass-border: rgba(255,255,255,0.12);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  /* ── LABEL STRIP ── */
+  .label-strip {
+    background: var(--gold);
+    color: var(--ink);
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    padding: 6px;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(14,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--gold); }
+  .logo span { font-weight: 400; color: var(--fog); font-size: 13px; display: block; font-family: 'Inter', sans-serif; letter-spacing: 0.05em; }
+  nav ul { display: flex; gap: 36px; list-style: none; }
+  nav ul a { text-decoration: none; color: var(--fog); font-size: 13px; font-weight: 500; transition: color 0.2s; }
+  nav ul a:hover { color: var(--gold); }
+  .nav-cta {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 92vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+    gap: 60px;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 70% 50%, rgba(61,90,71,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-left { position: relative; z-index: 2; }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .hero-eyebrow-text { font-size: 12px; color: var(--fog); letter-spacing: 0.08em; }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(42px, 5vw, 68px);
+    line-height: 1.08;
+    color: var(--white);
+    margin-bottom: 24px;
+  }
+  .hero h1 em { color: var(--gold); font-style: normal; }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--fog);
+    line-height: 1.7;
+    max-width: 420px;
+    margin-bottom: 44px;
+  }
+
+  .hero-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 14px 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--white);
+    border: 1px solid var(--glass-border);
+    padding: 14px 30px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  /* HERO RIGHT — Future Toggle Preview */
+  .hero-right {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .feature-badge {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    position: relative;
+  }
+  .feature-badge-label {
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .feature-badge-title { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+  .feature-badge-desc { font-size: 12px; color: var(--fog); line-height: 1.5; }
+
+  .toggle-pill {
+    display: inline-flex;
+    background: rgba(255,255,255,0.08);
+    border-radius: 40px;
+    padding: 4px;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .toggle-pill span {
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--fog);
+    font-weight: 500;
+  }
+  .toggle-pill span.active {
+    background: var(--sage);
+    color: var(--white);
+  }
+
+  /* live ping */
+  .live-ping {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--fog);
+    margin-top: 6px;
+  }
+  .ping-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4ADE80;
+    box-shadow: 0 0 0 0 rgba(74,222,128,0.5);
+    animation: ping 1.5s ease-in-out infinite;
+  }
+  @keyframes ping {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+  }
+
+  /* ── SECTION: WHO ARE YOU? (Life Stage) ── */
+  section { padding: 80px 60px; }
+
+  .section-intro { max-width: 520px; margin-bottom: 48px; }
+  .section-kicker {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3vw, 40px);
+    line-height: 1.2;
+    color: var(--white);
+    margin-bottom: 16px;
+  }
+  .section-body { font-size: 14px; color: var(--fog); line-height: 1.7; }
+
+  .life-stages {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .stage-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 28px 22px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .stage-card:hover, .stage-card.active {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.08);
+  }
+  .stage-icon { font-size: 28px; margin-bottom: 14px; display: block; }
+  .stage-name { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+  .stage-desc { font-size: 12px; color: var(--fog); line-height: 1.5; }
+  .stage-result {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ── SECTION: NEIGHBOURHOOD PULSE ── */
+  .pulse-section {
+    background: var(--earth);
+    border-top: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .pulse-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+
+  .pulse-map-preview {
+    background: var(--ink);
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    height: 340px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .map-mock {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: linear-gradient(135deg, #0d1f1a 0%, #0a1a14 100%);
+  }
+  /* grid lines for map feel */
+  .map-mock::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(61,90,71,0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,90,71,0.15) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .map-pins { position: absolute; inset: 0; }
+  .map-pin {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .pin-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--ink);
+    box-shadow: 0 0 0 4px rgba(201,169,110,0.2);
+  }
+  .pin-label {
+    font-size: 10px;
+    background: var(--ink);
+    border: 1px solid var(--glass-border);
+    color: var(--white);
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .pin-price { font-size: 10px; color: var(--gold); font-weight: 600; }
+
+  /* Infra overlay badges */
+  .infra-badge {
+    position: absolute;
+    background: rgba(90,128,104,0.85);
+    border: 1px solid var(--sage-light);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .pulse-right {}
+  .pulse-list { display: flex; flex-direction: column; gap: 14px; margin-top: 28px; }
+  .pulse-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+  }
+  .pulse-icon { font-size: 20px; flex-shrink: 0; }
+  .pulse-item-title { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
+  .pulse-item-desc { font-size: 12px; color: var(--fog); line-height: 1.5; }
+  .pulse-tag {
+    display: inline-block;
+    background: rgba(201,169,110,0.15);
+    border: 1px solid rgba(201,169,110,0.3);
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 6px;
+  }
+
+  /* ── SECTION: JOURNEY ROADMAP ── */
+  .roadmap-section {}
+  .roadmap-steps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    margin-top: 48px;
+    position: relative;
+  }
+  .roadmap-steps::before {
+    content: '';
+    position: absolute;
+    top: 28px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    z-index: 0;
+  }
+  .roadmap-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding: 0 12px;
+  }
+  .step-number {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    border: 1px solid var(--glass-border);
+    background: var(--ink);
+  }
+  .step-number.active { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+  .step-name { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+  .step-desc { font-size: 11px; color: var(--fog); line-height: 1.5; }
+  .step-time { font-size: 10px; color: var(--gold); margin-top: 8px; font-weight: 600; }
+
+  /* ── SECTION: PLOT HEARTBEAT ── */
+  .heartbeat-section { background: var(--earth); }
+  .heartbeat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
+  .hb-card {
+    background: var(--ink);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .hb-card:hover { border-color: var(--gold); }
+  .hb-image {
+    height: 140px;
+    background: linear-gradient(135deg, #1a2f26, #0e1f19);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .hb-image-text { font-family: 'Playfair Display', serif; font-size: 13px; color: var(--fog); }
+  .hb-image-tag {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: var(--sage);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  .hb-activity {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    background: rgba(14,17,23,0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--fog);
+  }
+  .hb-body { padding: 16px 18px; }
+  .hb-name { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+  .hb-meta { font-size: 12px; color: var(--fog); margin-bottom: 12px; }
+  .hb-price { font-size: 18px; font-weight: 600; color: var(--gold); margin-bottom: 12px; }
+  .hb-bars { display: flex; flex-direction: column; gap: 6px; }
+  .hb-bar-row { display: flex; align-items: center; gap: 8px; }
+  .hb-bar-label { font-size: 10px; color: var(--fog); width: 70px; flex-shrink: 0; }
+  .hb-bar-track { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; }
+  .hb-bar-fill { height: 100%; border-radius: 2px; background: var(--gold); }
+  .hb-bar-val { font-size: 10px; color: var(--gold); font-weight: 600; width: 30px; text-align: right; }
+
+  /* ── SECTION: DREAM BUILDER ── */
+  .dream-section {}
+  .dream-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+    margin-top: 48px;
+  }
+  .dream-left {}
+  .dream-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .dream-tag {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--fog);
+    font-size: 13px;
+    padding: 9px 18px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .dream-tag.selected {
+    background: rgba(201,169,110,0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .dream-cta { margin-top: 32px; }
+  .dream-right {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 32px;
+  }
+  .dream-result-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--white); margin-bottom: 20px; }
+  .dream-match { display: flex; flex-direction: column; gap: 12px; }
+  .dream-match-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--ink);
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+  }
+  .dm-left { display: flex; flex-direction: column; }
+  .dm-name { font-size: 14px; font-weight: 600; color: var(--white); }
+  .dm-sub { font-size: 11px; color: var(--fog); }
+  .dm-match { font-size: 12px; color: var(--gold); font-weight: 600; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--earth);
+    border-top: 1px solid var(--glass-border);
+    padding: 32px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--fog);
+  }
+  footer .logo { font-size: 18px; }
+
+  /* ── SECTION DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--glass-border);
+    margin: 0 60px;
+  }
+
+  /* ── ROI TICKER ── */
+  .roi-strip {
+    background: var(--sage);
+    padding: 14px 60px;
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    overflow: hidden;
+  }
+  .roi-item { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .roi-val { font-size: 18px; font-weight: 700; color: var(--white); }
+  .roi-label { font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.3; }
+  .roi-sep { color: rgba(255,255,255,0.2); font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="label-strip">DESIGN CONCEPT — FOR REFERENCE ONLY · Real Estate Platform</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    Landmark
+    <span>Properties · Hyderabad</span>
+  </div>
+  <ul>
+    <li><a href="#">Properties</a></li>
+    <li><a href="#">Neighbourhoods</a></li>
+    <li><a href="#">How It Works</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <button class="nav-cta">Book a Site Visit</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-dot"></div>
+      <span class="hero-eyebrow-text">Hyderabad · HMDA Approved</span>
+    </div>
+    <h1>Own the land<br><em>before the city</em><br>reaches it.</h1>
+    <p class="hero-sub">Verified plots in Hyderabad's fastest-growing corridors. See where the road, metro, and schools are going — then decide.</p>
+    <div class="hero-actions">
+      <button class="btn-primary">Explore Plots</button>
+      <button class="btn-ghost">See the Future Map</button>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <!-- Feature: Future Toggle -->
+    <div class="feature-badge">
+      <div class="feature-badge-label">★ UNIQUE FEATURE — IDEA 1</div>
+      <div class="feature-badge-title">Future Layer Toggle on Map</div>
+      <div class="feature-badge-desc">Switch between what the area looks like today vs. projected 2029 (metro station, IT corridor, school zone). Users see the investment story, not just the plot.</div>
+      <div class="toggle-pill">
+        <span class="active">Today 2025</span>
+        <span>In 2029</span>
+      </div>
+    </div>
+
+    <!-- Feature: Life Stage -->
+    <div class="feature-badge">
+      <div class="feature-badge-label">★ UNIQUE FEATURE — IDEA 2</div>
+      <div class="feature-badge-title">Life Stage Entry (replaces basic filters)</div>
+      <div class="feature-badge-desc">Instead of asking budget/area upfront, ask "who are you buying for?" — and the site curates plots with a narrative reason for each match.</div>
+    </div>
+
+    <!-- Feature: Heartbeat -->
+    <div class="feature-badge">
+      <div class="feature-badge-label">★ UNIQUE FEATURE — IDEA 3</div>
+      <div class="feature-badge-title">Plot Heartbeat — Live Social Proof</div>
+      <div class="feature-badge-desc">Each plot card shows: 4 people viewing now · Last visited 12 min ago · 2 enquiries today. Tasteful urgency without fake countdown timers.</div>
+      <div class="live-ping">
+        <div class="ping-dot"></div>
+        <span>14 people exploring plots right now</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROI TICKER -->
+<div class="roi-strip">
+  <div class="roi-item">
+    <div>
+      <div class="roi-val">38%</div>
+      <div class="roi-label">Avg. appreciation<br>ORR corridor · 3 yrs</div>
+    </div>
+  </div>
+  <div class="roi-sep">|</div>
+  <div class="roi-item">
+    <div>
+      <div class="roi-val">₹2.4Cr</div>
+      <div class="roi-label">Median resale value<br>plots sold 2021</div>
+    </div>
+  </div>
+  <div class="roi-sep">|</div>
+  <div class="roi-item">
+    <div>
+      <div class="roi-val">6 mins</div>
+      <div class="roi-label">To upcoming<br>metro station</div>
+    </div>
+  </div>
+  <div class="roi-sep">|</div>
+  <div class="roi-item">
+    <div>
+      <div class="roi-val">RERA & HMDA</div>
+      <div class="roi-label">All projects<br>verified & approved</div>
+    </div>
+  </div>
+</div>
+
+<!-- LIFE STAGE SECTION -->
+<section>
+  <div class="section-intro">
+    <div class="section-kicker">FIND YOUR PLOT</div>
+    <h2 class="section-title">Who are you<br>buying this for?</h2>
+    <p class="section-body">Skip the generic filters. Tell us your situation and we'll match you with plots that actually fit — with a reason for each one.</p>
+  </div>
+
+  <div class="life-stages">
+    <div class="stage-card active">
+      <span class="stage-icon">👨‍👩‍👧</span>
+      <div class="stage-name">Starting a family</div>
+      <div class="stage-desc">Looking for a safe, growing neighbourhood with schools and parks nearby.</div>
+      <div class="stage-result">→ 12 plots matched</div>
+    </div>
+    <div class="stage-card">
+      <span class="stage-icon">📈</span>
+      <div class="stage-name">Investment first</div>
+      <div class="stage-desc">Buying for appreciation. High-growth corridors near upcoming infrastructure.</div>
+      <div class="stage-result">→ 8 plots matched</div>
+    </div>
+    <div class="stage-card">
+      <span class="stage-icon">🏡</span>
+      <div class="stage-name">Building my home</div>
+      <div class="stage-desc">Ready to build. Need a clear layout, approved plan, and builder connections.</div>
+      <div class="stage-result">→ 17 plots matched</div>
+    </div>
+    <div class="stage-card">
+      <span class="stage-icon">🌿</span>
+      <div class="stage-name">Quiet retirement</div>
+      <div class="stage-desc">Gated community, low density, peaceful surroundings outside the city noise.</div>
+      <div class="stage-result">→ 6 plots matched</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- NEIGHBOURHOOD PULSE -->
+<section class="pulse-section">
+  <div class="pulse-grid">
+    <div class="pulse-map-preview">
+      <div class="map-mock">
+        <div class="map-pins">
+          <!-- pins -->
+          <div class="map-pin" style="left:30%; top:35%;">
+            <div class="pin-dot"></div>
+            <div class="pin-label">Narsingi <span class="pin-price">₹52L</span></div>
+          </div>
+          <div class="map-pin" style="left:55%; top:50%;">
+            <div class="pin-dot"></div>
+            <div class="pin-label">Mokila <span class="pin-price">₹38L</span></div>
+          </div>
+          <div class="map-pin" style="left:70%; top:28%;">
+            <div class="pin-dot"></div>
+            <div class="pin-label">Tukkuguda <span class="pin-price">₹44L</span></div>
+          </div>
+          <!-- infra badges -->
+          <div class="infra-badge" style="left:22%; top:65%; font-size:9px;">🚇 Metro by 2027</div>
+          <div class="infra-badge" style="left:52%; top:18%; font-size:9px;">🛣 ORR Phase-3</div>
+          <div class="infra-badge" style="left:62%; top:68%; font-size:9px;">🏫 TSREIS School</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pulse-right">
+      <div class="section-kicker">NEIGHBOURHOOD PULSE</div>
+      <h2 class="section-title">The map shows<br>where it's going,<br>not just where it is.</h2>
+      <p class="section-body">Overlay upcoming infrastructure on the map — metro lines, ring roads, schools, IT parks — so the buyer understands the investment before they've even asked.</p>
+
+      <div class="pulse-list">
+        <div class="pulse-item">
+          <div class="pulse-icon">🚇</div>
+          <div>
+            <div class="pulse-item-title">Metro Phase 4 — Narsingi Corridor</div>
+            <div class="pulse-item-desc">Station confirmed 2.1km from Plot A12. Land prices rose 26% post-announcement in Kokapet.</div>
+            <span class="pulse-tag">Govt. approved</span>
+          </div>
+        </div>
+        <div class="pulse-item">
+          <div class="pulse-icon">🏗</div>
+          <div>
+            <div class="pulse-item-title">TSREIS School — 800m from Mokila plots</div>
+            <div class="pulse-item-desc">Construction starts Q1 2026. Adjacent residential plots historically see 15–20% uplift.</div>
+            <span class="pulse-tag">Under construction</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PLOT HEARTBEAT SECTION -->
+<section class="heartbeat-section">
+  <div class="section-intro">
+    <div class="section-kicker">PLOTS WITH PULSE</div>
+    <h2 class="section-title">See what others<br>are looking at right now.</h2>
+    <p class="section-body">Live activity on each plot — who's interested, when it was last visited, how it's appreciated.</p>
+  </div>
+
+  <div class="heartbeat-grid">
+    <div class="hb-card">
+      <div class="hb-image">
+        <div class="hb-image-text">Plot A12 · Narsingi</div>
+        <div class="hb-image-tag">Hot 🔥</div>
+        <div class="hb-activity"><div class="ping-dot"></div>6 viewing now</div>
+      </div>
+      <div class="hb-body">
+        <div class="hb-name">Plot A12</div>
+        <div class="hb-meta">267 sq.yd · Narsingi · HMDA</div>
+        <div class="hb-price">₹52 Lakhs</div>
+        <div class="hb-bars">
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Appreciation</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:82%"></div></div>
+            <div class="hb-bar-val">82%</div>
+          </div>
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Connectivity</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:71%"></div></div>
+            <div class="hb-bar-val">71%</div>
+          </div>
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Infra Growth</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:90%"></div></div>
+            <div class="hb-bar-val">90%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hb-card">
+      <div class="hb-image">
+        <div class="hb-image-text">Plot B7 · Mokila</div>
+        <div class="hb-image-tag">New</div>
+        <div class="hb-activity"><div class="ping-dot"></div>2 viewing now</div>
+      </div>
+      <div class="hb-body">
+        <div class="hb-name">Plot B7</div>
+        <div class="hb-meta">200 sq.yd · Mokila · RERA</div>
+        <div class="hb-price">₹38 Lakhs</div>
+        <div class="hb-bars">
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Appreciation</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:60%"></div></div>
+            <div class="hb-bar-val">60%</div>
+          </div>
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Connectivity</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:55%"></div></div>
+            <div class="hb-bar-val">55%</div>
+          </div>
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Infra Growth</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:75%"></div></div>
+            <div class="hb-bar-val">75%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hb-card">
+      <div class="hb-image">
+        <div class="hb-image-text">Plot C3 · Tukkuguda</div>
+        <div class="hb-image-tag">Best Value</div>
+        <div class="hb-activity"><div class="ping-dot"></div>4 viewing now</div>
+      </div>
+      <div class="hb-body">
+        <div class="hb-name">Plot C3</div>
+        <div class="hb-meta">300 sq.yd · Tukkuguda · HMDA</div>
+        <div class="hb-price">₹44 Lakhs</div>
+        <div class="hb-bars">
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Appreciation</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:74%"></div></div>
+            <div class="hb-bar-val">74%</div>
+          </div>
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Connectivity</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:68%"></div></div>
+            <div class="hb-bar-val">68%</div>
+          </div>
+          <div class="hb-bar-row">
+            <div class="hb-bar-label">Infra Growth</div>
+            <div class="hb-bar-track"><div class="hb-bar-fill" style="width:85%"></div></div>
+            <div class="hb-bar-val">85%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- BUYER JOURNEY ROADMAP -->
+<section>
+  <div class="section-intro">
+    <div class="section-kicker">YOUR BUYING JOURNEY</div>
+    <h2 class="section-title">Most people don't buy<br>because they don't know<br>what happens next.</h2>
+    <p class="section-body">We show the full process — step by step — before they even call you. Informed buyers convert faster and trust you more.</p>
+  </div>
+
+  <div class="roadmap-steps">
+    <div class="roadmap-step">
+      <div class="step-number active">1</div>
+      <div class="step-name">Choose Your Plot</div>
+      <div class="step-desc">Browse, filter by life stage, and shortlist using the interactive map.</div>
+      <div class="step-time">Day 1</div>
+    </div>
+    <div class="roadmap-step">
+      <div class="step-number">2</div>
+      <div class="step-name">Site Visit</div>
+      <div class="step-desc">We arrange a free guided site visit with a verified property executive.</div>
+      <div class="step-time">Within 3 days</div>
+    </div>
+    <div class="roadmap-step">
+      <div class="step-number">3</div>
+      <div class="step-name">Legal Check</div>
+      <div class="step-desc">Documents are verified — RERA, HMDA, clear title. You get a report.</div>
+      <div class="step-time">Day 5–7</div>
+    </div>
+    <div class="roadmap-step">
+      <div class="step-number">4</div>
+      <div class="step-name">Payment Plan</div>
+      <div class="step-desc">Choose a schedule that works for you. Loan assistance available.</div>
+      <div class="step-time">Day 8</div>
+    </div>
+    <div class="roadmap-step">
+      <div class="step-number">5</div>
+      <div class="step-name">Registration</div>
+      <div class="step-desc">We guide you through the sub-registrar office. Plot is yours.</div>
+      <div class="step-time">Day 14–21</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- DREAM BUILDER -->
+<section>
+  <div class="section-intro">
+    <div class="section-kicker">DREAM BUILDER</div>
+    <h2 class="section-title">Tell us what you<br>want to feel. We'll<br>find the plot.</h2>
+    <p class="section-body">Pick what matters to you — not bedrooms and square yards. The right plot finds you.</p>
+  </div>
+
+  <div class="dream-grid">
+    <div class="dream-left">
+      <p class="section-body">What does your ideal land feel like?</p>
+      <div class="dream-tags">
+        <div class="dream-tag selected">Away from traffic</div>
+        <div class="dream-tag selected">Kids can play outside</div>
+        <div class="dream-tag">Walk to a temple</div>
+        <div class="dream-tag selected">Good resale in 5 yrs</div>
+        <div class="dream-tag">Corner plot</div>
+        <div class="dream-tag">Gated community</div>
+        <div class="dream-tag">Near a main road</div>
+        <div class="dream-tag selected">School within 2km</div>
+        <div class="dream-tag">No builders nearby yet</div>
+        <div class="dream-tag">Weekend drive only</div>
+      </div>
+      <div class="dream-cta">
+        <button class="btn-primary">Show My Matches</button>
+      </div>
+    </div>
+
+    <div class="dream-right">
+      <div class="dream-result-title">Your matches</div>
+      <div class="dream-match">
+        <div class="dream-match-item">
+          <div class="dm-left">
+            <div class="dm-name">Plot A12 · Narsingi</div>
+            <div class="dm-sub">267 sq.yd · ₹52L · Low traffic · 1.2km school</div>
+          </div>
+          <div class="dm-match">96% match</div>
+        </div>
+        <div class="dream-match-item">
+          <div class="dm-left">
+            <div class="dm-name">Plot C3 · Tukkuguda</div>
+            <div class="dm-sub">300 sq.yd · ₹44L · Gated · Corner plot</div>
+          </div>
+          <div class="dm-match">88% match</div>
+        </div>
+        <div class="dream-match-item">
+          <div class="dm-left">
+            <div class="dm-name">Plot F9 · Shadnagar</div>
+            <div class="dm-sub">200 sq.yd · ₹28L · Quiet · High growth</div>
+          </div>
+          <div class="dm-match">81% match</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION: PLOT COMPARISON ── -->
+<section style="background: var(--ink);">
+  <div class="section-intro">
+    <div class="section-kicker">NEW — IDEA 6</div>
+    <h2 class="section-title">Compare plots<br>side by side.</h2>
+    <p class="section-body">Shortlist up to 3 plots and compare everything that matters — price per sq.yd, infra score, legal status, appreciation potential. Converts browsers into callers.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 160px repeat(3, 1fr); gap:0; margin-top:40px; border:1px solid var(--glass-border); border-radius:10px; overflow:hidden;">
+    <!-- header row -->
+    <div style="background:var(--earth); padding:20px 16px; border-bottom:1px solid var(--glass-border);"></div>
+    <div style="background:rgba(201,169,110,0.1); border-left:1px solid var(--glass-border); border-bottom:1px solid var(--glass-border); padding:16px; text-align:center;">
+      <div style="font-size:11px; color:var(--gold); font-weight:600; margin-bottom:4px;">BEST MATCH</div>
+      <div style="font-size:15px; font-weight:700; color:var(--white);">Plot A12</div>
+      <div style="font-size:11px; color:var(--fog);">Narsingi</div>
+    </div>
+    <div style="background:var(--earth); border-left:1px solid var(--glass-border); border-bottom:1px solid var(--glass-border); padding:16px; text-align:center;">
+      <div style="font-size:15px; font-weight:700; color:var(--white);">Plot B7</div>
+      <div style="font-size:11px; color:var(--fog);">Mokila</div>
+    </div>
+    <div style="background:var(--earth); border-left:1px solid var(--glass-border); border-bottom:1px solid var(--glass-border); padding:16px; text-align:center;">
+      <div style="font-size:15px; font-weight:700; color:var(--white);">Plot C3</div>
+      <div style="font-size:11px; color:var(--fog);">Tukkuguda</div>
+    </div>
+
+    <!-- rows -->
+    <div style="background:var(--earth); padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--fog); display:flex; align-items:center;">Price</div>
+    <div style="background:rgba(201,169,110,0.05); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:14px; font-weight:700; color:var(--gold);">₹52L</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:14px; color:var(--white);">₹38L</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:14px; color:var(--white);">₹44L</div>
+
+    <div style="background:var(--earth); padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--fog); display:flex; align-items:center;">Area</div>
+    <div style="background:rgba(201,169,110,0.05); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:13px; color:var(--white);">267 sq.yd</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:13px; color:var(--white);">200 sq.yd</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:13px; color:var(--white);">300 sq.yd</div>
+
+    <div style="background:var(--earth); padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--fog); display:flex; align-items:center;">Approvals</div>
+    <div style="background:rgba(201,169,110,0.05); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:12px; color:#4ADE80;">HMDA ✓ RERA ✓</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:12px; color:#4ADE80;">RERA ✓</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:12px; color:#4ADE80;">HMDA ✓ RERA ✓</div>
+
+    <div style="background:var(--earth); padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--fog); display:flex; align-items:center;">Appreciation Score</div>
+    <div style="background:rgba(201,169,110,0.05); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:14px; font-weight:700; color:var(--gold);">82/100</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:14px; color:var(--white);">60/100</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); border-bottom:1px solid rgba(255,255,255,0.05); padding:14px 16px; text-align:center; font-size:14px; color:var(--white);">74/100</div>
+
+    <div style="background:var(--earth); padding:14px 16px; font-size:12px; color:var(--fog); display:flex; align-items:center;">Metro Distance</div>
+    <div style="background:rgba(201,169,110,0.05); border-left:1px solid var(--glass-border); padding:14px 16px; text-align:center; font-size:13px; color:var(--white);">2.1 km</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); padding:14px 16px; text-align:center; font-size:13px; color:var(--white);">6.4 km</div>
+    <div style="background:var(--ink); border-left:1px solid var(--glass-border); padding:14px 16px; text-align:center; font-size:13px; color:var(--white);">3.8 km</div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── SECTION: SHORTLIST + SHARE ── -->
+<section style="background: var(--earth);">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;">
+    <div>
+      <div class="section-kicker">NEW — IDEA 7</div>
+      <h2 class="section-title">Save your shortlist.<br>Share it on WhatsApp<br>in one tap.</h2>
+      <p class="section-body">Real estate in India is a family decision. Let visitors save their shortlisted plots and share a clean summary card with their spouse, parents, or siblings — without losing context or calling you first.</p>
+      <div style="margin-top:28px; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px; font-size:13px; color:var(--fog);">
+          <span style="font-size:18px;">📌</span> Save plots as you browse — no login needed
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; font-size:13px; color:var(--fog);">
+          <span style="font-size:18px;">📱</span> One tap generates a WhatsApp-ready summary card
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; font-size:13px; color:var(--fog);">
+          <span style="font-size:18px;">🔗</span> Shareable link opens the same shortlist for anyone
+        </div>
+      </div>
+    </div>
+    <!-- Mock WhatsApp card -->
+    <div style="display:flex; justify-content:center;">
+      <div style="background:#1A2E2A; border-radius:16px; padding:20px; width:280px; border:1px solid rgba(255,255,255,0.08); font-family:sans-serif;">
+        <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:12px;">Shared via Landmark Properties</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:16px;">📋 My Shortlisted Plots</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:rgba(255,255,255,0.06); border-radius:8px; padding:12px;">
+            <div style="font-size:13px; font-weight:600; color:white;">Plot A12 · Narsingi</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.5);">267 sq.yd · ₹52L · HMDA ✓</div>
+            <div style="font-size:11px; color:#C9A96E; margin-top:4px;">Appreciation score: 82/100</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06); border-radius:8px; padding:12px;">
+            <div style="font-size:13px; font-weight:600; color:white;">Plot C3 · Tukkuguda</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.5);">300 sq.yd · ₹44L · HMDA ✓</div>
+            <div style="font-size:11px; color:#C9A96E; margin-top:4px;">Appreciation score: 74/100</div>
+          </div>
+        </div>
+        <div style="margin-top:14px; background:#25D366; border-radius:8px; padding:10px; text-align:center; font-size:12px; font-weight:700; color:white;">Open My Shortlist →</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── SECTION: DOCUMENT TRANSPARENCY ── -->
+<section>
+  <div class="section-intro">
+    <div class="section-kicker">NEW — IDEA 8</div>
+    <h2 class="section-title">Every document.<br>Visible before<br>you ask.</h2>
+    <p class="section-body">Most real estate sites hide legal documents until you follow up 3 times. Showing them upfront is the single biggest trust signal you can give a buyer — and it sets this company apart from every broker in the city.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:40px;">
+    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:10px; padding:24px;">
+      <div style="font-size:24px; margin-bottom:12px;">📄</div>
+      <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:6px;">RERA Certificate</div>
+      <div style="font-size:12px; color:var(--fog); margin-bottom:14px; line-height:1.5;">Registered under Telangana RERA. Protects your payment if the project delays.</div>
+      <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:#4ADE80; font-weight:600;">✓ Verified &amp; Available</div>
+      <div style="margin-top:10px;">
+        <span style="font-size:11px; color:var(--gold); cursor:pointer; font-weight:500;">Download PDF ↓</span>
+      </div>
+    </div>
+    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:10px; padding:24px;">
+      <div style="font-size:24px; margin-bottom:12px;">🏛</div>
+      <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:6px;">HMDA Approval</div>
+      <div style="font-size:12px; color:var(--fog); margin-bottom:14px; line-height:1.5;">Layout approved by Hyderabad Metropolitan Development Authority. Plan is legal to build on.</div>
+      <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:#4ADE80; font-weight:600;">✓ Verified &amp; Available</div>
+      <div style="margin-top:10px;">
+        <span style="font-size:11px; color:var(--gold); cursor:pointer; font-weight:500;">Download PDF ↓</span>
+      </div>
+    </div>
+    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:10px; padding:24px;">
+      <div style="font-size:24px; margin-bottom:12px;">📋</div>
+      <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:6px;">Encumbrance Certificate</div>
+      <div style="font-size:12px; color:var(--fog); margin-bottom:14px; line-height:1.5;">Confirms no loans or legal disputes are attached to this property. Title is clear.</div>
+      <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:#4ADE80; font-weight:600;">✓ Verified &amp; Available</div>
+      <div style="margin-top:10px;">
+        <span style="font-size:11px; color:var(--gold); cursor:pointer; font-weight:500;">Download PDF ↓</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── SECTION: EMI + APPRECIATION STORY ── -->
+<section style="background:var(--earth);">
+  <div class="section-intro">
+    <div class="section-kicker">NEW — IDEA 9</div>
+    <h2 class="section-title">What does ₹52 Lakhs<br>actually look like<br>month to month?</h2>
+    <p class="section-body">Not a boring EMI calculator. A story that shows affordability and investment return together — so the visitor sees what they pay and what they gain at the same time.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:48px; align-items:start;">
+    <div style="background:var(--ink); border:1px solid var(--glass-border); border-radius:12px; padding:32px;">
+      <div style="font-size:13px; color:var(--fog); margin-bottom:24px; font-weight:500;">Plot A12 · Narsingi · ₹52 Lakhs</div>
+
+      <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:28px;">
+        <div>
+          <div style="font-size:11px; color:var(--fog); margin-bottom:6px;">Down Payment (20%)</div>
+          <div style="font-size:22px; font-weight:700; color:var(--white);">₹10,40,000</div>
+        </div>
+        <div style="height:1px; background:var(--glass-border);"></div>
+        <div>
+          <div style="font-size:11px; color:var(--fog); margin-bottom:6px;">Loan Amount (80%)</div>
+          <div style="font-size:22px; font-weight:700; color:var(--white);">₹41,60,000</div>
+        </div>
+        <div style="height:1px; background:var(--glass-border);"></div>
+        <div>
+          <div style="font-size:11px; color:var(--fog); margin-bottom:6px;">Monthly EMI · 20yr · 8.5%</div>
+          <div style="font-size:28px; font-weight:700; color:var(--gold);">₹36,100 / month</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(61,90,71,0.2); border:1px solid rgba(61,90,71,0.4); border-radius:8px; padding:16px;">
+        <div style="font-size:11px; color:var(--sage-light); font-weight:600; margin-bottom:8px;">APPRECIATION STORY</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:12px; color:var(--fog);">Today (2025)</span>
+          <span style="font-size:14px; font-weight:600; color:var(--white);">₹52 Lakhs</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:12px; color:var(--fog);">In 2027 (metro opens)</span>
+          <span style="font-size:14px; font-weight:600; color:var(--white);">~₹65 Lakhs</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; color:var(--fog);">In 2030 (ORR Phase 3)</span>
+          <span style="font-size:16px; font-weight:700; color:var(--gold);">~₹85–90 Lakhs</span>
+        </div>
+        <div style="margin-top:12px; font-size:11px; color:rgba(255,255,255,0.35); line-height:1.5;">Based on ORR corridor 3yr avg. of 38% appreciation. Not a guarantee — indicative of area trends.</div>
+      </div>
+    </div>
+
+    <div style="padding-top:8px;">
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="display:flex; gap:16px;">
+          <div style="font-size:28px; flex-shrink:0;">💡</div>
+          <div>
+            <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:4px;">Your EMI pays the bank. The land pays you back.</div>
+            <div style="font-size:12px; color:var(--fog); line-height:1.6;">While you pay ₹36K/month, the plot's value grows. In 5 years, the appreciation may equal or exceed what you've paid in EMIs.</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:16px;">
+          <div style="font-size:28px; flex-shrink:0;">🏦</div>
+          <div>
+            <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:4px;">Loan assistance included</div>
+            <div style="font-size:12px; color:var(--fog); line-height:1.6;">We work with SBI, HDFC, and Axis. Pre-approval checks in 24 hours. We handle the paperwork.</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:16px;">
+          <div style="font-size:28px; flex-shrink:0;">📊</div>
+          <div>
+            <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:4px;">Try it on any plot</div>
+            <div style="font-size:12px; color:var(--fog); line-height:1.6;">Every plot page has this calculator pre-filled. Change the down payment or tenure and it recalculates instantly.</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn-primary">Calculate for My Budget</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo">Landmark <span style="display:inline; font-family:Inter; font-size:14px; color:var(--fog)">Properties</span></div>
+  <div>Design Concept · For reference only</div>
+  <div>All features are implementable suggestions</div>
+</footer>
+
+</body>
+</html>

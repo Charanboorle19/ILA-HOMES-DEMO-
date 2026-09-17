@@ -1,0 +1,146 @@
+.pd-lifestyle__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: clamp(1.5rem, 4vw, 2.75rem);
+  align-items: center;
+}
+
+.pd-lifestyle__intro {
+  max-width: 32rem;
+  margin-bottom: 1.25rem;
+}
+
+.pd-lifestyle__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.pd-lifestyle__item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--pd-border, rgba(15, 17, 20, 0.08));
+  background: #fff;
+  color: var(--pd-secondary, #4a5060);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.pd-lifestyle__item:hover {
+  border-color: rgba(201, 168, 76, 0.4);
+  color: var(--pd-ink, #0f1114);
+}
+
+.pd-lifestyle__item.is-active {
+  border-color: rgba(201, 168, 76, 0.55);
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--pd-ink, #0f1114);
+}
+
+.pd-lifestyle__icon {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  color: var(--pd-accent, #c9a84c);
+}
+
+.pd-lifestyle__svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  display: block;
+}
+
+.pd-lifestyle__stage {
+  position: relative;
+  width: 100%;
+  height: 22rem;
+  overflow: hidden;
+  border: 1px solid var(--pd-border, rgba(15, 17, 20, 0.08));
+  background: #e8eaef;
+}
+
+.pd-lifestyle__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transform: scale(1.03);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pd-lifestyle__img.is-active {
+  opacity: 1;
+  transform: scale(1);
+  z-index: 1;
+}
+
+.pd-lifestyle__caption {
+  position: absolute;
+  z-index: 2;
+  left: 0.85rem;
+  bottom: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: calc(100% - 5rem);
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 17, 20, 0.72);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+
+.pd-lifestyle__caption-icon {
+  display: grid;
+  place-items: center;
+  color: #e2c57a;
+}
+
+.pd-lifestyle__dots {
+  position: absolute;
+  z-index: 2;
+  right: 0.85rem;
+  bottom: 0.95rem;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.pd-lifestyle__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.pd-lifestyle__dot.is-active {
+  background: #c9a84c;
+}
+
+@media (max-width: 800px) {
+  .pd-lifestyle__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pd-lifestyle__stage {
+    height: 16rem;
+  }
+}

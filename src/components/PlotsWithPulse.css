@@ -1,0 +1,261 @@
+/* Plots with Pulse — light social proof section */
+
+.plots-pulse {
+  --pp-bg: #f7f8fa;
+  --pp-card: #ffffff;
+  --pp-ink: #0f1114;
+  --pp-fog: #4a5060;
+  --pp-muted: #8a909e;
+  --pp-line: rgba(15, 17, 20, 0.1);
+  --pp-gold: #c9a84c;
+  --pp-sage: #3d5a47;
+  --pp-live: #22c55e;
+
+  width: 100%;
+  margin: 0;
+  padding: clamp(2.5rem, 6vh, 4rem) var(--space);
+  color: var(--pp-ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 40% 35% at 8% 12%, rgba(34, 197, 94, 0.06), transparent 55%),
+    radial-gradient(ellipse 35% 30% at 92% 88%, rgba(201, 168, 76, 0.08), transparent 50%),
+    var(--pp-bg);
+}
+
+.plots-pulse__frame {
+  width: min(100%, var(--max));
+  margin-inline: auto;
+}
+
+.plots-pulse__intro {
+  max-width: 36rem;
+  margin-bottom: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.plots-pulse__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--pp-gold);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.plots-pulse__heading {
+  margin: 0 0 0.65rem;
+  color: var(--pp-ink);
+  font-family: var(--font-body);
+  font-size: clamp(1.45rem, 2.8vw, 2rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.plots-pulse__lede {
+  margin: 0;
+  color: var(--pp-fog);
+  font-size: clamp(0.8rem, 1.1vw, 0.92rem);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.plots-pulse__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.plots-pulse__card {
+  overflow: hidden;
+  border: 1px solid var(--pp-line);
+  background: var(--pp-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plots-pulse__card:hover {
+  border-color: rgba(201, 168, 76, 0.45);
+  box-shadow: 0 10px 28px rgba(15, 17, 20, 0.06);
+}
+
+.plots-pulse__image {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 9.5rem;
+  background:
+    linear-gradient(145deg, rgba(61, 90, 71, 0.12), transparent 55%),
+    linear-gradient(135deg, #e8ede9, #dfe6e1);
+}
+
+.plots-pulse__image-text {
+  color: var(--pp-fog);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.plots-pulse__badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  background: var(--pp-sage);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.plots-pulse__live {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid var(--pp-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--pp-fog);
+  font-size: 0.62rem;
+  font-weight: 500;
+}
+
+.plots-pulse__ping {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--pp-live);
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  animation: plots-pulse-ping 1.5s ease-in-out infinite;
+}
+
+.plots-pulse__ping--sm {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+@keyframes plots-pulse-ping {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+
+.plots-pulse__body {
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.plots-pulse__name {
+  margin: 0 0 0.2rem;
+  color: var(--pp-ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.plots-pulse__meta {
+  margin: 0 0 0.65rem;
+  color: var(--pp-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.plots-pulse__price {
+  margin: 0 0 0.85rem;
+  color: #a6862e;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.plots-pulse__signals {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.75rem;
+  list-style: none;
+  border: 1px solid var(--pp-line);
+  background: #f2f3f7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.plots-pulse__signals li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--pp-fog);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.plots-pulse__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.plots-pulse__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plots-pulse__bar-label {
+  width: 4.5rem;
+  flex-shrink: 0;
+  color: var(--pp-muted);
+  font-size: 0.6rem;
+}
+
+.plots-pulse__bar-track {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(15, 17, 20, 0.08);
+  overflow: hidden;
+}
+
+.plots-pulse__bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--pp-gold);
+}
+
+.plots-pulse__bar-val {
+  width: 1.85rem;
+  flex-shrink: 0;
+  color: #a6862e;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .plots-pulse__grid {
+    grid-template-columns: 1fr;
+    max-width: 26rem;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .plots-pulse__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .plots-pulse__bar-label {
+    width: 3.75rem;
+  }
+}

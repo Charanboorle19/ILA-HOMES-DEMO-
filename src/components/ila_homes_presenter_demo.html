@@ -1,0 +1,701 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+#ila-root {
+  width: 100%;
+  height: 620px;
+  background: #1a1612;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Georgia', serif;
+}
+
+/* INTRO SCREEN */
+#intro-screen {
+  position: absolute;
+  inset: 0;
+  background: #1a1612;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  transition: opacity 0.8s ease;
+}
+#intro-screen.hidden { opacity: 0; pointer-events: none; }
+.intro-logo {
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: #8b6f47;
+  text-transform: uppercase;
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 24px;
+}
+.intro-headline {
+  font-size: 28px;
+  color: #f5f0e8;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 380px;
+  margin-bottom: 10px;
+}
+.intro-sub {
+  font-size: 13px;
+  color: #8b7a68;
+  font-family: -apple-system, sans-serif;
+  text-align: center;
+  margin-bottom: 40px;
+  letter-spacing: 0.02em;
+}
+.start-btn {
+  background: #8b6f47;
+  color: #f5f0e8;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: -apple-system, sans-serif;
+  transition: background 0.2s;
+}
+.start-btn:hover { background: #7a6040; }
+.intro-note {
+  margin-top: 16px;
+  font-size: 10px;
+  color: #4a4035;
+  font-family: -apple-system, sans-serif;
+  letter-spacing: 0.06em;
+}
+
+/* MAIN PRESENTATION */
+#presentation {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+#presentation.active { opacity: 1; pointer-events: all; }
+
+/* LEFT — PRESENTER */
+#presenter-side {
+  width: 42%;
+  height: 100%;
+  background: #1a1612;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 0;
+  border-right: 0.5px solid rgba(139,111,71,0.2);
+}
+
+/* AVATAR */
+.avatar-wrap {
+  position: relative;
+  width: 200px;
+  height: 340px;
+  margin-bottom: 0;
+}
+.avatar-bg-glow {
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(139,111,71,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.avatar-svg {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* SPEECH BUBBLE */
+#speech-bubble {
+  position: absolute;
+  top: 24px;
+  left: 16px;
+  right: 16px;
+  background: rgba(30,26,20,0.92);
+  border: 0.5px solid rgba(139,111,71,0.35);
+  border-radius: 10px;
+  padding: 14px 16px;
+  z-index: 10;
+}
+#speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px; height: 8px;
+  background: rgba(30,26,20,0.92);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.speech-name {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #8b6f47;
+  text-transform: uppercase;
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 6px;
+}
+#speech-text {
+  font-size: 12.5px;
+  color: #f0ead8;
+  line-height: 1.6;
+  font-family: 'Georgia', serif;
+  min-height: 60px;
+}
+
+/* Talking animation */
+@keyframes mouthTalk {
+  0%,100% { d: path("M 92 158 Q 100 162 108 158"); }
+  50% { d: path("M 92 158 Q 100 168 108 158"); }
+}
+.mouth-talking {
+  animation: mouthTalk 0.25s ease-in-out infinite alternate;
+}
+
+/* RIGHT — PROPERTY */
+#property-side {
+  width: 58%;
+  height: 100%;
+  background: #f5f0e8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* PROPERTY CARD */
+#property-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 28px 20px;
+  opacity: 0;
+  transform: translateX(30px);
+  transition: all 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+#property-card.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.prop-step {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #8b6f47;
+  text-transform: uppercase;
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 6px;
+}
+.prop-name {
+  font-size: 26px;
+  color: #3a3228;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+.prop-location {
+  font-size: 12px;
+  color: #8b7a68;
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 20px;
+}
+
+/* MAP MINI */
+.prop-map-mini {
+  width: 100%;
+  height: 140px;
+  border-radius: 8px;
+  background: #e8e0cc;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 0.5px solid rgba(139,111,71,0.2);
+}
+.mini-map-svg {
+  width: 100%; height: 100%;
+}
+
+/* DETAILS GRID */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.detail-cell {
+  background: #fff;
+  border: 0.5px solid rgba(139,111,71,0.18);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.detail-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #8b7a68;
+  text-transform: uppercase;
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 4px;
+}
+.detail-value {
+  font-size: 14px;
+  color: #3a3228;
+  font-family: 'Georgia', serif;
+}
+
+.prop-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.prop-price {
+  font-size: 28px;
+  color: #8b6f47;
+  font-family: 'Georgia', serif;
+}
+.prop-price-unit {
+  font-size: 12px;
+  color: #8b7a68;
+  font-family: -apple-system, sans-serif;
+}
+.prop-badge {
+  display: inline-block;
+  background: #eef6ee;
+  color: #3a6b3a;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: -apple-system, sans-serif;
+  font-weight: 600;
+}
+
+/* CONTROLS */
+#controls {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: rgba(245,240,232,0.95);
+  border-top: 0.5px solid rgba(139,111,71,0.2);
+}
+.ctrl-skip {
+  font-size: 10px;
+  color: #8b7a68;
+  font-family: -apple-system, sans-serif;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ctrl-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ctrl-dots {
+  display: flex;
+  gap: 6px;
+}
+.ctrl-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(139,111,71,0.25);
+  transition: background 0.3s;
+}
+.ctrl-dot.active { background: #8b6f47; }
+.next-btn {
+  background: #3a3228;
+  color: #f5f0e8;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 5px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: -apple-system, sans-serif;
+  transition: background 0.2s;
+}
+.next-btn:hover { background: #2a2420; }
+
+/* END SCREEN */
+#end-screen {
+  position: absolute;
+  inset: 0;
+  background: #1a1612;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+  z-index: 200;
+}
+#end-screen.active { opacity: 1; pointer-events: all; }
+.end-logo { font-size: 10px; letter-spacing: 0.28em; color: #8b6f47; text-transform: uppercase; font-family: -apple-system,sans-serif; margin-bottom: 20px; }
+.end-headline { font-size: 26px; color: #f5f0e8; text-align: center; max-width: 340px; line-height: 1.35; margin-bottom: 10px; }
+.end-sub { font-size: 12px; color: #8b7a68; font-family: -apple-system,sans-serif; text-align:center; margin-bottom: 36px; }
+.end-cta {
+  background: #8b6f47; color: #f5f0e8; border: none;
+  padding: 13px 36px; border-radius: 6px;
+  font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; font-family: -apple-system,sans-serif; margin-bottom: 12px;
+}
+.end-restart {
+  background: none; border: 0.5px solid rgba(139,111,71,0.4); color: #8b7a68;
+  padding: 10px 28px; border-radius: 6px;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; font-family: -apple-system,sans-serif;
+}
+
+/* NAV TOP */
+#top-nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  pointer-events: none;
+}
+.top-logo { font-size: 11px; letter-spacing: 0.2em; color: #8b6f47; text-transform: uppercase; font-family: -apple-system,sans-serif; }
+.top-logo em { color: #4a4035; font-style: normal; }
+</style>
+
+<div id="ila-root">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">ILA Homes guided property presentation</h2>
+
+  <!-- TOP NAV (always visible) -->
+  <div id="top-nav">
+    <div class="top-logo">ILA <em>Homes</em></div>
+  </div>
+
+  <!-- INTRO SCREEN -->
+  <div id="intro-screen">
+    <div class="intro-logo">ILA Homes · South Hyderabad</div>
+    <div class="intro-headline">Let us walk you through our properties</div>
+    <div class="intro-sub">A guided presentation — 3 properties, 2 minutes</div>
+    <button class="start-btn" onclick="startPresentation()">Begin Presentation</button>
+    <div class="intro-note">You can skip any property or the entire walkthrough</div>
+  </div>
+
+  <!-- MAIN PRESENTATION -->
+  <div id="presentation">
+
+    <!-- LEFT: PRESENTER -->
+    <div id="presenter-side">
+      <div id="speech-bubble">
+        <div class="speech-name">Arjun · ILA Homes</div>
+        <div id="speech-text">Good afternoon. Allow me to walk you through three exceptional plots we currently have available in South Hyderabad.</div>
+      </div>
+
+      <div class="avatar-wrap">
+        <div class="avatar-bg-glow"></div>
+        <!-- Realistic-style avatar SVG -->
+        <svg class="avatar-svg" viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shadow -->
+          <ellipse cx="100" cy="332" rx="52" ry="8" fill="rgba(0,0,0,0.35)"/>
+          <!-- Legs / Trousers -->
+          <rect x="72" y="230" width="24" height="100" rx="6" fill="#2a2420"/>
+          <rect x="104" y="230" width="24" height="100" rx="6" fill="#2a2420"/>
+          <!-- Shoes -->
+          <ellipse cx="84" cy="330" rx="15" ry="6" fill="#1a1210"/>
+          <ellipse cx="116" cy="330" rx="15" ry="6" fill="#1a1210"/>
+          <!-- Body / Suit jacket -->
+          <rect x="60" y="155" width="80" height="90" rx="12" fill="#2c2420"/>
+          <!-- White shirt / tie -->
+          <rect x="90" y="160" width="20" height="80" rx="4" fill="#f0ead8"/>
+          <rect x="96" y="165" width="8" height="60" rx="3" fill="#8b6f47"/>
+          <!-- Lapels -->
+          <path d="M90 160 L72 185 L90 185 Z" fill="#241e18"/>
+          <path d="M110 160 L128 185 L110 185 Z" fill="#241e18"/>
+          <!-- Collar -->
+          <rect x="86" y="155" width="28" height="16" rx="4" fill="#f0ead8"/>
+          <!-- Arms -->
+          <rect x="38" y="158" width="26" height="72" rx="10" fill="#2c2420"/>
+          <rect x="136" y="158" width="26" height="72" rx="10" fill="#2c2420"/>
+          <!-- Hands -->
+          <ellipse cx="51" cy="232" rx="11" ry="9" fill="#c8a882"/>
+          <ellipse cx="149" cy="232" rx="11" ry="9" fill="#c8a882"/>
+          <!-- Neck -->
+          <rect x="88" y="130" width="24" height="30" rx="6" fill="#c8a882"/>
+          <!-- Head -->
+          <ellipse cx="100" cy="108" rx="36" ry="40" fill="#c8a882"/>
+          <!-- Hair -->
+          <ellipse cx="100" cy="72" rx="36" ry="18" fill="#1a1410"/>
+          <rect x="64" y="72" width="72" height="20" rx="0" fill="#1a1410"/>
+          <!-- Ear left -->
+          <ellipse cx="65" cy="108" rx="7" ry="9" fill="#be9e74"/>
+          <!-- Ear right -->
+          <ellipse cx="135" cy="108" rx="7" ry="9" fill="#be9e74"/>
+          <!-- Eyes -->
+          <ellipse cx="86" cy="108" rx="7" ry="7.5" fill="#fff"/>
+          <ellipse cx="114" cy="108" rx="7" ry="7.5" fill="#fff"/>
+          <circle cx="87" cy="109" r="4.5" fill="#2a1a0a"/>
+          <circle cx="115" cy="109" r="4.5" fill="#2a1a0a"/>
+          <circle cx="88" cy="107" r="1.5" fill="#fff"/>
+          <circle cx="116" cy="107" r="1.5" fill="#fff"/>
+          <!-- Eyebrows -->
+          <path d="M79 100 Q86 97 93 100" stroke="#1a1410" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M107 100 Q114 97 121 100" stroke="#1a1410" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Nose -->
+          <path d="M97 114 Q100 120 103 114" stroke="#b08060" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- Mouth -->
+          <path id="mouth-path" d="M92 128 Q100 133 108 128" stroke="#8b5a3a" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- Slight smile lines -->
+          <path d="M90 125 Q88 130 91 133" stroke="#be9e74" stroke-width="1" fill="none" opacity="0.5"/>
+          <path d="M110 125 Q112 130 109 133" stroke="#be9e74" stroke-width="1" fill="none" opacity="0.5"/>
+          <!-- Glasses -->
+          <rect x="77" y="102" width="20" height="14" rx="5" fill="none" stroke="#3a2e22" stroke-width="2"/>
+          <rect x="103" y="102" width="20" height="14" rx="5" fill="none" stroke="#3a2e22" stroke-width="2"/>
+          <line x1="97" y1="109" x2="103" y2="109" stroke="#3a2e22" stroke-width="1.5"/>
+          <line x1="63" y1="109" x2="77" y2="109" stroke="#3a2e22" stroke-width="1.5"/>
+          <line x1="123" y1="109" x2="137" y2="109" stroke="#3a2e22" stroke-width="1.5"/>
+          <!-- Pocket square -->
+          <path d="M132 170 L140 165 L144 175 Z" fill="#8b6f47" opacity="0.8"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- RIGHT: PROPERTY -->
+    <div id="property-side">
+      <div id="property-card">
+        <div class="prop-step" id="p-step">Property 1 of 3</div>
+        <div class="prop-name" id="p-name">Imperial City</div>
+        <div class="prop-location" id="p-loc">Maheshwaram Gate · Thukkuguda · South Hyderabad</div>
+
+        <!-- Mini map -->
+        <div class="prop-map-mini">
+          <svg class="mini-map-svg" id="mini-map" viewBox="0 0 400 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="400" height="140" fill="#ede6d4"/>
+            <path d="M0,80 Q60,72 140,78 Q220,84 300,76 Q360,72 400,78" fill="none" stroke="#c5b99a" stroke-width="6" opacity="0.6"/>
+            <path d="M40,140 Q80,100 120,80 Q160,62 200,50" fill="none" stroke="#b5a88a" stroke-width="3" stroke-dasharray="6,3" opacity="0.7"/>
+            <path d="M0,30 Q100,20 180,40 Q260,55 400,35" fill="none" stroke="#c5b99a" stroke-width="2" opacity="0.5"/>
+            <circle id="prop-dot" cx="148" cy="70" r="8" fill="#8b6f47" opacity="0.9"/>
+            <circle cx="148" cy="70" r="16" fill="#8b6f47" opacity="0.15"/>
+            <text id="prop-dot-label" x="165" y="65" font-size="10" fill="#3a3228" font-family="Georgia,serif" font-weight="bold">Imperial City</text>
+            <text x="50" y="112" font-size="8" fill="#8b7a68" font-family="-apple-system,sans-serif" opacity="0.8">Srisailam Hwy</text>
+            <text x="280" y="32" font-size="8" fill="#8b7a68" font-family="-apple-system,sans-serif" opacity="0.7">ORR</text>
+          </svg>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-cell">
+            <div class="detail-label">Plot Size</div>
+            <div class="detail-value" id="d-size">203 Sq Yards</div>
+          </div>
+          <div class="detail-cell">
+            <div class="detail-label">Facing</div>
+            <div class="detail-value" id="d-facing">West Facing</div>
+          </div>
+          <div class="detail-cell">
+            <div class="detail-label">Approval</div>
+            <div class="detail-value" id="d-approval">HMDA Final</div>
+          </div>
+          <div class="detail-cell">
+            <div class="detail-label">ORR Exit 14</div>
+            <div class="detail-value" id="d-orr">~3 km</div>
+          </div>
+        </div>
+
+        <div class="prop-price-row">
+          <div class="prop-price" id="d-price">₹40,000</div>
+          <div class="prop-price-unit">per sq yard</div>
+        </div>
+        <div class="prop-badge">✓ Legally Verified · HMDA Approved</div>
+      </div>
+
+      <!-- Controls -->
+      <div id="controls">
+        <button class="ctrl-skip" onclick="skipAll()">Skip presentation</button>
+        <div class="ctrl-nav">
+          <div class="ctrl-dots">
+            <div class="ctrl-dot active" id="dot-0"></div>
+            <div class="ctrl-dot" id="dot-1"></div>
+            <div class="ctrl-dot" id="dot-2"></div>
+          </div>
+          <button class="next-btn" id="next-btn" onclick="nextProperty()">Next Property →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="end-screen">
+    <div class="end-logo">ILA Homes · Telangana</div>
+    <div class="end-headline">That concludes our property walkthrough</div>
+    <div class="end-sub">All properties are legally verified and HMDA / DTCP approved</div>
+    <button class="end-cta" onclick="sendPrompt('I want to know more about ILA Homes properties in South Hyderabad')">Schedule a site visit ↗</button>
+    <button class="end-restart" onclick="restart()">Watch again</button>
+  </div>
+
+</div>
+
+<script>
+const properties = [
+  {
+    step: 'Property 1 of 3',
+    name: 'Imperial City',
+    loc: 'Maheshwaram Gate · Thukkuguda · South Hyderabad',
+    size: '203 Sq Yards',
+    facing: 'West Facing',
+    approval: 'HMDA Final',
+    orr: '~3 km (Exit 14)',
+    price: '₹40,000',
+    mapDot: {cx: 148, cy: 70, label: 'Imperial City', labelX: 165, labelY: 65},
+    progress: '33%',
+    speech: 'Our first property — Imperial City in Maheshwaram. 203 square yards, west facing, with HMDA final approval. Located just 3 kilometres from ORR Exit 14, this is a strong investment in one of South Hyderabad\'s fastest-growing corridors.'
+  },
+  {
+    step: 'Property 2 of 3',
+    name: 'Mansanpally Residency',
+    loc: 'Mansanpally · South Hyderabad',
+    size: '220 Sq Yards',
+    facing: 'East Facing',
+    approval: 'DTCP Approved',
+    orr: '~6 km',
+    price: '₹21,000',
+    mapDot: {cx: 90, cy: 100, label: 'Mansanpally', labelX: 106, labelY: 96},
+    progress: '66%',
+    speech: 'Our second property is in Mansanpally — 220 square yards, east facing, DTCP approved. At ₹21,000 per square yard, this represents excellent value. The area is seeing strong infrastructure development and appreciating steadily.'
+  },
+  {
+    step: 'Property 3 of 3',
+    name: 'Thukkuguda Heights',
+    loc: 'Thukkuguda · Near ORR Exit 14 · South Hyderabad',
+    size: '167 Sq Yards',
+    facing: 'North Facing',
+    approval: 'HMDA Approved',
+    orr: '~1.5 km (Exit 14)',
+    price: '₹35,000',
+    mapDot: {cx: 220, cy: 62, label: 'Thukkuguda Heights', labelX: 238, labelY: 58},
+    progress: '100%',
+    speech: 'Our final property — Thukkuguda Heights. At just 1.5 kilometres from ORR Exit 14, this is our best-connected plot. 167 square yards, HMDA approved, north facing. Ideal for buyers who prioritise proximity to the city ring road.'
+  }
+];
+
+let current = 0;
+let talkInterval = null;
+
+function startPresentation() {
+  document.getElementById('intro-screen').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('presentation').classList.add('active');
+    setTimeout(() => {
+      document.getElementById('property-card').classList.add('visible');
+      startTalking(properties[0].speech);
+    }, 300);
+  }, 700);
+}
+
+function startTalking(text) {
+  const el = document.getElementById('speech-text');
+  const mouth = document.getElementById('mouth-path');
+  el.textContent = '';
+  let i = 0;
+  if (talkInterval) clearInterval(talkInterval);
+
+  mouth.setAttribute('d', 'M92 128 Q100 133 108 128');
+  let open = false;
+
+  talkInterval = setInterval(() => {
+    if (i < text.length) {
+      el.textContent += text[i];
+      i++;
+      if (i % 3 === 0) {
+        open = !open;
+        if (open) {
+          mouth.setAttribute('d', 'M92 128 Q100 140 108 128');
+        } else {
+          mouth.setAttribute('d', 'M92 128 Q100 133 108 128');
+        }
+      }
+    } else {
+      clearInterval(talkInterval);
+      mouth.setAttribute('d', 'M92 128 Q100 133 108 128');
+    }
+  }, 28);
+}
+
+function updateProperty(idx) {
+  const p = properties[idx];
+  const card = document.getElementById('property-card');
+  card.classList.remove('visible');
+
+  setTimeout(() => {
+    document.getElementById('p-step').textContent = p.step;
+    document.getElementById('p-name').textContent = p.name;
+    document.getElementById('p-loc').textContent = p.loc;
+    document.getElementById('d-size').textContent = p.size;
+    document.getElementById('d-facing').textContent = p.facing;
+    document.getElementById('d-approval').textContent = p.approval;
+    document.getElementById('d-orr').textContent = p.orr;
+    document.getElementById('d-price').textContent = p.price;
+    const dot = document.getElementById('prop-dot');
+    const label = document.getElementById('prop-dot-label');
+    dot.setAttribute('cx', p.mapDot.cx);
+    dot.setAttribute('cy', p.mapDot.cy);
+    label.setAttribute('x', p.mapDot.labelX);
+    label.setAttribute('y', p.mapDot.labelY);
+    label.textContent = p.mapDot.label;
+
+    for (let d = 0; d < 3; d++) {
+      document.getElementById('dot-' + d).classList.toggle('active', d === idx);
+    }
+
+    if (idx === 2) {
+      document.getElementById('next-btn').textContent = 'View Summary →';
+    } else {
+      document.getElementById('next-btn').textContent = 'Next Property →';
+    }
+
+    card.classList.add('visible');
+    startTalking(p.speech);
+  }, 320);
+}
+
+function nextProperty() {
+  if (current < properties.length - 1) {
+    current++;
+    updateProperty(current);
+  } else {
+    skipAll();
+  }
+}
+
+function skipAll() {
+  if (talkInterval) clearInterval(talkInterval);
+  document.getElementById('presentation').classList.remove('active');
+  document.getElementById('end-screen').classList.add('active');
+}
+
+function restart() {
+  current = 0;
+  document.getElementById('end-screen').classList.remove('active');
+  document.getElementById('property-card').classList.remove('visible');
+  updateProperty(0);
+  setTimeout(() => {
+    document.getElementById('presentation').classList.add('active');
+    document.getElementById('property-card').classList.add('visible');
+  }, 100);
+}
+</script>

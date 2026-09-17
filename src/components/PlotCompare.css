@@ -1,0 +1,339 @@
+/* Plot Compare — dark palette, pin 2–3 plots side-by-side */
+
+.plot-compare {
+  --pc-bg: #0f1114;
+  --pc-earth: #16191e;
+  --pc-panel: #1a1e24;
+  --pc-white: #f4f5f7;
+  --pc-fog: rgba(244, 245, 247, 0.55);
+  --pc-line: rgba(255, 255, 255, 0.1);
+  --pc-line-soft: rgba(255, 255, 255, 0.05);
+  --pc-gold: #c9a96e;
+  --pc-ok: #4ade80;
+  --pc-warn: #fbbf24;
+
+  width: 100%;
+  margin: 0;
+  padding: clamp(2.5rem, 6vh, 4rem) var(--space);
+  color: var(--pc-white);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 45% 35% at 10% 0%, rgba(201, 169, 110, 0.12), transparent 55%),
+    var(--pc-bg);
+}
+
+.plot-compare__frame {
+  width: min(100%, var(--max));
+  margin-inline: auto;
+}
+
+.plot-compare__intro {
+  max-width: 36rem;
+  margin-bottom: 1.75rem;
+}
+
+.plot-compare__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--pc-gold);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.plot-compare__heading {
+  margin: 0 0 0.65rem;
+  color: var(--pc-white);
+  font-family: var(--font-body);
+  font-size: clamp(1.45rem, 2.8vw, 2rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.plot-compare__lede {
+  margin: 0;
+  color: var(--pc-fog);
+  font-size: clamp(0.8rem, 1.1vw, 0.92rem);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.plot-compare__picker {
+  margin-bottom: 1.25rem;
+}
+
+.plot-compare__picker-label {
+  margin: 0 0 0.7rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--pc-white);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plot-compare__picker-label span {
+  color: var(--pc-fog);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.plot-compare__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.plot-compare__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--pc-white);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.plot-compare__chip:hover {
+  border-color: rgba(201, 169, 110, 0.45);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.plot-compare__chip.is-pinned {
+  border-color: rgba(201, 169, 110, 0.55);
+  background: rgba(201, 169, 110, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.plot-compare__chip-pin {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.plot-compare__chip.is-pinned .plot-compare__chip-pin {
+  color: var(--pc-gold);
+}
+
+.plot-compare__chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  text-align: left;
+}
+
+.plot-compare__chip-text strong {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.plot-compare__chip-text small {
+  color: var(--pc-fog);
+  font-size: 0.66rem;
+  font-weight: 400;
+}
+
+.plot-compare__table {
+  --cols: 3;
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 11rem) repeat(var(--cols), minmax(0, 1fr));
+  border: 1px solid var(--pc-line);
+  background: var(--pc-bg);
+  overflow: hidden;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.35);
+}
+
+.plot-compare__row {
+  display: contents;
+}
+
+.plot-compare__label-cell,
+.plot-compare__plot-head,
+.plot-compare__value,
+.plot-compare__cta-cell {
+  border-bottom: 1px solid var(--pc-line-soft);
+  border-left: 1px solid var(--pc-line);
+}
+
+.plot-compare__label-cell {
+  display: flex;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  background: var(--pc-earth);
+  color: var(--pc-fog);
+  font-size: 0.74rem;
+  font-weight: 500;
+  border-left: none;
+}
+
+.plot-compare__plot-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 1.1rem 0.85rem;
+  background: var(--pc-earth);
+  text-align: center;
+}
+
+.plot-compare__plot-head.is-best {
+  background: rgba(201, 169, 110, 0.1);
+}
+
+.plot-compare__badge {
+  margin-bottom: 0.25rem;
+  color: var(--pc-gold);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.plot-compare__badge--ghost {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.plot-compare__plot-code {
+  margin: 0;
+  color: var(--pc-white);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.plot-compare__plot-loc {
+  margin: 0;
+  color: var(--pc-fog);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.plot-compare__value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 0.85rem;
+  background: var(--pc-bg);
+  color: var(--pc-white);
+  font-size: 0.84rem;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.plot-compare__value.is-best {
+  background: rgba(201, 169, 110, 0.05);
+  color: var(--pc-gold);
+  font-weight: 600;
+}
+
+.plot-compare__value.is-warn {
+  color: var(--pc-warn);
+}
+
+.plot-compare__score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 7.5rem;
+}
+
+.plot-compare__meter {
+  display: block;
+  width: 100%;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.plot-compare__meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a6862e, var(--pc-gold));
+}
+
+.plot-compare__value.is-best .plot-compare__meter > span {
+  background: var(--pc-gold);
+}
+
+.plot-compare__row--cta .plot-compare__label-cell,
+.plot-compare__row--cta .plot-compare__cta-cell {
+  border-bottom: none;
+}
+
+.plot-compare__cta-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.85rem;
+  background: var(--pc-earth);
+}
+
+.plot-compare__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 12rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(201, 169, 110, 0.45);
+  background: var(--pc-gold);
+  color: #0f1114;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.plot-compare__cta:hover {
+  background: #e2c97e;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .plot-compare__table {
+    grid-template-columns: minmax(6.5rem, 8.5rem) repeat(var(--cols), minmax(7.5rem, 1fr));
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .plot-compare__heading br {
+    display: none;
+  }
+
+  .plot-compare__table {
+    grid-template-columns: 6.25rem repeat(var(--cols), minmax(8rem, 1fr));
+  }
+
+  .plot-compare__plot-code {
+    font-size: 0.9rem;
+  }
+
+  .plot-compare__value,
+  .plot-compare__label-cell {
+    font-size: 0.74rem;
+    padding: 0.8rem 0.65rem;
+  }
+}

@@ -1,0 +1,212 @@
+/* Affordability — EMI story (light palette) */
+
+.pd-price__intro {
+  max-width: 36rem;
+  margin-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+
+.pd-price__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(1.5rem, 4vw, 2.75rem);
+  align-items: stretch;
+}
+
+.pd-price__card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.35rem 1.25rem;
+  border: 1px solid rgba(15, 17, 20, 0.1);
+  background:
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(201, 168, 76, 0.1), transparent 55%),
+    #ffffff;
+  box-shadow: 0 14px 36px rgba(15, 17, 20, 0.05);
+}
+
+.pd-price__plot {
+  margin: 0 0 1.15rem;
+  display: inline-flex;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.1);
+  color: #8a7028;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.pd-price__slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 1.15rem;
+}
+
+.pd-price__slider-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--pd-secondary, #4a5060);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.pd-price__slider-label strong {
+  color: #a6862e;
+  font-size: 0.9rem;
+}
+
+.pd-price__slider input[type='range'] {
+  width: 100%;
+  accent-color: #c9a84c;
+  cursor: pointer;
+}
+
+.pd-price__rows {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+}
+
+.pd-price__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(15, 17, 20, 0.08);
+}
+
+.pd-price__row span {
+  color: var(--pd-secondary, #4a5060);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.pd-price__row strong {
+  color: var(--pd-ink, #0f1114);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.pd-price__row--emi {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.pd-price__row--emi strong {
+  color: #a6862e;
+  font-size: 1.35rem;
+}
+
+.pd-price__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  background: #c9a84c;
+  color: #0f1114;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pd-price__cta:hover {
+  background: #e2c97e;
+  transform: translateY(-1px);
+}
+
+.pd-price__story {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem 1.4rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  background:
+    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(201, 168, 76, 0.18), transparent 55%),
+    linear-gradient(165deg, #1a1d24 0%, #12141a 100%);
+  box-shadow: 0 18px 40px rgba(15, 17, 20, 0.18);
+}
+
+.pd-price__story-kicker {
+  margin: 0 0 0.65rem;
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.16);
+  color: #e2c97e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pd-price__story-lead {
+  margin: 0 0 1.25rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.pd-price__story-lead strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.pd-price__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pd-price__point {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pd-price__point:last-of-type {
+  border-bottom: 0;
+}
+
+.pd-price__point span {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.78rem;
+}
+
+.pd-price__point strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.pd-price__point--peak strong {
+  color: #e2c97e;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.pd-price__disclaimer {
+  margin: 1rem 0 0;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .pd-price__grid {
+    grid-template-columns: 1fr;
+  }
+}

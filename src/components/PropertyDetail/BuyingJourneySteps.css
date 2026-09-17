@@ -1,0 +1,67 @@
+.pd-journey .pd-heading {
+  margin-bottom: 2.25rem;
+}
+
+.pd-journey__steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pd-journey__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.pd-journey__line {
+  position: absolute;
+  top: 1.1rem;
+  left: 2.6rem;
+  right: -1rem;
+  height: 1px;
+  background: rgba(15, 17, 20, 0.12);
+}
+
+.pd-journey__num {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid var(--pd-border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--pd-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pd-journey__step strong {
+  color: var(--pd-ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.pd-journey__step p {
+  margin: 0;
+  color: var(--pd-secondary);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .pd-journey__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .pd-journey__line {
+    display: none;
+  }
+}

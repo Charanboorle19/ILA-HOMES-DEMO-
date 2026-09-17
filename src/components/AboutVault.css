@@ -1,0 +1,379 @@
+.about-vault {
+  position: relative;
+  height: 90vh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #0f1114;
+  color: #f7f8fa;
+  font-family: var(--font-body);
+  isolation: isolate;
+}
+
+/* Map stays full-bleed always — content slides over left (no Mapbox resize lag) */
+.about-vault__map-pane {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  background: #171a1c;
+}
+
+.about-vault__map,
+.about-vault__overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.about-vault__map {
+  z-index: 1;
+  background: #171a1c;
+}
+
+.about-vault__overlay {
+  z-index: 2;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 17, 20, 0.28) 0%,
+    rgba(15, 17, 20, 0.04) 35%,
+    rgba(15, 17, 20, 0.04) 65%,
+    rgba(15, 17, 20, 0.32) 100%
+  );
+  pointer-events: none;
+  transition: opacity 600ms ease;
+}
+
+.about-vault.is-split .about-vault__overlay {
+  opacity: 0.55;
+}
+
+.about-vault__map-pane .mapboxgl-ctrl-top-right {
+  top: 12px;
+  right: 12px;
+}
+
+.about-vault__map-pane .mapboxgl-ctrl-group {
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  background: rgba(15, 17, 20, 0.88);
+  box-shadow: none;
+}
+
+.about-vault__map-pane .mapboxgl-ctrl-group button {
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+}
+
+.about-vault__map-pane .mapboxgl-ctrl-group button + button {
+  border-top-color: rgba(201, 168, 76, 0.2);
+}
+
+.about-vault__map-pane .mapboxgl-ctrl-icon {
+  filter: invert(1) sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1);
+}
+
+/* Content panel slides in from the left only after split */
+.about-vault__content {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(34%, 400px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
+  padding: clamp(48px, 8vh, 80px) clamp(22px, 2.8vw, 40px);
+  background: #0f1114;
+  border-right: 1px solid rgba(201, 168, 76, 0.18);
+  box-shadow: 18px 0 40px rgba(0, 0, 0, 0.28);
+  transform: translate3d(-105%, 0, 0);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.55s ease;
+}
+
+.about-vault.is-split .about-vault__content {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.about-vault__about {
+  max-width: 360px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.about-vault.show-about .about-vault__about {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.about-eyebrow {
+  display: block;
+  margin-bottom: 14px;
+  color: #c9a84c;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.about-vault__heading {
+  margin: 0 0 1.25rem;
+  color: #f7f8fa;
+  font-family: var(--font-body);
+  font-size: clamp(24px, 2.8vw, 34px);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.about-body {
+  margin: 0;
+  color: rgba(247, 248, 250, 0.82);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.about-vault__stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: clamp(28px, 4vw, 56px);
+}
+
+.vault-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 700ms ease, transform 700ms ease;
+  transition-delay: var(--stat-delay, 0ms);
+}
+
+.about-vault.show-stats .vault-stat {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.vault-stat__number {
+  color: #f7f8fa;
+  font-family: var(--font-body);
+  font-size: clamp(36px, 4.5vw, 56px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.vault-stat__label {
+  color: #8a909e;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.vault-stat__line {
+  width: 20px;
+  height: 1px;
+  margin-top: 4px;
+  background: #c9a84c;
+}
+
+.about-vault__door {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  width: 50%;
+  height: 100%;
+  background: #0f1114;
+  transition: transform 1.4s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.about-vault__door--left {
+  left: 0;
+  right: auto;
+  border-right: 1px solid rgba(201, 168, 76, 0.25);
+}
+
+.about-vault__door--right {
+  left: auto;
+  right: 0;
+  border-left: 1px solid rgba(201, 168, 76, 0.25);
+}
+
+.about-vault.is-open .about-vault__door--left {
+  transform: translateX(-100%);
+}
+
+.about-vault.is-open .about-vault__door--right {
+  transform: translateX(100%);
+}
+
+.about-vault__seam {
+  position: absolute;
+  z-index: 11;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(201, 168, 76, 0.4),
+    transparent
+  );
+  transform: translateY(-50%);
+  opacity: 1;
+  transition: opacity 400ms ease 1.2s;
+  pointer-events: none;
+}
+
+.about-vault.is-open .about-vault__seam {
+  opacity: 0;
+}
+
+.about-vault__trigger {
+  position: absolute;
+  z-index: 12;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  width: min(90vw, 520px);
+  color: rgba(247, 248, 250, 0.35);
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  transition: opacity 1.4s cubic-bezier(0.76, 0, 0.24, 1);
+  pointer-events: none;
+}
+
+.about-vault.is-open .about-vault__trigger {
+  opacity: 0;
+}
+
+.ila-marker {
+  /* Do not set transform here — Mapbox uses it to pin the marker to lat/lng */
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+.ila-marker.is-visible {
+  opacity: 1;
+}
+
+.ila-marker.is-selected .ila-marker__label {
+  border-color: rgba(74, 160, 100, 0.7);
+  background: rgba(74, 160, 100, 0.2);
+  color: #8fdba8;
+  box-shadow: 0 0 0 1px rgba(74, 160, 100, 0.4), 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.ila-marker__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(8px);
+  transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ila-marker.is-visible .ila-marker__inner {
+  transform: translateY(0);
+}
+
+.ila-marker.is-selected .ila-marker__inner {
+  transform: translateY(0) scale(1.04);
+}
+
+.ila-marker__label {
+  padding: 4px 8px;
+  border: 1px solid rgba(226, 201, 126, 0.55);
+  background: rgba(15, 17, 20, 0.92);
+  color: #e2c97e;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 900px) {
+  .about-vault {
+    height: auto;
+    min-height: 0;
+  }
+
+  .about-vault.is-split .about-vault__map-pane {
+    position: relative;
+    inset: auto;
+    min-height: 420px;
+  }
+
+  .about-vault__content,
+  .about-vault.is-split .about-vault__content {
+    position: relative;
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+    box-shadow: none;
+    padding: 56px 24px 40px;
+    transform: none;
+  }
+
+  .about-vault:not(.is-split) .about-vault__content {
+    display: none;
+  }
+
+  .about-vault:not(.is-split) .about-vault__map-pane {
+    position: absolute;
+    inset: 0;
+    min-height: 720px;
+  }
+
+  .about-vault.is-split {
+    display: flex;
+    flex-direction: column;
+    min-height: 900px;
+  }
+
+  .about-body {
+    font-size: 18px;
+  }
+
+  .about-vault__stats {
+    gap: 28px;
+  }
+
+  .vault-stat__number {
+    font-size: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-vault__door,
+  .about-vault__trigger,
+  .about-vault__seam,
+  .about-vault__content,
+  .about-vault__about,
+  .about-vault__overlay,
+  .vault-stat,
+  .ila-marker {
+    transition: none;
+  }
+}

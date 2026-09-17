@@ -1,0 +1,248 @@
+
+<h2 class="sr-only">Growth corridors accordion — click a location to expand details with map highlight</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{background:var(--surface-1);border-radius:12px;overflow:hidden;border:0.5px solid var(--border);font-family:var(--font-sans)}
+.top-bar{padding:36px 36px 24px;border-bottom:0.5px solid var(--border)}
+.eyebrow{font-size:10px;letter-spacing:0.18em;color:#C9A84C;text-transform:uppercase;margin-bottom:10px}
+.heading{font-size:26px;font-family:var(--font-voice);font-weight:400;color:var(--text-primary);line-height:1.2}
+.body-grid{display:grid;grid-template-columns:1fr 1fr;min-height:440px}
+.left{border-right:0.5px solid var(--border)}
+.accordion-item{border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.2s}
+.accordion-item:last-child{border-bottom:none}
+.accordion-item.active{background:var(--surface-2)}
+.accordion-item:hover:not(.active){background:var(--surface-0)}
+.acc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;gap:12px}
+.acc-left{display:flex;align-items:center;gap:14px}
+.acc-num{font-size:10px;letter-spacing:0.1em;color:#C9A84C;min-width:20px}
+.acc-name{font-size:16px;font-family:var(--font-voice);color:var(--text-primary);font-weight:400}
+.acc-tag{font-size:10px;color:var(--text-muted);letter-spacing:0.06em}
+.acc-icon{font-size:14px;color:var(--text-muted);transition:transform 0.3s;flex-shrink:0}
+.accordion-item.active .acc-icon{transform:rotate(45deg);color:#C9A84C}
+.acc-body{max-height:0;overflow:hidden;transition:max-height 0.4s cubic-bezier(0.25,0.46,0.45,0.94)}
+.accordion-item.active .acc-body{max-height:200px}
+.acc-content{padding:0 24px 20px 58px}
+.acc-desc{font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px}
+.acc-stats{display:flex;gap:20px}
+.stat-val{font-size:17px;font-family:var(--font-voice);color:var(--text-primary)}
+.stat-val.gold{color:#C9A84C}
+.stat-lbl{font-size:9px;letter-spacing:0.08em;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
+.right{position:relative;background:var(--surface-0)}
+.map-wrap{width:100%;height:100%;position:relative}
+.map-svg{width:100%;height:100%}
+.map-label{font-size:9px;font-family:sans-serif;letter-spacing:0.04em}
+.prop-dot{transition:all 0.3s;cursor:pointer}
+.highlight-ring{transition:all 0.4s;opacity:0}
+.highlight-ring.active{opacity:1}
+.info-pill{position:absolute;bottom:16px;left:16px;right:16px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.pill-name{font-size:13px;font-family:var(--font-voice);color:var(--text-primary)}
+.pill-tag{font-size:10px;color:var(--text-muted);margin-top:2px;letter-spacing:0.04em}
+.pill-badge{font-size:10px;color:#C9A84C;border:0.5px solid rgba(201,168,76,0.3);padding:4px 10px;border-radius:20px;white-space:nowrap}
+</style>
+
+<div class="wrap">
+  <div class="top-bar">
+    <div class="eyebrow">South Hyderabad · Growth corridors</div>
+    <div class="heading">Explore locations shaping<br>the next phase of Hyderabad</div>
+  </div>
+
+  <div class="body-grid">
+    <div class="left" id="accordion">
+
+      <div class="accordion-item active" onclick="toggle(0)">
+        <div class="acc-header">
+          <div class="acc-left">
+            <span class="acc-num">01</span>
+            <div>
+              <div class="acc-name">South Hyderabad</div>
+              <div class="acc-tag">Growth epicentre</div>
+            </div>
+          </div>
+          <i class="ti ti-plus acc-icon" aria-hidden="true"></i>
+        </div>
+        <div class="acc-body">
+          <div class="acc-content">
+            <div class="acc-desc">The next Gachibowli. ORR and airport corridor infrastructure is already in place. The window to buy before prices reflect it is narrowing fast.</div>
+            <div class="acc-stats">
+              <div><div class="stat-val gold">28 min</div><div class="stat-lbl">To airport via ORR</div></div>
+              <div><div class="stat-val">Rising</div><div class="stat-lbl">Demand index</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item" onclick="toggle(1)">
+        <div class="acc-header">
+          <div class="acc-left">
+            <span class="acc-num">02</span>
+            <div>
+              <div class="acc-name">Maheshwaram</div>
+              <div class="acc-tag">ORR · Srisailam highway</div>
+            </div>
+          </div>
+          <i class="ti ti-plus acc-icon" aria-hidden="true"></i>
+        </div>
+        <div class="acc-body">
+          <div class="acc-content">
+            <div class="acc-desc">3 km from ORR Exit 14. IT corridor expansion actively drawing residential demand. Land prices up 38% over 3 years.</div>
+            <div class="acc-stats">
+              <div><div class="stat-val gold">38%</div><div class="stat-lbl">Price growth · 3yr</div></div>
+              <div><div class="stat-val">3 km</div><div class="stat-lbl">To ORR Exit 14</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item" onclick="toggle(2)">
+        <div class="acc-header">
+          <div class="acc-left">
+            <span class="acc-num">03</span>
+            <div>
+              <div class="acc-name">Thukkuguda</div>
+              <div class="acc-tag">ORR Exit 14 · Employment hub</div>
+            </div>
+          </div>
+          <i class="ti ti-plus acc-icon" aria-hidden="true"></i>
+        </div>
+        <div class="acc-body">
+          <div class="acc-content">
+            <div class="acc-desc">Just 1.5 km from ORR Exit 14. Infrastructure-led residential boom with strong employment hub proximity and rising buyer demand.</div>
+            <div class="acc-stats">
+              <div><div class="stat-val gold">1.5 km</div><div class="stat-lbl">To ORR Exit 14</div></div>
+              <div><div class="stat-val">High</div><div class="stat-lbl">Demand index</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item" onclick="toggle(3)">
+        <div class="acc-header">
+          <div class="acc-left">
+            <span class="acc-num">04</span>
+            <div>
+              <div class="acc-name">Mansanpally</div>
+              <div class="acc-tag">Srisailam highway · Value zone</div>
+            </div>
+          </div>
+          <i class="ti ti-plus acc-icon" aria-hidden="true"></i>
+        </div>
+        <div class="acc-body">
+          <div class="acc-content">
+            <div class="acc-desc">Strong appreciation at competitive entry pricing. Industrial and residential mix driving consistent long-term growth along the Srisailam corridor.</div>
+            <div class="acc-stats">
+              <div><div class="stat-val gold">₹21K</div><div class="stat-lbl">Entry price / sq yd</div></div>
+              <div><div class="stat-val">Rising</div><div class="stat-lbl">Appreciation</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item" onclick="toggle(4)">
+        <div class="acc-header">
+          <div class="acc-left">
+            <span class="acc-num">05</span>
+            <div>
+              <div class="acc-name">Future City</div>
+              <div class="acc-tag">Master planned · Airport corridor</div>
+            </div>
+          </div>
+          <i class="ti ti-plus acc-icon" aria-hidden="true"></i>
+        </div>
+        <div class="acc-body">
+          <div class="acc-content">
+            <div class="acc-desc">Government master plan active. 1.5 million residents projected. Long-horizon planning zones designed for the next phase of Hyderabad's expansion.</div>
+            <div class="acc-stats">
+              <div><div class="stat-val gold">1.5M</div><div class="stat-lbl">Planned residents</div></div>
+              <div><div class="stat-val">Long</div><div class="stat-lbl">Horizon play</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right">
+      <div class="map-wrap">
+        <svg class="map-svg" viewBox="0 0 340 440" xmlns="http://www.w3.org/2000/svg">
+          <rect width="340" height="440" fill="var(--surface-0)"/>
+
+          <path d="M30,80 Q80,60 140,72 Q200,84 260,68 Q300,58 330,65" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="5" stroke-dasharray="10,5"/>
+          <path d="M20,200 Q100,185 180,195 Q250,205 320,192" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="3" stroke-dasharray="6,4"/>
+          <path d="M10,310 Q70,280 130,295 Q190,308 240,290 Q280,278 330,285" fill="none" stroke="rgba(201,168,76,0.12)" stroke-width="2.5"/>
+          <path d="M60,420 Q100,360 140,310 Q170,270 195,230 Q215,195 225,160" fill="none" stroke="rgba(201,168,76,0.18)" stroke-width="2.5" stroke-dasharray="5,4"/>
+
+          <text x="40" y="68" class="map-label" fill="rgba(201,168,76,0.6)" letter-spacing="0.08em">OUTER RING ROAD</text>
+          <text x="22" y="302" class="map-label" fill="rgba(201,168,76,0.4)">Srisailam Hwy</text>
+          <text x="218" y="148" class="map-label" fill="rgba(201,168,76,0.35)">Airport Rd</text>
+
+          <circle cx="170" cy="140" r="18" fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.2)" stroke-width="0.5"/>
+          <text x="170" y="136" text-anchor="middle" class="map-label" fill="rgba(201,168,76,0.6)" font-size="8">HYDERABAD</text>
+          <text x="170" y="147" text-anchor="middle" class="map-label" fill="rgba(201,168,76,0.4)" font-size="7">CITY</text>
+
+          <circle id="ring-0" class="highlight-ring active" cx="170" cy="240" r="32" fill="rgba(201,168,76,0.08)" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <circle id="ring-1" class="highlight-ring" cx="120" cy="290" r="28" fill="rgba(201,168,76,0.08)" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <circle id="ring-2" class="highlight-ring" cx="155" cy="310" r="24" fill="rgba(201,168,76,0.08)" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <circle id="ring-3" class="highlight-ring" cx="90" cy="330" r="24" fill="rgba(201,168,76,0.08)" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <circle id="ring-4" class="highlight-ring" cx="230" cy="210" r="26" fill="rgba(201,168,76,0.08)" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+          <circle class="prop-dot" cx="170" cy="240" r="6" fill="#C9A84C" opacity="0.5" id="dot-0" onclick="toggle(0)"/>
+          <circle class="prop-dot" cx="120" cy="290" r="6" fill="#C9A84C" opacity="0.5" id="dot-1" onclick="toggle(1)"/>
+          <circle class="prop-dot" cx="155" cy="310" r="6" fill="#C9A84C" opacity="0.5" id="dot-2" onclick="toggle(2)"/>
+          <circle class="prop-dot" cx="90" cy="330" r="6" fill="#C9A84C" opacity="0.5" id="dot-3" onclick="toggle(3)"/>
+          <circle class="prop-dot" cx="230" cy="210" r="6" fill="#C9A84C" opacity="0.5" id="dot-4" onclick="toggle(4)"/>
+
+          <text id="lbl-0" x="180" y="237" class="map-label" fill="rgba(201,168,76,0.9)" font-size="8">South Hyderabad</text>
+          <text id="lbl-1" x="130" y="287" class="map-label" fill="rgba(201,168,76,0.7)" font-size="8">Maheshwaram</text>
+          <text id="lbl-2" x="165" y="307" class="map-label" fill="rgba(201,168,76,0.7)" font-size="8">Thukkuguda</text>
+          <text id="lbl-3" x="100" y="327" class="map-label" fill="rgba(201,168,76,0.7)" font-size="8">Mansanpally</text>
+          <text id="lbl-4" x="240" y="207" class="map-label" fill="rgba(201,168,76,0.7)" font-size="8">Future City</text>
+
+          <circle cx="240" cy="380" r="10" fill="rgba(201,168,76,0.08)" stroke="rgba(201,168,76,0.3)" stroke-width="0.5"/>
+          <text x="240" y="384" text-anchor="middle" font-size="10" fill="rgba(201,168,76,0.5)">✈</text>
+          <text x="240" y="398" text-anchor="middle" class="map-label" fill="rgba(201,168,76,0.4)" font-size="7">RGIA</text>
+        </svg>
+
+        <div class="info-pill">
+          <div>
+            <div class="pill-name" id="pill-name">South Hyderabad</div>
+            <div class="pill-tag" id="pill-tag">Growth epicentre · ORR corridor</div>
+          </div>
+          <div class="pill-badge" id="pill-badge">28 min to airport</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = [
+  {name:'South Hyderabad', tag:'Growth epicentre · ORR corridor', badge:'28 min to airport'},
+  {name:'Maheshwaram', tag:'ORR · Srisailam highway', badge:'38% growth · 3yr'},
+  {name:'Thukkuguda', tag:'ORR Exit 14 · Employment hub', badge:'1.5 km to ORR'},
+  {name:'Mansanpally', tag:'Srisailam highway · Value zone', badge:'₹21K entry price'},
+  {name:'Future City', tag:'Master planned · Airport corridor', badge:'1.5M planned residents'}
+]
+
+let current = 0
+
+function toggle(idx){
+  const items = document.querySelectorAll('.accordion-item')
+  const rings = document.querySelectorAll('.highlight-ring')
+  const dots = document.querySelectorAll('.prop-dot')
+
+  items[current].classList.remove('active')
+  rings[current].classList.remove('active')
+  dots[current].style.opacity = '0.5'
+  dots[current].style.r && null
+
+  current = idx
+  items[current].classList.add('active')
+  rings[current].classList.add('active')
+  dots[current].style.opacity = '1'
+
+  const d = data[current]
+  document.getElementById('pill-name').textContent = d.name
+  document.getElementById('pill-tag').textContent = d.tag
+  document.getElementById('pill-badge').textContent = d.badge
+}
+</script>

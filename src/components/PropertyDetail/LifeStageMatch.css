@@ -1,0 +1,407 @@
+/* Life stage match — Find Your Plot visual language */
+
+@property --match {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.pd-life {
+  --pd-life-ink: #f2f0ea;
+  --pd-life-muted: #9a9388;
+  --pd-life-soft: #d8d2c8;
+  --pd-life-surface: #2a2d32;
+  --pd-life-bg: #1c1f24;
+  --pd-life-radius: 14px;
+  --pd-life-r-ink: #1a1c1f;
+  --pd-life-r-muted: #6b7280;
+  --pd-life-r-line: rgba(26, 28, 31, 0.1);
+  --pd-life-r-gold: #9a7b32;
+
+  width: 100%;
+  margin: 0;
+  padding: clamp(2rem, 5vh, 3.25rem) var(--space);
+  color: var(--pd-life-ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 20%, rgba(201, 168, 76, 0.18), transparent 58%),
+    radial-gradient(ellipse 45% 40% at 10% 80%, rgba(61, 90, 71, 0.14), transparent 55%),
+    var(--pd-life-bg);
+}
+
+.pd-life__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  width: min(100%, var(--max));
+  margin-inline: auto;
+}
+
+.pd-life__intro {
+  max-width: 34rem;
+}
+
+.pd-life__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--accent, #c9a84c);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pd-life__heading {
+  margin: 0 0 0.35rem;
+  color: var(--pd-life-ink);
+  font-family: var(--font-heading);
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.pd-life__lede {
+  margin: 0;
+  color: var(--pd-life-muted);
+  font-size: clamp(0.78rem, 1.05vw, 0.88rem);
+  line-height: 1.5;
+}
+
+.pd-life__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.pd-life__stages {
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr 1.05fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    'family family investment'
+    'build retirement retirement';
+  gap: 0.5rem;
+}
+
+.pd-life__stage--family {
+  grid-area: family;
+}
+
+.pd-life__stage--investment {
+  grid-area: investment;
+}
+
+.pd-life__stage--build {
+  grid-area: build;
+}
+
+.pd-life__stage--retirement {
+  grid-area: retirement;
+}
+
+.pd-life__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0.85rem 0.9rem 0.8rem;
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  border-radius: var(--pd-life-radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%),
+    var(--pd-life-surface);
+  color: inherit;
+  text-align: left;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 10px 24px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pd-life__stage::after {
+  content: '';
+  position: absolute;
+  top: 0.7rem;
+  right: 0.75rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--accent, #c9a84c);
+  opacity: 0.55;
+  box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.45);
+  animation: pd-life-pulse 2s ease-out infinite;
+  pointer-events: none;
+}
+
+.pd-life__stage:hover {
+  background:
+    linear-gradient(180deg, rgba(201, 168, 76, 0.1), transparent 50%),
+    #32363c;
+  border-color: rgba(201, 168, 76, 0.55);
+  transform: translateY(-2px);
+}
+
+.pd-life__stage.is-active {
+  border-color: rgba(201, 168, 76, 0.7);
+  background:
+    linear-gradient(180deg, rgba(201, 168, 76, 0.18), rgba(201, 168, 76, 0.06)),
+    #2f3339;
+  box-shadow:
+    0 0 0 1px rgba(201, 168, 76, 0.2),
+    0 14px 30px rgba(201, 168, 76, 0.12);
+}
+
+.pd-life__stage.is-active::after {
+  opacity: 0;
+  animation: none;
+}
+
+.pd-life__stage-icon {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.55rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--accent, #c9a84c);
+}
+
+.pd-life__stage-icon svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.pd-life__stage.is-active .pd-life__stage-icon {
+  border-color: transparent;
+  background: var(--accent, #c9a84c);
+  color: #1c1f24;
+}
+
+.pd-life__stage-name {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--pd-life-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.pd-life__stage-desc {
+  display: block;
+  flex: 1 1 auto;
+  margin-bottom: 0.75rem;
+  color: var(--pd-life-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.pd-life__stage-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.pd-life__stage-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pd-life__stage-cta-label {
+  color: var(--pd-life-soft);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.pd-life__stage.is-active .pd-life__stage-cta-label {
+  color: #e2c57a;
+}
+
+.pd-life__stage-arrow {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid rgba(242, 240, 234, 0.16);
+  border-radius: 50%;
+  color: var(--pd-life-soft);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.pd-life__stage-arrow svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.pd-life__stage:hover .pd-life__stage-arrow,
+.pd-life__stage.is-active .pd-life__stage-arrow {
+  border-color: transparent;
+  background: var(--accent, #c9a84c);
+  color: #1c1f24;
+}
+
+.pd-life__results {
+  display: flex;
+  flex-direction: column;
+  min-height: 14rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: var(--pd-life-radius);
+  background:
+    linear-gradient(165deg, rgba(201, 168, 76, 0.12), #ffffff 40%),
+    #f7f6f3;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  color: var(--pd-life-r-ink);
+}
+
+.pd-life__results-head {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--pd-life-r-line);
+}
+
+.pd-life__results-kicker {
+  margin: 0 0 0.15rem;
+  color: var(--pd-life-r-gold);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pd-life__results-title {
+  margin: 0;
+  color: var(--pd-life-r-ink);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pd-life__circle {
+  --match: 0;
+  width: 8.25rem;
+  height: 8.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--accent, #c9a84c) calc(var(--match) * 1%),
+    rgba(26, 28, 31, 0.1) 0
+  );
+  position: relative;
+  transition: --match 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pd-life__circle::before {
+  content: '';
+  position: absolute;
+  inset: 0.7rem;
+  border-radius: 50%;
+  background: #f7f6f3;
+}
+
+.pd-life__circle-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.pd-life__percent {
+  display: block;
+  color: var(--pd-life-r-ink);
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  animation: pd-life-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pd-life__match-label {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--pd-life-r-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pd-life__reason {
+  margin: 0;
+  max-width: 18rem;
+  color: var(--pd-life-r-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  animation: pd-life-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pd-life-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(201, 168, 76, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0);
+  }
+}
+
+@keyframes pd-life-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pd-life__result-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  animation: pd-life-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 900px) {
+  .pd-life__body {
+    grid-template-columns: 1fr;
+  }
+
+  .pd-life__stages {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'family investment'
+      'build retirement';
+  }
+}
+
+@media (max-width: 560px) {
+  .pd-life__stages {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'family'
+      'investment'
+      'build'
+      'retirement';
+  }
+}

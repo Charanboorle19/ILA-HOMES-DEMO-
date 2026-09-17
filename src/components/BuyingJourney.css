@@ -1,0 +1,398 @@
+/* Buying Journey — left: heading + steps | right: full-section detail */
+
+.buying-journey {
+  --bj-ink: #0f1114;
+  --bj-muted: #6b7280;
+  --bj-soft-text: #3d434b;
+  --bj-line: rgba(15, 17, 20, 0.1);
+  --bj-surface: #ffffff;
+  --bj-soft: #f4f5f7;
+  --bj-gold: #9a7b32;
+  --bj-pad-y: clamp(2.5rem, 6vh, 4rem);
+
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--bj-ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(201, 168, 76, 0.1), transparent 55%),
+    var(--bj-soft);
+}
+
+.buying-journey__frame {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.18fr);
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  margin-inline: 0;
+  min-height: 100%;
+}
+
+/* ——— Left: intro + steps ——— */
+
+.buying-journey__left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  min-width: 0;
+  padding: var(--bj-pad-y) clamp(1rem, 3vw, 2rem) var(--bj-pad-y) var(--space);
+  box-sizing: border-box;
+}
+
+.buying-journey__intro {
+  max-width: none;
+}
+
+.buying-journey__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--bj-gold);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.buying-journey__heading {
+  margin: 0 0 0.55rem;
+  color: var(--bj-ink);
+  font-family: var(--font-body);
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.buying-journey__lede {
+  margin: 0;
+  color: var(--bj-muted);
+  font-size: clamp(0.78rem, 1.05vw, 0.88rem);
+  line-height: 1.55;
+}
+
+.buying-journey__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--bj-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.buying-journey__step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.buying-journey__step:hover {
+  background: #ffffff;
+  border-color: rgba(201, 168, 76, 0.22);
+}
+
+.buying-journey__step.is-active {
+  background: #ffffff;
+  border-color: rgba(201, 168, 76, 0.45);
+  box-shadow: 0 10px 24px rgba(15, 17, 20, 0.06);
+}
+
+.buying-journey__step-index {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  background: rgba(15, 17, 20, 0.04);
+  color: var(--bj-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.buying-journey__step.is-active .buying-journey__step-index {
+  background: var(--accent, #c9a84c);
+  color: #0f1114;
+}
+
+.buying-journey__step-name {
+  color: var(--bj-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.buying-journey__step:not(.is-active) .buying-journey__step-name {
+  color: #3a4048;
+  font-weight: 500;
+}
+
+.buying-journey__step-arrow {
+  color: rgba(15, 17, 20, 0.25);
+  font-size: 0.95rem;
+  line-height: 1;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.buying-journey__step:hover .buying-journey__step-arrow,
+.buying-journey__step.is-active .buying-journey__step-arrow {
+  color: var(--bj-gold);
+  transform: translateX(2px);
+}
+
+/* ——— Right: portrait media + copy — full section height ——— */
+
+.buying-journey__detail {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+.buying-journey__detail-inner {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.78fr) minmax(0, 1.22fr);
+  gap: 1.15rem;
+  flex: 1 1 auto;
+  align-self: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  padding: var(--bj-pad-y) 1.1rem;
+  border: none;
+  border-left: 1px solid rgba(201, 168, 76, 0.28);
+  border-radius: 0;
+  background: var(--bj-surface);
+  box-shadow: none;
+  overflow: hidden;
+  animation: bj-fade-in 0.3s ease both;
+}
+
+.buying-journey__media {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+.buying-journey__media-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  border-radius: 0;
+  overflow: hidden;
+  background: #ebecef;
+  border: none;
+}
+
+.buying-journey__media-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.buying-journey__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.buying-journey__detail-head {
+  flex: 0 0 auto;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--bj-line);
+}
+
+.buying-journey__detail-kicker {
+  margin: 0 0 0.3rem;
+  color: var(--bj-gold);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.buying-journey__detail-title {
+  margin: 0 0 0.45rem;
+  color: var(--bj-ink);
+  font-size: clamp(1.05rem, 1.7vw, 1.28rem);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.buying-journey__detail-time {
+  margin: 0 0 0.7rem;
+  display: inline-flex;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--bj-gold);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.buying-journey__detail-summary {
+  margin: 0;
+  color: var(--bj-soft-text);
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.buying-journey__panels {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.buying-journey__panel {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--bj-line);
+  border-radius: 12px;
+  background: var(--bj-soft);
+}
+
+.buying-journey__panel--receive {
+  border-color: rgba(201, 168, 76, 0.35);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.buying-journey__panel-title {
+  margin: 0 0 0.55rem;
+  color: var(--bj-ink);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.buying-journey__panel--receive .buying-journey__panel-title {
+  color: var(--bj-gold);
+}
+
+.buying-journey__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.buying-journey__list li {
+  position: relative;
+  padding-left: 1rem;
+  color: var(--bj-soft-text);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.buying-journey__list li::before {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  left: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: rgba(15, 17, 20, 0.28);
+}
+
+.buying-journey__list--receive li {
+  color: var(--bj-ink);
+  font-weight: 400;
+}
+
+.buying-journey__list--receive li::before {
+  background: var(--accent, #c9a84c);
+}
+
+@keyframes bj-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1100px) {
+  .buying-journey__detail-inner {
+    grid-template-columns: minmax(10rem, 0.72fr) minmax(0, 1.28fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 980px) {
+  .buying-journey__frame {
+    grid-template-columns: 1fr;
+  }
+
+  .buying-journey__left {
+    padding: var(--bj-pad-y) var(--space);
+  }
+
+  .buying-journey__detail-inner {
+    grid-template-columns: minmax(10rem, 12.5rem) minmax(0, 1fr);
+    min-height: 26rem;
+    border-left: none;
+    border-top: 1px solid rgba(201, 168, 76, 0.28);
+    padding: 1.25rem var(--space);
+  }
+}
+
+@media (max-width: 640px) {
+  .buying-journey__detail-inner {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .buying-journey__media-frame {
+    width: min(100%, 16rem);
+    height: auto;
+    min-height: 0;
+    margin-inline: auto;
+    aspect-ratio: 3 / 4;
+    border-radius: 0;
+  }
+}
