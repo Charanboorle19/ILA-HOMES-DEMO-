@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import './PropertyPanel.css'
 
 const STATUS_CLASS = {
@@ -50,16 +51,52 @@ export default function PropertyPanel({
 
             <div className="property-panel__header property-panel__block">
               <span className="property-panel__tag">{property.tag}</span>
-              <h2>{property.label}</h2>
               <p className="property-panel__location">
                 <span className="property-panel__dot" aria-hidden="true" />
                 {property.location}
               </p>
             </div>
 
+            <div className="property-panel__media property-panel__block">
+              {property.image ? (
+                <img
+                  className="property-panel__media-img"
+                  src={property.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div className="property-panel__media-placeholder" aria-hidden="true" />
+              )}
+              <h2 className="property-panel__media-title">{property.label}</h2>
+            </div>
+
             <div className="property-panel__price property-panel__block">
-              <span>Price Range</span>
-              <strong>{property.priceRange}</strong>
+              <div className="property-panel__price-copy">
+                <span>Price Range</span>
+                <strong>{property.priceRange}</strong>
+              </div>
+              <Link
+                className="property-panel__view"
+                to={`/properties/${property.id}`}
+              >
+                View
+                <svg
+                  className="property-panel__view-arrow"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3.5 8h9M8.5 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
             </div>
 
             <div className="property-panel__divider" aria-hidden="true" />
@@ -105,12 +142,12 @@ export default function PropertyPanel({
                 {property.status}
               </span>
             </div>
+          </div>
 
-            <div className="property-panel__cta-wrap property-panel__block">
-              <button type="button" className="property-panel__cta">
-                Request Site Visit
-              </button>
-            </div>
+          <div className="property-panel__cta-wrap property-panel__block">
+            <button type="button" className="property-panel__cta">
+              Request Site Visit
+            </button>
           </div>
         </>
       ) : null}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import explainingVideo from '../assets/real-estate-person-explaining.mp4'
 import mobilePresenterVideo from '../assets/video.mp4'
 import propertyVoiceOver from '../assets/ElevenLabs_2026-09-16T05_52_25_Adam - Articulate Engineering Professor_pvc_s50_m2.mp3'
+import heroPropertyImage from '../assets/about-panel/hero-property.jpg'
 import PropertyMap from './PropertyMap'
 import PropertyPanel from './PropertyPanel'
 
@@ -28,6 +29,19 @@ function useIsMobileViewport() {
   return isMobile
 }
 
+function randomPriceRange(seed) {
+  let value = seed
+  const next = () => {
+    value = (value * 1664525 + 1013904223) >>> 0
+    return value
+  }
+  const low = 18 + (next() % 38) // ₹18L – ₹55L
+  const high = low + 12 + (next() % 42) // spread ₹12L – ₹53L above low
+  const format = (amount) =>
+    amount >= 100 ? `₹${(amount / 100).toFixed(1)}Cr` : `₹${amount}L`
+  return `${format(low)} – ${format(high)}`
+}
+
 const properties = [
   {
     id: 'sarath-city',
@@ -39,13 +53,14 @@ const properties = [
     tag: 'Commercial Landmark',
     plots: 48,
     plotSizes: 'Retail · Anchor blocks',
-    priceRange: 'Landmark pin',
+    priceRange: randomPriceRange(101),
     facing: 'ORR corridor',
     road: 'ORR · Gachibowli access',
     water: 'Municipal network',
     power: 'Dedicated HT feed',
     status: 'Ready to Register',
     highlight: 'Live map pin on the Kondapur commercial belt',
+    image: heroPropertyImage,
     layout: { rotation: 22, cols: 4, rows: 3 },
     speech: 'We are starting at Sarath City Capital Mall in Kondapur, Hyderabad. Watch the live map as we travel to the next location.',
   },
@@ -59,13 +74,14 @@ const properties = [
     tag: 'Retail Destination',
     plots: 36,
     plotSizes: 'Mall · Food court zones',
-    priceRange: 'Landmark pin',
+    priceRange: randomPriceRange(202),
     facing: 'Kukatpally belt',
     road: 'KPHB Phase 9 access',
     water: 'Municipal network',
     power: 'Dedicated HT feed',
     status: 'Open for Booking',
     highlight: 'Live map pin in Kukatpally Housing Board Colony',
+    image: heroPropertyImage,
     layout: { rotation: -12, cols: 5, rows: 3 },
     speech: 'We have arrived at Nexus Hyderabad Mall in Kukatpally Housing Board Colony, K P H B Phase 9, Hyderabad.',
   },
@@ -256,23 +272,61 @@ export default function GuidePlaceholder() {
 
   useEffect(() => {
     setShowPanel(false)
-    if (transitioning || !inView) return undefined
+    if (isMobile || transitioning || !inView) return undefined
 
     const timer = window.setTimeout(() => {
       setShowPanel(true)
     }, Math.max(0, detailDelay * 1000))
 
     return () => window.clearTimeout(timer)
-  }, [property.id, detailDelay, transitioning, inView])
+  }, [property.id, detailDelay, transitioning, inView, isMobile])
+
+  useEffect(() => {
+    if (!(isMobile && showPanel)) {
+      document.body.style.removeProperty('overflow')
+      document.documentElement.style.removeProperty('overflow')
+      document.body.style.removeProperty('position')
+      document.body.style.removeProperty('top')
+      document.body.style.removeProperty('width')
+      return undefined
+    }
+
+    const scrollY = window.scrollY
+    const prevBody = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    }
+    const prevHtml = document.documentElement.style.overflow
+
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+
+    return () => {
+      document.documentElement.style.overflow = prevHtml
+      document.body.style.overflow = prevBody.overflow
+      document.body.style.position = prevBody.position
+      document.body.style.top = prevBody.top
+      document.body.style.width = prevBody.width
+      window.scrollTo(0, scrollY)
+    }
+  }, [isMobile, showPanel])
 
   const next = () => {
     advanceToNext()
   }
 
+  const closePanel = () => setShowPanel(false)
+  const openPanel = () => setShowPanel(true)
+
   return (
     <section
       ref={sectionRef}
-      className="presentation-hero"
+      className={`presentation-hero${isMobile && showPanel ? ' has-mobile-sheet' : ''}`}
       id="explore"
       aria-label="ILA Homes guided property presentation"
     >
@@ -320,6 +374,7 @@ export default function GuidePlaceholder() {
                     layout={property.layout}
                     travelTarget={travelTarget}
                     onTravelComplete={handleTravelComplete}
+                    onPropertySelect={openPanel}
                   />
                   <aside
                     className={`presentation__map-facts${showMapFacts ? ' is-ready' : ''}`}
@@ -406,7 +461,7 @@ export default function GuidePlaceholder() {
                     <div className="presentation__map-panel">
                       <PropertyPanel
                         property={showPanel ? property : null}
-                        onClose={() => setShowPanel(false)}
+                        onClose={closePanel}
                         autoSelecting={showPanel}
                         autoIndex={current}
                         autoTotal={properties.length}
@@ -424,6 +479,24 @@ export default function GuidePlaceholder() {
           </div>
         </div>
       </div>
+
+      {isMobile && showPanel ? (
+        <button
+          type="button"
+          className="presentation-hero__sheet-scrim"
+          aria-label="Close property details"
+          onClick={closePanel}
+        />
+      ) : null}
+      {isMobile ? (
+        <PropertyPanel
+          property={showPanel ? property : null}
+          onClose={closePanel}
+          autoSelecting={false}
+          autoIndex={current}
+          autoTotal={properties.length}
+        />
+      ) : null}
     </section>
   )
 }

@@ -1187,6 +1187,42 @@ export default function AboutVault() {
   // Show once the About map is open on mobile (doors open / split), with selected layout facts.
   const showMobileMapFacts = isMobileView && (isOpen || isSplit) && Boolean(factsProperty)
 
+  useEffect(() => {
+    const sheetOpen = isMobileView && Boolean(panelProperty)
+    if (!sheetOpen) {
+      document.body.style.removeProperty('overflow')
+      document.documentElement.style.removeProperty('overflow')
+      document.body.style.removeProperty('position')
+      document.body.style.removeProperty('top')
+      document.body.style.removeProperty('width')
+      return undefined
+    }
+
+    const scrollY = window.scrollY
+    const prevBody = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    }
+    const prevHtml = document.documentElement.style.overflow
+
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+
+    return () => {
+      document.documentElement.style.overflow = prevHtml
+      document.body.style.overflow = prevBody.overflow
+      document.body.style.position = prevBody.position
+      document.body.style.top = prevBody.top
+      document.body.style.width = prevBody.width
+      window.scrollTo(0, scrollY)
+    }
+  }, [isMobileView, panelProperty])
+
   return (
     <section
       ref={sectionRef}

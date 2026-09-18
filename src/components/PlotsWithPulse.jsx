@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { propertyLayouts } from '../data/propertyLayouts'
+import plotBgKokapet from '../assets/plots-pulse/kokapet.jpg'
+import plotBgNallagandla from '../assets/plots-pulse/nallagandla.jpg'
+import plotBgMansanpally from '../assets/plots-pulse/mansanpally.jpg'
 import './PlotsWithPulse.css'
 
 const FEATURED_IDS = [
@@ -7,6 +10,12 @@ const FEATURED_IDS = [
   'nallagandla-enclave',
   'mansanpally-meadows',
 ]
+
+const PLOT_IMAGES = {
+  'kokapet-heights': plotBgKokapet,
+  'nallagandla-enclave': plotBgNallagandla,
+  'mansanpally-meadows': plotBgMansanpally,
+}
 
 const PULSE_SEED = {
   'kokapet-heights': {
@@ -49,6 +58,7 @@ function buildPlots() {
       meta: `${layout?.plotSizes ?? ''} · ${layout?.tag ?? ''}`,
       price: layout?.priceRange?.split('–')[0]?.trim() ?? layout?.priceRange ?? '',
       status: layout?.status ?? '',
+      image: PLOT_IMAGES[id],
       ...pulse,
     }
   })
@@ -95,7 +105,15 @@ export default function PlotsWithPulse() {
         <div className="plots-pulse__grid">
           {plots.map((plot) => (
             <article key={plot.id} className="plots-pulse__card">
-              <div className="plots-pulse__image" aria-hidden="true">
+              <div className="plots-pulse__image">
+                <img
+                  className="plots-pulse__image-bg"
+                  src={plot.image}
+                  alt=""
+                  loading="eager"
+                  decoding="async"
+                  draggable="false"
+                />
                 <span className="plots-pulse__image-text">
                   {plot.name} · {plot.location.split(',')[0]}
                 </span>

@@ -81,37 +81,101 @@ export default function ShortlistShare() {
     setShared(true)
   }
 
+  function renderChoose(instance) {
+    return (
+      <div className="shortlist-share__choose">
+        <header className="shortlist-share__detail-head">
+          <p className="shortlist-share__detail-kicker">Choose plots</p>
+          <h3 className="shortlist-share__detail-title">Select properties to shortlist</h3>
+          <p className="shortlist-share__detail-summary">
+            Tap any property to add or remove it from your WhatsApp shortlist.
+          </p>
+        </header>
+
+        <div
+          className="shortlist-share__panels"
+          role="group"
+          aria-label="All properties"
+        >
+          {PROPERTIES.map((plot) => {
+            const isOn = pinned.includes(plot.id)
+            return (
+              <button
+                key={`${instance}-${plot.id}`}
+                type="button"
+                className={`shortlist-share__option${isOn ? ' is-selected' : ''}`}
+                aria-pressed={isOn}
+                onClick={() => togglePlot(plot.id)}
+              >
+                <span className="shortlist-share__option-top">
+                  <span className="shortlist-share__option-check" aria-hidden="true">
+                    {isOn ? '✓' : ''}
+                  </span>
+                  <span className="shortlist-share__option-copy">
+                    <span className="shortlist-share__option-name">{plot.name}</span>
+                    <span className="shortlist-share__option-loc">{plot.location}</span>
+                  </span>
+                </span>
+                <span className="shortlist-share__option-meta">{plot.meta}</span>
+                <span className="shortlist-share__option-score">
+                  Appreciation score: {plot.score}/100
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <button
+          type="button"
+          className="shortlist-share__wa-btn"
+          onClick={shareOnWhatsApp}
+          disabled={pinned.length === 0}
+        >
+          {shared
+            ? 'Shared — open again'
+            : pinned.length === 0
+              ? 'Select plots to share'
+              : `Share ${pinned.length} ${pinned.length === 1 ? 'plot' : 'plots'} →`}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <section className="shortlist-share" id="shortlist-share" aria-label="Shortlist and share">
       <div className="shortlist-share__frame">
         <div className="shortlist-share__left">
-          <header className="shortlist-share__intro">
-            <p className="shortlist-share__eyebrow">New — Idea 7</p>
-            <h2 className="shortlist-share__heading">
-              Save your shortlist. Share it on WhatsApp in one tap.
-            </h2>
-            <p className="shortlist-share__lede">
-              Real estate in India is a family decision. Let visitors save their shortlisted
-              plots and share a clean summary card with their spouse, parents, or siblings —
-              without losing context or calling you first.
-            </p>
+          <header
+            className="shortlist-share__intro"
+            style={{ '--ss-intro-image': `url("${shareFamilyImg}")` }}
+          >
+            <div className="shortlist-share__intro-bg" aria-hidden="true" />
+            <div className="shortlist-share__intro-content">
+              <h2 className="shortlist-share__heading">
+                Save your shortlist. Share it on WhatsApp in one tap.
+              </h2>
+            </div>
           </header>
 
-          <ol className="shortlist-share__features" aria-label="How shortlist sharing works">
-            {FEATURES.map((feature) => (
-              <li key={feature.number}>
-                <div className="shortlist-share__feature">
-                  <span className="shortlist-share__feature-index" aria-hidden="true">
-                    {feature.number}
-                  </span>
-                  <span className="shortlist-share__feature-body">
-                    <span className="shortlist-share__feature-title">{feature.title}</span>
-                    <span className="shortlist-share__feature-copy">{feature.copy}</span>
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="shortlist-share__steps-block">
+            <ol className="shortlist-share__features" aria-label="How shortlist sharing works">
+              {FEATURES.map((feature) => (
+                <li key={feature.number}>
+                  <div className="shortlist-share__feature">
+                    <span className="shortlist-share__feature-index" aria-hidden="true">
+                      {feature.number}
+                    </span>
+                    <span className="shortlist-share__feature-body">
+                      <span className="shortlist-share__feature-title">{feature.title}</span>
+                      <span className="shortlist-share__feature-copy">{feature.copy}</span>
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <div className="shortlist-share__choose-mobile">{renderChoose('mobile')}</div>
+          </div>
 
           <p className="shortlist-share__count">
             {pinned.length === 0
@@ -133,59 +197,7 @@ export default function ShortlistShare() {
         <aside className="shortlist-share__right" aria-live="polite">
           <div className="shortlist-share__detail-inner">
             <div className="shortlist-share__copy">
-              <header className="shortlist-share__detail-head">
-                <p className="shortlist-share__detail-kicker">Choose plots</p>
-                <h3 className="shortlist-share__detail-title">Select properties to shortlist</h3>
-                <p className="shortlist-share__detail-summary">
-                  Tap any property to add or remove it from your WhatsApp shortlist.
-                </p>
-              </header>
-
-              <div
-                className="shortlist-share__panels"
-                role="group"
-                aria-label="All properties"
-              >
-                {PROPERTIES.map((plot) => {
-                  const isOn = pinned.includes(plot.id)
-                  return (
-                    <button
-                      key={plot.id}
-                      type="button"
-                      className={`shortlist-share__option${isOn ? ' is-selected' : ''}`}
-                      aria-pressed={isOn}
-                      onClick={() => togglePlot(plot.id)}
-                    >
-                      <span className="shortlist-share__option-top">
-                        <span className="shortlist-share__option-check" aria-hidden="true">
-                          {isOn ? '✓' : ''}
-                        </span>
-                        <span className="shortlist-share__option-copy">
-                          <span className="shortlist-share__option-name">{plot.name}</span>
-                          <span className="shortlist-share__option-loc">{plot.location}</span>
-                        </span>
-                      </span>
-                      <span className="shortlist-share__option-meta">{plot.meta}</span>
-                      <span className="shortlist-share__option-score">
-                        Appreciation score: {plot.score}/100
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button
-                type="button"
-                className="shortlist-share__wa-btn"
-                onClick={shareOnWhatsApp}
-                disabled={pinned.length === 0}
-              >
-                {shared
-                  ? 'Shared — open again'
-                  : pinned.length === 0
-                    ? 'Select plots to share'
-                    : `Share ${pinned.length} ${pinned.length === 1 ? 'plot' : 'plots'} →`}
-              </button>
+              <div className="shortlist-share__choose-desktop">{renderChoose('desktop')}</div>
             </div>
 
             <div className="shortlist-share__media">

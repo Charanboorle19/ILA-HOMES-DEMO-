@@ -198,12 +198,13 @@ export default function PlotCompare() {
           </div>
         </div>
 
-        <div
-          className="plot-compare__table"
-          style={{ '--cols': pinned.length }}
-          role="table"
-          aria-label="Plot comparison"
-        >
+        <div className="plot-compare__table-wrap">
+          <div
+            className="plot-compare__table"
+            style={{ '--cols': pinned.length }}
+            role="table"
+            aria-label="Plot comparison"
+          >
           <div className="plot-compare__row plot-compare__row--head" role="row">
             <div className="plot-compare__label-cell" role="columnheader" />
             {pinned.map((plot) => (
@@ -270,6 +271,7 @@ export default function PlotCompare() {
                 </a>
               </div>
             ))}
+          </div>
           </div>
         </div>
       </div>

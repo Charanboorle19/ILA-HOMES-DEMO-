@@ -2,6 +2,13 @@
  * Demo property layouts for the About map.
  * Coordinates are APPROXIMATE / DEMO ONLY — not surveyed parcel boundaries.
  */
+import imageSingapore from '../assets/about-panel/singapore-township.jpg'
+import imageNallagandla from '../assets/about-panel/nallagandla-enclave.jpg'
+import imageKokapet from '../assets/about-panel/kokapet-heights.jpg'
+import imageKhajaguda from '../assets/about-panel/khajaguda-residency.webp'
+import imagePatancheru from '../assets/about-panel/patancheru-gateway.jpg'
+import imageMansanpally from '../assets/about-panel/mansanpally-meadows.jpg'
+
 export const propertyLayouts = [
   {
     id: 'singapore-township',
@@ -17,6 +24,7 @@ export const propertyLayouts = [
     power: 'TSSPDCL Underground',
     status: 'Ready to Register',
     highlight: 'Gated layout with compound wall',
+    image: imageSingapore,
     lng: 78.2876,
     lat: 17.4102,
     rotation: 8,
@@ -37,6 +45,7 @@ export const propertyLayouts = [
     power: 'TSSPDCL Overhead',
     status: 'Limited Plots',
     highlight: 'Walking distance to OU campus belt',
+    image: imageNallagandla,
     lng: 78.3482,
     lat: 17.4561,
     rotation: -12,
@@ -57,6 +66,7 @@ export const propertyLayouts = [
     power: 'TSSPDCL Underground',
     status: 'Fast Moving',
     highlight: 'Direct ORR access, 10 min to Financial District',
+    image: imageKokapet,
     lng: 78.3321,
     lat: 17.3854,
     rotation: 18,
@@ -77,6 +87,7 @@ export const propertyLayouts = [
     power: 'TSSPDCL Underground',
     status: 'Almost Sold Out',
     highlight: 'Premium corner plots with park facing',
+    image: imageKhajaguda,
     lng: 78.3652,
     lat: 17.3518,
     rotation: -6,
@@ -97,6 +108,7 @@ export const propertyLayouts = [
     power: 'TSSPDCL Overhead',
     status: 'Open for Booking',
     highlight: 'High appreciation zone near Pharma City',
+    image: imagePatancheru,
     lng: 78.2645,
     lat: 17.5321,
     rotation: 14,
@@ -117,6 +129,7 @@ export const propertyLayouts = [
     power: 'TSSPDCL Underground',
     status: 'Ready to Register',
     highlight: '15 min from Rajiv Gandhi International Airport',
+    image: imageMansanpally,
     lng: 78.3123,
     lat: 17.2987,
     rotation: -20,

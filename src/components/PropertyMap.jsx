@@ -337,6 +337,7 @@ export default function PropertyMap({
   layout,
   travelTarget,
   onTravelComplete,
+  onPropertySelect,
 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -347,8 +348,10 @@ export default function PropertyMap({
   const rotationRunningRef = useRef(false)
   const activeCoordinatesRef = useRef(null)
   const layoutRef = useRef(layout)
+  const onPropertySelectRef = useRef(onPropertySelect)
 
   layoutRef.current = layout
+  onPropertySelectRef.current = onPropertySelect
 
   const stopRotation = () => {
     rotationRunningRef.current = false
@@ -451,6 +454,12 @@ export default function PropertyMap({
       quietBasemap()
       applyMobileMapInteractions(map)
       ensureLayoutLayers(map)
+      LAYOUT_LAYERS.forEach((layerId) => {
+        map.off('click', layerId, handlePropertySelect)
+        if (map.getLayer(layerId)) {
+          map.on('click', layerId, handlePropertySelect)
+        }
+      })
       const coords = activeCoordinatesRef.current
       if (coords) {
         showPropertyLayout(
@@ -484,6 +493,7 @@ export default function PropertyMap({
 
     const markerElement = createMarkerElement(propertyName)
     markerElement.classList.add('is-hidden')
+    markerElement.style.cursor = 'pointer'
     const marker = new mapboxgl.Marker({
       element: markerElement,
       anchor: 'center',
@@ -495,6 +505,25 @@ export default function PropertyMap({
     markerRef.current = marker
     markerElementRef.current = markerElement
 
+    const handlePropertySelect = (event) => {
+      event?.originalEvent?.preventDefault?.()
+      event?.originalEvent?.stopPropagation?.()
+      event?.preventDefault?.()
+      event?.stopPropagation?.()
+      onPropertySelectRef.current?.()
+    }
+
+    markerElement.addEventListener('click', handlePropertySelect)
+
+    const bindLayoutClicks = () => {
+      LAYOUT_LAYERS.forEach((layerId) => {
+        map.off('click', layerId, handlePropertySelect)
+        if (map.getLayer(layerId)) {
+          map.on('click', layerId, handlePropertySelect)
+        }
+      })
+    }
+
     const resize = () => {
       if (!mapRef.current) return
       map.resize()
@@ -505,6 +534,7 @@ export default function PropertyMap({
       quietBasemap()
       applyMobileMapInteractions(map)
       ensureLayoutLayers(map)
+      bindLayoutClicks()
       showPropertyLayout(
         map,
         longitude,
@@ -544,6 +574,10 @@ export default function PropertyMap({
       map.off('load', handleLoad)
       map.off('zoomstart', reinstateMobileLock)
       map.off('touchstart', reinstateMobileLock)
+      LAYOUT_LAYERS.forEach((layerId) => {
+        map.off('click', layerId, handlePropertySelect)
+      })
+      markerElement.removeEventListener('click', handlePropertySelect)
       stopRotation()
       observer?.disconnect()
       LAYOUT_LAYERS.forEach((layerId) => {

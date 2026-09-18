@@ -265,15 +265,38 @@ function scoreFeelMatch(layoutId, selectedTags) {
   return Math.round(total / selectedTags.length)
 }
 
-const MATCH_LOAD_MS = 1400
+const MATCH_LOAD_MS = 900
+const MOBILE_SHEET_QUERY = '(max-width: 980px)'
+
+function useIsMobileSheet() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(MOBILE_SHEET_QUERY).matches : false,
+  )
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_SHEET_QUERY)
+    const sync = () => setIsMobile(mediaQuery.matches)
+    sync()
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', sync)
+      return () => mediaQuery.removeEventListener('change', sync)
+    }
+    mediaQuery.addListener(sync)
+    return () => mediaQuery.removeListener(sync)
+  }, [])
+
+  return isMobile
+}
 
 export default function FindYourPlot() {
+  const isMobileSheet = useIsMobileSheet()
   const [mode, setMode] = useState(null)
   const [selectedStage, setSelectedStage] = useState(null)
   const [revealedStage, setRevealedStage] = useState(null)
   const [selectedFeels, setSelectedFeels] = useState([])
   const [revealedFeels, setRevealedFeels] = useState([])
   const [status, setStatus] = useState('idle')
+  const [sheetOpen, setSheetOpen] = useState(false)
   const loadTimerRef = useRef(null)
 
   const stage = useMemo(
@@ -309,6 +332,7 @@ export default function FindYourPlot() {
 
   const matches = mode === 'feel' ? feelMatches : stageMatches
   const isFeelMode = mode === 'feel'
+  const sheetVisible = isMobileSheet && sheetOpen && (status === 'loading' || status === 'ready')
 
   useEffect(() => {
     return () => {
@@ -316,9 +340,33 @@ export default function FindYourPlot() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isMobileSheet) {
+      setSheetOpen(false)
+      document.body.style.removeProperty('overflow')
+      return undefined
+    }
+
+    if (sheetVisible) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prev
+      }
+    }
+
+    document.body.style.removeProperty('overflow')
+    return undefined
+  }, [isMobileSheet, sheetVisible])
+
+  useEffect(() => {
+    if (status === 'idle') setSheetOpen(false)
+  }, [status])
+
   function runLoad(after) {
     if (loadTimerRef.current) window.clearTimeout(loadTimerRef.current)
     setStatus('loading')
+    if (isMobileSheet) setSheetOpen(true)
     loadTimerRef.current = window.setTimeout(() => {
       after()
       setStatus('ready')
@@ -327,6 +375,20 @@ export default function FindYourPlot() {
   }
 
   function selectStage(id) {
+    // Tap again to unselect
+    if (mode === 'stage' && selectedStage === id) {
+      if (loadTimerRef.current) window.clearTimeout(loadTimerRef.current)
+      loadTimerRef.current = null
+      setMode(null)
+      setSelectedStage(null)
+      setRevealedStage(null)
+      setSelectedFeels([])
+      setRevealedFeels([])
+      setStatus('idle')
+      setSheetOpen(false)
+      return
+    }
+
     setMode('stage')
     setSelectedStage(id)
     setSelectedFeels([])
@@ -336,25 +398,53 @@ export default function FindYourPlot() {
   }
 
   function toggleFeel(id) {
+    const isOn = selectedFeels.includes(id)
+    const next = isOn
+      ? selectedFeels.filter((tag) => tag !== id)
+      : [...selectedFeels, id]
+
+    // Clearing the last feel tag fully resets
+    if (next.length === 0) {
+      if (loadTimerRef.current) window.clearTimeout(loadTimerRef.current)
+      loadTimerRef.current = null
+      setSelectedFeels([])
+      setRevealedFeels([])
+      setSelectedStage(null)
+      setRevealedStage(null)
+      setMode(null)
+      setStatus('idle')
+      setSheetOpen(false)
+      return
+    }
+
     setMode('feel')
     setSelectedStage(null)
     setRevealedStage(null)
+    setSelectedFeels(next)
+    setRevealedFeels([])
 
-    setSelectedFeels((prev) => {
-      const next = prev.includes(id) ? prev.filter((tag) => tag !== id) : [...prev, id]
+    // Removing a tag while others remain: refresh matches without forcing the sheet open again
+    if (isOn) {
+      if (loadTimerRef.current) window.clearTimeout(loadTimerRef.current)
+      setStatus('loading')
+      loadTimerRef.current = window.setTimeout(() => {
+        setRevealedFeels(next)
+        setStatus('ready')
+        loadTimerRef.current = null
+      }, MATCH_LOAD_MS)
+      return
+    }
 
-      if (next.length === 0) {
-        if (loadTimerRef.current) window.clearTimeout(loadTimerRef.current)
-        setRevealedFeels([])
-        setStatus('idle')
-        setMode(null)
-        return next
-      }
+    runLoad(() => setRevealedFeels(next))
+  }
 
-      setRevealedFeels([])
-      runLoad(() => setRevealedFeels(next))
-      return next
-    })
+  function closeSheet() {
+    setSheetOpen(false)
+  }
+
+  function reopenSheet() {
+    if (!isMobileSheet) return
+    if (status === 'ready' || status === 'loading') setSheetOpen(true)
   }
 
   const selectedLabel = isFeelMode
@@ -369,7 +459,7 @@ export default function FindYourPlot() {
 
   return (
     <section
-      className="find-your-plot"
+      className={`find-your-plot${sheetVisible ? ' has-mobile-sheet' : ''}`}
       id="find-your-plot"
       aria-label="Find your plot by life stage"
     >
@@ -408,7 +498,7 @@ export default function FindYourPlot() {
                       </span>
                       <span className="find-your-plot__stage-cta">
                         <span className="find-your-plot__stage-cta-label">
-                          {isActive && status !== 'idle' ? 'Selected' : 'Select'}
+                          {isActive && status !== 'idle' ? 'Unselect' : 'Select'}
                         </span>
                         <span className="find-your-plot__stage-arrow" aria-hidden="true">
                           <IconArrow />
@@ -447,13 +537,34 @@ export default function FindYourPlot() {
                 })}
               </div>
             </div>
+
+            {isMobileSheet && status === 'ready' && !sheetOpen ? (
+              <button
+                type="button"
+                className="find-your-plot__reopen"
+                onClick={reopenSheet}
+              >
+                View {matches.length} {matches.length === 1 ? 'match' : 'matches'}
+              </button>
+            ) : null}
           </div>
 
           <aside
-            className={`find-your-plot__results is-${status}`}
+            className={`find-your-plot__results is-${status}${sheetVisible ? ' is-sheet-open' : ''}`}
             aria-live="polite"
             aria-busy={status === 'loading'}
+            aria-hidden={isMobileSheet && !sheetVisible}
           >
+            <div className="find-your-plot__sheet-handle" aria-hidden="true" />
+            <button
+              type="button"
+              className="find-your-plot__sheet-close"
+              aria-label="Close matches"
+              onClick={closeSheet}
+            >
+              ×
+            </button>
+
             {status === 'idle' && (
               <div className="find-your-plot__state find-your-plot__state--idle">
                 <span className="find-your-plot__state-mark" aria-hidden="true" />
@@ -531,6 +642,17 @@ export default function FindYourPlot() {
           </aside>
         </div>
       </div>
+
+      {isMobileSheet ? (
+        <button
+          type="button"
+          className={`find-your-plot__sheet-scrim${sheetVisible ? ' is-visible' : ''}`}
+          aria-label="Close matches"
+          aria-hidden={!sheetVisible}
+          tabIndex={sheetVisible ? 0 : -1}
+          onClick={closeSheet}
+        />
+      ) : null}
     </section>
   )
 }

@@ -39,6 +39,9 @@
 
   --space: clamp(1rem, 2vw, 1.75rem);
   --section-y: clamp(4.5rem, 10vw, 7.5rem);
+  /* Mobile section floor: never shorter than one screen; can grow taller.
+     Use svh (not dvh) so browser chrome show/hide on scroll doesn't resize sections. */
+  --section-floor: 100svh;
   /* Stretch content across the viewport with only a small side gutter */
   --max: calc(100% - (var(--space) * 2));
   --radius: 2px;

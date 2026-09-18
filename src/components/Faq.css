@@ -135,12 +135,27 @@
 }
 
 @media (max-width: 800px) {
+  .faq {
+    padding: 1.25rem var(--space) 1rem;
+  }
+
   .faq__frame {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .faq__intro {
     position: static;
     max-width: 36rem;
+  }
+
+  .faq__heading {
+    margin-bottom: 0.4rem;
+    font-size: clamp(1.25rem, 5vw, 1.55rem);
+  }
+
+  .faq__lede {
+    margin-bottom: 0;
+    font-size: 0.84rem;
   }
 }

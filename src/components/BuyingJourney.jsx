@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import step1 from '../assets/step-1.png'
 import step2 from '../assets/step-2.png'
 import step3 from '../assets/step-3.png'
 import step4 from '../assets/step-4.png'
 import step5 from '../assets/step-5.png'
+import stepLan1 from '../assets/step-lan-1.png'
+import stepLan2 from '../assets/step-lan-2.png'
+import stepLan3 from '../assets/step-lan-3.png'
+import stepLan4 from '../assets/step-lan-4.png'
+import stepLan5 from '../assets/step-lan-5.png'
 import './BuyingJourney.css'
 
 const STEPS = [
@@ -13,6 +18,7 @@ const STEPS = [
     name: 'Select Your Plot & Review Feasibility',
     time: '1 to 3 Days',
     image: step1,
+    imageMobile: stepLan1,
     summary:
       'Browse live layouts, zoning, and a fully itemized price sheet before you commit.',
     happens: [
@@ -31,6 +37,7 @@ const STEPS = [
     name: 'Guided On-Site Inspection & Boundary Demarcation',
     time: 'Day 3 to Day 7',
     image: step2,
+    imageMobile: stepLan2,
     summary:
       'Walk the ground, verify boundaries, and confirm access, drainage, and utilities.',
     happens: [
@@ -50,6 +57,7 @@ const STEPS = [
     name: 'Legal Due Diligence & Document Verification',
     time: '5 to 10 Business Days',
     image: step3,
+    imageMobile: stepLan3,
     summary:
       'Full title chain, statutory approvals, and independent advocate access — no opaque files.',
     happens: [
@@ -69,6 +77,7 @@ const STEPS = [
     name: 'Transparent Agreement & Structured Payment',
     time: '7 to 14 Business Days',
     image: step4,
+    imageMobile: stepLan4,
     summary:
       'Formal sale agreement with clear payment paths — including bank coordination if needed.',
     happens: [
@@ -88,6 +97,7 @@ const STEPS = [
     name: 'Sub-Registrar Office Execution & Khata/Title Mutation',
     time: '1 Day (Execution) + 15 to 30 Days (Mutation)',
     image: step5,
+    imageMobile: stepLan5,
     summary:
       'Official registration, possession handover, and mutation of revenue records in your name.',
     happens: [
@@ -105,11 +115,68 @@ const STEPS = [
   },
 ]
 
-export default function BuyingJourney() {
-  const [activeStep, setActiveStep] = useState(STEPS[0].id)
-  const current = STEPS.find((step) => step.id === activeStep) ?? STEPS[0]
+const MOBILE_QUERY = '(max-width: 980px)'
+
+function useIsMobileBuyingJourney() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(MOBILE_QUERY).matches : false,
+  )
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_QUERY)
+    const sync = () => setIsMobile(mediaQuery.matches)
+    sync()
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', sync)
+      return () => mediaQuery.removeEventListener('change', sync)
+    }
+    mediaQuery.addListener(sync)
+    return () => mediaQuery.removeListener(sync)
+  }, [])
+
+  return isMobile
+}
+
+export default function BuyingJourney() {
+  const isMobile = useIsMobileBuyingJourney()
+  const [activeStep, setActiveStep] = useState(STEPS[0].id)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const copyRef = useRef(null)
+  const stepsRef = useRef(null)
+  const stepItemRefs = useRef({})
+  const current = STEPS.find((step) => step.id === activeStep) ?? STEPS[0]
+  const stepImage = isMobile ? current.imageMobile : current.image
+
+  useEffect(() => {
+    setDetailsOpen(false)
+  }, [activeStep])
+
+  useEffect(() => {
+    if (copyRef.current) copyRef.current.scrollTop = 0
+  }, [activeStep, detailsOpen])
+
+  function selectStep(id) {
+    setActiveStep(id)
+    setDetailsOpen(false)
+  }
+
+  useEffect(() => {
+    const list = stepsRef.current
+    const item = stepItemRefs.current[activeStep]
+    if (!list || !item) return
+
+    const target =
+      item.offsetLeft - (list.clientWidth - item.clientWidth) / 2
+    list.scrollTo({
+      left: Math.max(0, target),
+      behavior: 'smooth',
+    })
+  }, [activeStep])
+
+  useEffect(() => {
+    // Pause auto-advance while mobile details are open
+    if (isMobile && detailsOpen) return undefined
+
     const timer = window.setTimeout(() => {
       setActiveStep((prev) => {
         const index = STEPS.findIndex((step) => step.id === prev)
@@ -118,7 +185,7 @@ export default function BuyingJourney() {
     }, 3000)
 
     return () => window.clearTimeout(timer)
-  }, [activeStep])
+  }, [activeStep, isMobile, detailsOpen])
 
   return (
     <section
@@ -140,16 +207,26 @@ export default function BuyingJourney() {
             </p>
           </header>
 
-          <ol className="buying-journey__steps" aria-label="Buying steps">
+          <ol
+            ref={stepsRef}
+            className="buying-journey__steps"
+            aria-label="Buying steps"
+          >
             {STEPS.map((step) => {
               const isActive = step.id === activeStep
               return (
-                <li key={step.id}>
+                <li
+                  key={step.id}
+                  ref={(node) => {
+                    if (node) stepItemRefs.current[step.id] = node
+                    else delete stepItemRefs.current[step.id]
+                  }}
+                >
                   <button
                     type="button"
                     className={`buying-journey__step${isActive ? ' is-active' : ''}`}
                     aria-pressed={isActive}
-                    onClick={() => setActiveStep(step.id)}
+                    onClick={() => selectStep(step.id)}
                   >
                     <span className="buying-journey__step-index" aria-hidden="true">
                       {step.number}
@@ -171,13 +248,13 @@ export default function BuyingJourney() {
               <div className="buying-journey__media-frame">
                 <img
                   className="buying-journey__media-image"
-                  src={current.image}
+                  src={stepImage}
                   alt={`Illustration for step ${current.number}: ${current.name}`}
                 />
               </div>
             </div>
 
-            <div className="buying-journey__copy">
+            <div className="buying-journey__copy" ref={copyRef}>
               <header className="buying-journey__detail-head">
                 <p className="buying-journey__detail-kicker">Step {current.number}</p>
                 <h3 className="buying-journey__detail-title">{current.name}</h3>
@@ -187,25 +264,38 @@ export default function BuyingJourney() {
                 <p className="buying-journey__detail-summary">{current.summary}</p>
               </header>
 
-              <div className="buying-journey__panels">
-                <div className="buying-journey__panel">
-                  <h4 className="buying-journey__panel-title">What happens</h4>
-                  <ul className="buying-journey__list">
-                    {current.happens.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
+              {isMobile ? (
+                <button
+                  type="button"
+                  className={`buying-journey__about-toggle${detailsOpen ? ' is-open' : ''}`}
+                  aria-expanded={detailsOpen}
+                  onClick={() => setDetailsOpen((open) => !open)}
+                >
+                  {detailsOpen ? 'Hide details' : 'View about this'}
+                </button>
+              ) : null}
 
-                <div className="buying-journey__panel buying-journey__panel--receive">
-                  <h4 className="buying-journey__panel-title">What you receive</h4>
-                  <ul className="buying-journey__list buying-journey__list--receive">
-                    {current.receives.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+              {(!isMobile || detailsOpen) && (
+                <div className="buying-journey__panels">
+                  <div className="buying-journey__panel">
+                    <h4 className="buying-journey__panel-title">What happens</h4>
+                    <ul className="buying-journey__list">
+                      {current.happens.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="buying-journey__panel buying-journey__panel--receive">
+                    <h4 className="buying-journey__panel-title">What you receive</h4>
+                    <ul className="buying-journey__list buying-journey__list--receive">
+                      {current.receives.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </aside>
