@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN =
   Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 
@@ -694,7 +694,7 @@ export default function PropertyMap({
   if (!HAS_MAPBOX_TOKEN) {
     return (
       <div className="presentation__map-message">
-        Add VITE_MAPBOX_ACCESS_TOKEN to .env.local to load the map.
+        Add MAPBOX_ACCESS_TOKEN to .env.local to load the map.
       </div>
     )
   }

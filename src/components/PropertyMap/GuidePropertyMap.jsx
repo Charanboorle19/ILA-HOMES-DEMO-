@@ -1,8 +1,8 @@
-﻿import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN = MAPBOX_TOKEN && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 const MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
 
@@ -51,7 +51,7 @@ export default function GuidePropertyMap({ latitude, longitude, propertyName }) 
   }, [latitude, longitude])
 
   if (!HAS_MAPBOX_TOKEN) {
-    return <div className="presentation__map-message">Add VITE_MAPBOX_ACCESS_TOKEN to .env.local to load the map.</div>
+    return <div className="presentation__map-message">Add MAPBOX_ACCESS_TOKEN to .env.local to load the map.</div>
   }
 
   if (!hasCoordinates(latitude, longitude)) {

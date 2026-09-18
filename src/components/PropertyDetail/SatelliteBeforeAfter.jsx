@@ -3,7 +3,7 @@ import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './SatelliteBeforeAfter.css'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN =
   Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 const MAP_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12'
@@ -139,7 +139,7 @@ export default function SatelliteBeforeAfter({ property }) {
                 </Map>
               ) : (
                 <div className="pd-sat__fallback" role="status">
-                  Add <code>VITE_MAPBOX_ACCESS_TOKEN</code> to load the live map.
+                  Add <code>MAPBOX_ACCESS_TOKEN</code> to load the live map.
                 </div>
               )}
             </div>

@@ -8,7 +8,7 @@ import {
 } from '../data/locations'
 import './GrowthCorridors.css'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN =
   Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 const MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
@@ -793,7 +793,7 @@ export default function GrowthCorridors() {
                 ) : (
                   <div className="growth-corridors__map-fallback" role="status">
                     <p>
-                      Add <code>VITE_MAPBOX_ACCESS_TOKEN</code> to load the live map.
+                      Add <code>MAPBOX_ACCESS_TOKEN</code> to load the live map.
                     </p>
                   </div>
                 )}

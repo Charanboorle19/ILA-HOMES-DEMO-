@@ -6,7 +6,7 @@ import PropertyPanel from './PropertyPanel'
 import { propertyLayouts } from '../data/propertyLayouts'
 import { usePropertyPanel } from '../hooks/usePropertyPanel'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN = Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 const HYDERABAD_CENTER = [78.34, 17.4]
 const MOBILE_MAP_QUERY = '(max-width: 900px)'

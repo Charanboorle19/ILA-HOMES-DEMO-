@@ -1,4 +1,4 @@
-﻿import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -15,7 +15,7 @@ import PropertyPanel from './PropertyPanel'
 import LocationPanel from './LocationPanel'
 import MapControls from './MapControls'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
 const MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
 
 /**
@@ -89,7 +89,7 @@ export default function PropertyMap({
           <p>
             Add your token to a <code>.env.local</code> file in the project root:
           </p>
-          <pre>VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_PUBLIC_TOKEN</pre>
+          <pre>MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_PUBLIC_TOKEN</pre>
           <p>
             See <code>.env.example</code>. Restart <code>npm run dev</code> after
             saving. The rest of the site continues to work without it.
