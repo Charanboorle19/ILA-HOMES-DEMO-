@@ -18,6 +18,10 @@
   background: #171a1c;
 }
 
+.about-vault__map-pane .property-panel {
+  z-index: 4;
+}
+
 .about-vault__map,
 .about-vault__overlay {
   position: absolute;
@@ -27,6 +31,56 @@
 .about-vault__map {
   z-index: 1;
   background: #171a1c;
+}
+
+.about-vault__loader {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.85rem;
+  background: rgba(15, 17, 20, 0.82);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.about-vault__loader--error {
+  background: rgba(15, 17, 20, 0.9);
+}
+
+.about-vault__loader-ring {
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 2px solid rgba(201, 168, 76, 0.22);
+  border-top-color: #c9a84c;
+  border-radius: 50%;
+  animation: about-vault-spin 0.85s linear infinite;
+}
+
+.about-vault__loader-label {
+  margin: 0;
+  color: rgba(247, 248, 250, 0.82);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes about-vault-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-vault__loader-ring {
+    animation: none;
+    border-top-color: #c9a84c;
+    opacity: 0.85;
+  }
 }
 
 .about-vault__overlay {
@@ -299,6 +353,11 @@
 }
 
 .ila-marker__label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0;
   padding: 4px 8px;
   border: 1px solid rgba(226, 201, 126, 0.55);
   background: rgba(15, 17, 20, 0.92);
@@ -310,30 +369,120 @@
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ila-marker__name {
+  display: block;
+}
+
+.ila-marker__hint {
+  display: none;
+}
+
+.ila-marker__cta {
+  display: none;
 }
 
 @media (max-width: 900px) {
   .about-vault {
     height: auto;
     min-height: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .about-vault.is-open,
+  .about-vault.is-map-loading {
+    height: 100svh;
+    height: 100dvh;
+    min-height: 100svh;
+    min-height: 100dvh;
   }
 
   .about-vault.is-split .about-vault__map-pane {
     position: relative;
     inset: auto;
-    min-height: 420px;
+    order: 2;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    min-height: 68svh;
+    overflow: hidden;
   }
 
   .about-vault__content,
   .about-vault.is-split .about-vault__content {
     position: relative;
+    order: 1;
     width: 100%;
+    max-width: 100%;
     min-height: auto;
+    box-sizing: border-box;
+    gap: 2rem;
     border-right: none;
     border-bottom: 1px solid rgba(201, 168, 76, 0.18);
     box-shadow: none;
-    padding: 56px 24px 40px;
+    padding: 2rem 1.25rem 1.75rem;
+    padding-left: max(1.25rem, env(safe-area-inset-left));
+    padding-right: max(1.25rem, env(safe-area-inset-right));
     transform: none;
+  }
+
+  .about-vault__about {
+    width: 100%;
+    max-width: 36rem;
+    margin: 0;
+  }
+
+  .about-eyebrow {
+    margin-bottom: 0.65rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+  }
+
+  .about-vault__heading {
+    margin: 0 0 0.9rem;
+    font-size: clamp(1.45rem, 6.4vw, 1.9rem);
+    font-weight: 560;
+    letter-spacing: -0.02em;
+    line-height: 1.22;
+  }
+
+  .about-body {
+    margin: 0;
+    font-size: clamp(0.95rem, 3.8vw, 1.05rem);
+    line-height: 1.65;
+  }
+
+  .about-vault__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 0.85rem 0.75rem;
+    width: 100%;
+  }
+
+  .vault-stat {
+    min-width: 0;
+    gap: 0.4rem;
+  }
+
+  .vault-stat__number {
+    font-size: clamp(1.65rem, 7vw, 2.15rem);
+  }
+
+  .vault-stat__label {
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    line-height: 1.35;
+  }
+
+  .vault-stat__line {
+    width: 1rem;
+    margin-top: 0.15rem;
   }
 
   .about-vault:not(.is-split) .about-vault__content {
@@ -343,25 +492,407 @@
   .about-vault:not(.is-split) .about-vault__map-pane {
     position: absolute;
     inset: 0;
+    order: 0;
     min-height: 720px;
   }
 
   .about-vault.is-split {
     display: flex;
     flex-direction: column;
-    min-height: 900px;
+    height: 100svh;
+    height: 100dvh;
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
+  .about-vault.is-split .about-vault__content {
+    flex: 0 0 auto;
+  }
+
+  .about-vault.is-split .about-vault__map-pane {
+    flex: 1 1 auto;
+  }
+
+  /* Opened doors sit off-screen and caused horizontal page scroll. */
+  .about-vault.is-open .about-vault__door,
+  .about-vault.is-open .about-vault__seam {
+    display: none;
+  }
+
+  /* Full-page bottom sheet — light, 70% of the viewport. */
+  .about-vault__sheet-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(15, 17, 20, 0.4);
+    cursor: pointer;
+    animation: about-sheet-scrim-in 240ms ease both;
+  }
+
+  .about-vault .property-panel {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 90;
+    width: 100%;
+    max-width: 100%;
+    height: 70svh;
+    max-height: 70svh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid rgba(139, 111, 71, 0.18);
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    background: #f7f3ec;
+    color: #3a3228;
+    box-shadow: 0 -18px 40px rgba(58, 50, 40, 0.18);
+    transform: translate3d(0, 110%, 0);
+    opacity: 1;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0.42s;
+    scrollbar-color: rgba(139, 111, 71, 0.35) rgba(58, 50, 40, 0.06);
+  }
+
+  .about-vault .property-panel.is-active {
+    transform: translate3d(0, 0, 0);
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0s;
+  }
+
+  .about-vault .property-panel__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-color: rgba(139, 111, 71, 0.28);
+    color: #8b7a68;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 14px rgba(58, 50, 40, 0.12);
+  }
+
+  .about-vault .property-panel__close:hover {
+    border-color: rgba(139, 111, 71, 0.55);
+    color: #3a3228;
+  }
+
+  .about-vault .property-panel__tag {
+    border-color: rgba(139, 111, 71, 0.28);
+    color: #8b6f47;
+  }
+
+  .about-vault .property-panel h2 {
+    color: #3a3228;
+  }
+
+  .about-vault .property-panel__location,
+  .about-vault .property-panel__price span,
+  .about-vault .property-panel dt {
+    color: #8b7a68;
+  }
+
+  .about-vault .property-panel__price {
+    border-color: rgba(139, 111, 71, 0.14);
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  .about-vault .property-panel__price strong,
+  .about-vault .property-panel dd {
+    color: #3a3228;
+  }
+
+  .about-vault .property-panel__divider {
+    background: rgba(139, 111, 71, 0.14);
+  }
+
+  .about-vault .property-panel__highlight {
+    color: #5c5348;
+  }
+
+  .about-vault .property-panel__cta {
+    background: #3a3228;
+    color: #f7f3ec;
+  }
+
+  .about-vault .property-panel__cta:hover {
+    background: #2a241c;
+  }
+
+  .about-vault .property-panel__auto {
+    border-color: rgba(139, 111, 71, 0.22);
+    background: rgba(255, 255, 255, 0.65);
+  }
+
+  .about-vault .property-panel__auto-label {
+    color: #8b6f47;
+  }
+
+  .about-vault .property-panel__auto-step {
+    color: #3a3228;
+  }
+
+  .ila-marker.is-selected .ila-marker__inner {
+    position: relative;
+    transform: translateY(0) scale(1.02);
+  }
+
+  .ila-marker__label {
+    gap: 0;
+    max-width: 6.75rem;
+    padding: 3px 6px 4px;
+    font-size: 7.5px;
+    letter-spacing: 0.05em;
+    line-height: 1.15;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .ila-marker__name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ila-marker__hint {
+    display: none;
+    position: absolute;
+    right: calc(100% + 7px);
+    top: 50%;
+    align-items: center;
+    gap: 0;
+    pointer-events: none;
+    transform: translateY(-50%);
+    white-space: nowrap;
+  }
+
+  .ila-marker.is-selected .ila-marker__hint {
+    display: flex;
+    animation: about-marker-hint-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ila-marker__hint-text {
+    padding: 3px 6px;
+    border: 1px solid rgba(143, 219, 168, 0.55);
+    border-radius: 999px;
+    background: rgba(15, 17, 20, 0.94);
+    color: #8fdba8;
+    font-family: var(--font-body);
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .ila-marker__hint-line {
+    position: relative;
+    display: block;
+    width: 22px;
+    height: 1px;
+    margin-left: 1px;
+    background: rgba(143, 219, 168, 0.85);
+  }
+
+  .ila-marker__hint-line::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 0;
+    height: 0;
+    border-top: 3.5px solid transparent;
+    border-bottom: 3.5px solid transparent;
+    border-left: 5px solid rgba(143, 219, 168, 0.95);
+    transform: translateY(-50%);
+  }
+
+  @keyframes about-marker-hint-in {
+    from {
+      opacity: 0;
+      transform: translate(-6px, -50%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(0, -50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ila-marker.is-selected .ila-marker__hint {
+      animation: none;
+    }
+  }
+
+  .about-vault__map .mapboxgl-canvas-container,
+  .about-vault__map .mapboxgl-canvas-container.mapboxgl-interactive,
+  .about-vault__map .mapboxgl-canvas {
+    touch-action: pan-y !important;
+  }
+
+  .about-vault__map-facts {
+    position: absolute;
+    z-index: 8;
+    right: 0.55rem;
+    bottom: 0.6rem;
+    left: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    pointer-events: none;
+  }
+
+  .about-vault__map-facts:not(.is-ready) .about-vault__fact-chip {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: none;
+  }
+
+  .about-vault__fact-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.55rem 0.6rem 0.55rem 0.5rem;
+    border: 1px solid rgba(15, 17, 20, 0.06);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #111;
+    box-shadow: 0 8px 22px rgba(15, 17, 20, 0.14);
+    animation: about-fact-chip-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .about-vault__fact-chip-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 8px;
+    background: #f3f4f6;
+    color: #111;
+  }
+
+  .about-vault__fact-chip-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .about-vault__fact-chip span:last-child {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+  }
+
+  .about-vault__fact-chip strong {
+    color: #111;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  .about-vault__fact-chip em {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #5b616b;
+    font-size: 0.68rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .about-vault__map-facts.is-ready .about-vault__fact-chip--tl { animation-delay: 0ms; }
+  .about-vault__map-facts.is-ready .about-vault__fact-chip--tr { animation-delay: 60ms; }
+  .about-vault__map-facts.is-ready .about-vault__fact-chip--bl { animation-delay: 120ms; }
+  .about-vault__map-facts.is-ready .about-vault__fact-chip--br { animation-delay: 180ms; }
+
+  @keyframes about-fact-chip-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .about-vault__map-facts.is-ready .about-vault__fact-chip {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .about-vault.is-split .about-vault__map-pane {
+    min-height: 72svh;
+  }
+
+  .about-vault__content,
+  .about-vault.is-split .about-vault__content {
+    gap: 1.65rem;
+    padding: 1.5rem 1rem 1.4rem;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .about-eyebrow {
+    margin-bottom: 0.5rem;
+    font-size: 0.62rem;
+  }
+
+  .about-vault__heading {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.35rem, 7vw, 1.7rem);
   }
 
   .about-body {
-    font-size: 18px;
+    font-size: 0.95rem;
+    line-height: 1.6;
   }
 
   .about-vault__stats {
-    gap: 28px;
+    gap: 0.75rem 0.5rem;
   }
 
   .vault-stat__number {
-    font-size: 42px;
+    font-size: clamp(1.45rem, 8vw, 1.9rem);
+  }
+
+  .vault-stat__label {
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+@keyframes about-sheet-scrim-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

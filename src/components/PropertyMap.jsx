@@ -6,15 +6,73 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN =
   Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 
-/** Clean dark Mapbox basemap for the hero presentation. */
-const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11'
+/** Clean Mapbox basemap for the hero presentation. */
+const MAP_STYLE_DARK = 'mapbox://styles/mapbox/dark-v11'
+/** Mobile: pale desaturated basemap like the reference callouts layout. */
+const MAP_STYLE_MOBILE = 'mapbox://styles/mapbox/light-v11'
 const INITIAL_ZOOM = 15.6
+const MOBILE_ZOOM = 14.15
+const MOBILE_FIT_MAX_ZOOM = 14.55
 const ROTATION_DURATION = 48000
 const INITIAL_PITCH = 28
+const MOBILE_PITCH = 18
 const CINEMATIC_TRAVEL_DURATION = 5000
 const JOURNEY_ZOOM_OUT = 11.6
 const DESTINATION_ZOOM = INITIAL_ZOOM
 const ZOOM_OUT_APEX = 0.24
+/** Match presentation mobile breakpoint: zoom-only map, page scroll stays free. */
+const MOBILE_MAP_QUERY = '(max-width: 900px)'
+
+function isMobileMapViewport() {
+  return typeof window !== 'undefined' && window.matchMedia(MOBILE_MAP_QUERY).matches
+}
+
+function getHeroMapStyle() {
+  return isMobileMapViewport() ? MAP_STYLE_MOBILE : MAP_STYLE_DARK
+}
+
+function getHeroDestinationZoom() {
+  return isMobileMapViewport() ? MOBILE_ZOOM : DESTINATION_ZOOM
+}
+
+function getHeroPitch() {
+  return isMobileMapViewport() ? MOBILE_PITCH : INITIAL_PITCH
+}
+
+function applyMobileMapInteractions(map) {
+  if (!map) return
+
+  const mobile = isMobileMapViewport()
+
+  if (mobile) {
+    // One-finger gestures scroll the page; only pinch / +/- zoom the map.
+    map.dragPan.disable()
+    map.scrollZoom.disable()
+    map.boxZoom.disable()
+    map.dragRotate.disable()
+    map.keyboard.disable()
+    map.doubleClickZoom.disable()
+    map.touchPitch.disable()
+    map.touchZoomRotate.enable()
+    map.touchZoomRotate.disableRotation()
+    map.getCanvas().style.touchAction = 'pan-y'
+    const container = map.getCanvasContainer()
+    if (container) container.style.touchAction = 'pan-y'
+  } else {
+    map.dragPan.enable()
+    map.scrollZoom.enable()
+    map.boxZoom.enable()
+    map.dragRotate.enable()
+    map.keyboard.enable()
+    map.doubleClickZoom.enable()
+    map.touchPitch.enable()
+    map.touchZoomRotate.enable()
+    map.touchZoomRotate.enableRotation()
+    map.getCanvas().style.touchAction = ''
+    const container = map.getCanvasContainer()
+    if (container) container.style.touchAction = ''
+  }
+}
 
 const LAYOUT_SOURCE = 'hero-layout'
 const LAYOUT_LAYERS = [
@@ -44,6 +102,8 @@ function interpolate(start, end, progress) {
 }
 
 function interpolateZoom(startZoom, progress) {
+  const destinationZoom = getHeroDestinationZoom()
+
   if (progress <= ZOOM_OUT_APEX) {
     return interpolate(
       startZoom,
@@ -54,7 +114,7 @@ function interpolateZoom(startZoom, progress) {
 
   return interpolate(
     JOURNEY_ZOOM_OUT,
-    DESTINATION_ZOOM,
+    destinationZoom,
     smoothStep((progress - ZOOM_OUT_APEX) / (1 - ZOOM_OUT_APEX)),
   )
 }
@@ -254,13 +314,14 @@ function setLayoutHighlight(map, longitude, latitude, layout) {
 function fitToLayout(map, boundary) {
   if (!map || !boundary?.length) return
 
+  const mobile = isMobileMapViewport()
   const bounds = new mapboxgl.LngLatBounds()
   boundary.forEach((coord) => bounds.extend(coord))
   map.fitBounds(bounds, {
-    padding: 48,
-    maxZoom: 16.2,
+    padding: mobile ? 64 : 48,
+    maxZoom: mobile ? MOBILE_FIT_MAX_ZOOM : 16.2,
     duration: 900,
-    pitch: INITIAL_PITCH,
+    pitch: getHeroPitch(),
     bearing: map.getBearing(),
   })
 }
@@ -341,31 +402,26 @@ export default function PropertyMap({
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: MAP_STYLE,
+      style: getHeroMapStyle(),
       center: [longitude, latitude],
-      zoom: INITIAL_ZOOM,
+      zoom: isMobileMapViewport() ? MOBILE_ZOOM : INITIAL_ZOOM,
       bearing: 0,
-      pitch: INITIAL_PITCH,
+      pitch: getHeroPitch(),
       attributionControl: true,
     })
 
-    const markerElement = createMarkerElement(propertyName)
-    markerElement.classList.add('is-hidden')
-    const marker = new mapboxgl.Marker({
-      element: markerElement,
-      anchor: 'center',
-    })
-      .setLngLat([longitude, latitude])
-      .addTo(map)
+    map.addControl(
+      new mapboxgl.NavigationControl({
+        showCompass: false,
+        showZoom: true,
+        visualizePitch: false,
+      }),
+      'top-right',
+    )
 
-    mapRef.current = map
-    markerRef.current = marker
-    markerElementRef.current = markerElement
+    applyMobileMapInteractions(map)
 
-    const resize = () => {
-      if (!mapRef.current) return
-      map.resize()
-    }
+    let usingMobileStyle = isMobileMapViewport()
 
     const quietBasemap = () => {
       const style = map.getStyle()
@@ -391,9 +447,63 @@ export default function PropertyMap({
       })
     }
 
+    const restoreMapContent = () => {
+      quietBasemap()
+      applyMobileMapInteractions(map)
+      ensureLayoutLayers(map)
+      const coords = activeCoordinatesRef.current
+      if (coords) {
+        showPropertyLayout(
+          map,
+          coords[0],
+          coords[1],
+          propertyName,
+          layoutRef.current,
+          { fit: false },
+        )
+      }
+    }
+
+    const syncMapInteractions = () => {
+      const wantsMobile = isMobileMapViewport()
+      applyMobileMapInteractions(map)
+
+      if (wantsMobile !== usingMobileStyle) {
+        usingMobileStyle = wantsMobile
+        map.setStyle(getHeroMapStyle())
+        map.once('style.load', restoreMapContent)
+      }
+    }
+
+    const mediaQuery = window.matchMedia(MOBILE_MAP_QUERY)
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMapInteractions)
+    } else {
+      mediaQuery.addListener(syncMapInteractions)
+    }
+
+    const markerElement = createMarkerElement(propertyName)
+    markerElement.classList.add('is-hidden')
+    const marker = new mapboxgl.Marker({
+      element: markerElement,
+      anchor: 'center',
+    })
+      .setLngLat([longitude, latitude])
+      .addTo(map)
+
+    mapRef.current = map
+    markerRef.current = marker
+    markerElementRef.current = markerElement
+
+    const resize = () => {
+      if (!mapRef.current) return
+      map.resize()
+    }
+
     const handleLoad = () => {
       resize()
       quietBasemap()
+      applyMobileMapInteractions(map)
       ensureLayoutLayers(map)
       showPropertyLayout(
         map,
@@ -409,7 +519,13 @@ export default function PropertyMap({
       startRotation(map)
     }
 
+    // Keep page scroll free: never re-enable pan from accidental handler resets.
+    const reinstateMobileLock = () => {
+      if (isMobileMapViewport()) applyMobileMapInteractions(map)
+    }
     map.on('load', handleLoad)
+    map.on('zoomstart', reinstateMobileLock)
+    map.on('touchstart', reinstateMobileLock)
 
     const observer =
       typeof ResizeObserver !== 'undefined'
@@ -420,7 +536,14 @@ export default function PropertyMap({
 
     return () => {
       window.removeEventListener('resize', resize)
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', syncMapInteractions)
+      } else {
+        mediaQuery.removeListener(syncMapInteractions)
+      }
       map.off('load', handleLoad)
+      map.off('zoomstart', reinstateMobileLock)
+      map.off('touchstart', reinstateMobileLock)
       stopRotation()
       observer?.disconnect()
       LAYOUT_LAYERS.forEach((layerId) => {
@@ -502,7 +625,7 @@ export default function PropertyMap({
         ],
         zoom,
         bearing: interpolate(startBearing, 0, movementProgress),
-        pitch: interpolate(startPitch, INITIAL_PITCH, movementProgress),
+        pitch: interpolate(startPitch, getHeroPitch(), movementProgress),
       })
 
       if (rawProgress < 1) {

@@ -9,6 +9,48 @@ import { usePropertyPanel } from '../hooks/usePropertyPanel'
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN = Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 const HYDERABAD_CENTER = [78.34, 17.4]
+const MOBILE_MAP_QUERY = '(max-width: 900px)'
+const DESKTOP_OVERVIEW_MAX_ZOOM = 11.2
+const MOBILE_OVERVIEW_MAX_ZOOM = 10.35
+const DESKTOP_TOUR_ZOOM = 11.05
+const MOBILE_TOUR_ZOOM = 10.75
+const MAP_FACTS_REVEAL_DELAY_MS = 700
+
+function isMobileMapViewport() {
+  return typeof window !== 'undefined' && window.matchMedia(MOBILE_MAP_QUERY).matches
+}
+
+function applyAboutMapInteractions(map) {
+  if (!map) return
+
+  if (isMobileMapViewport()) {
+    map.dragPan.disable()
+    map.scrollZoom.disable()
+    map.boxZoom.disable()
+    map.dragRotate.disable()
+    map.keyboard.disable()
+    map.doubleClickZoom.disable()
+    map.touchPitch.disable()
+    map.touchZoomRotate.enable()
+    map.touchZoomRotate.disableRotation()
+    map.getCanvas().style.touchAction = 'pan-y'
+    const container = map.getCanvasContainer()
+    if (container) container.style.touchAction = 'pan-y'
+  } else {
+    map.dragPan.enable()
+    map.scrollZoom.enable()
+    map.boxZoom.enable()
+    map.dragRotate.enable()
+    map.keyboard.enable()
+    map.doubleClickZoom.enable()
+    map.touchPitch.enable()
+    map.touchZoomRotate.enable()
+    map.touchZoomRotate.enableRotation()
+    map.getCanvas().style.touchAction = ''
+    const container = map.getCanvasContainer()
+    if (container) container.style.touchAction = ''
+  }
+}
 
 const STATS = [
   { number: '2019', label: 'Established', countUp: false },
@@ -201,6 +243,15 @@ function getLayoutExtent(layout) {
 }
 
 function estimateLabelSize(label) {
+  const mobile = isMobileMapViewport()
+  if (mobile) {
+    return {
+      // Compact name tag (+ separate click hint when selected).
+      width: Math.max(0.011, Math.min(0.028, label.length * 0.00105)),
+      height: 0.0064,
+    }
+  }
+
   return {
     width: Math.max(0.02, label.length * 0.00165),
     height: 0.006,
@@ -240,17 +291,21 @@ function boxesOverlap(a, b, pad = 0.0012) {
 
 /** Place each name tag below its layout when possible; nudge away from other layouts/labels. */
 function resolveLabelPlacements(layouts) {
+  const mobile = isMobileMapViewport()
   const extents = layouts.map((layout) => ({
     layout,
     extent: getLayoutExtent(layout),
   }))
   const placed = []
+  const gapScale = mobile ? 0.22 : 0.16
+  const layoutPad = mobile ? 0.0024 : 0.0018
+  const labelPad = mobile ? 0.003 : 0.0022
 
   extents.forEach(({ layout, extent }) => {
     const size = estimateLabelSize(layout.label)
     const cx = (extent.minLng + extent.maxLng) / 2
     const cy = (extent.minLat + extent.maxLat) / 2
-    const gap = Math.max(extent.width, extent.height) * 0.16
+    const gap = Math.max(extent.width, extent.height) * gapScale
 
     const candidates = [
       { lng: cx, lat: extent.minLat - gap, anchor: 'top' },
@@ -265,6 +320,8 @@ function resolveLabelPlacements(layouts) {
       { lng: cx, lat: extent.minLat - gap * 3.6, anchor: 'top' },
       { lng: extent.maxLng + gap * 1.4, lat: extent.minLat - gap * 1.6, anchor: 'top-left' },
       { lng: extent.minLng - gap * 1.4, lat: extent.minLat - gap * 1.6, anchor: 'top-right' },
+      { lng: cx - extent.width * 0.55, lat: extent.minLat - gap * 2.8, anchor: 'top' },
+      { lng: cx + extent.width * 0.55, lat: extent.minLat - gap * 2.8, anchor: 'top' },
     ]
 
     let chosen = candidates[0]
@@ -272,10 +329,10 @@ function resolveLabelPlacements(layouts) {
       const box = getLabelBox(candidate.lng, candidate.lat, size, candidate.anchor)
       const hitsOtherLayout = extents.some(({ layout: other, extent: otherExtent }) => {
         if (other.id === layout.id) return false
-        return boxesOverlap(box, otherExtent, 0.0018)
+        return boxesOverlap(box, otherExtent, layoutPad)
       })
-      const hitsOwnLayout = boxesOverlap(box, extent, 0.0008)
-      const hitsOtherLabel = placed.some((item) => boxesOverlap(box, item.box, 0.0022))
+      const hitsOwnLayout = boxesOverlap(box, extent, mobile ? 0.0012 : 0.0008)
+      const hitsOtherLabel = placed.some((item) => boxesOverlap(box, item.box, labelPad))
 
       if (!hitsOtherLayout && !hitsOwnLayout && !hitsOtherLabel) {
         chosen = candidate
@@ -303,10 +360,16 @@ function createMarkerElement(layout) {
   // Inner wrapper holds animation transforms — never transform the Mapbox root node
   element.innerHTML = `
     <div class="ila-marker__inner">
-      <div class="ila-marker__label">${layout.label}</div>
+      <div class="ila-marker__hint" aria-hidden="true">
+        <span class="ila-marker__hint-text">Click here</span>
+        <span class="ila-marker__hint-line"></span>
+      </div>
+      <button type="button" class="ila-marker__label">
+        <span class="ila-marker__name">${layout.label}</span>
+      </button>
     </div>
   `
-  element.setAttribute('aria-hidden', 'true')
+  element.setAttribute('aria-label', `${layout.label}, view details`)
   return element
 }
 
@@ -507,6 +570,7 @@ export default function AboutVault() {
   const setHoveredIdRef = useRef(() => {})
 
   const { activeProperty, openPanel, closePanel } = usePropertyPanel()
+  const activePropertyRef = useRef(null)
 
   const [isOpen, setIsOpen] = useState(false)
   const [isSplit, setIsSplit] = useState(false)
@@ -515,6 +579,12 @@ export default function AboutVault() {
   const [isAutoSelecting, setIsAutoSelecting] = useState(false)
   const [autoIndex, setAutoIndex] = useState(0)
   const [hoveredId, setHoveredId] = useState(null)
+  const [isMobileView, setIsMobileView] = useState(() => isMobileMapViewport())
+  const [showMapFacts, setShowMapFacts] = useState(false)
+  const [mapStatus, setMapStatus] = useState(() => (HAS_MAPBOX_TOKEN ? 'loading' : 'unavailable'))
+  const [shouldReveal, setShouldReveal] = useState(false)
+  const mapFactsTimerRef = useRef(null)
+  const hasRevealedRef = useRef(false)
 
   useEffect(() => {
     openPanelRef.current = openPanel
@@ -522,9 +592,54 @@ export default function AboutVault() {
   }, [openPanel])
 
   useEffect(() => {
-    if (!HAS_MAPBOX_TOKEN || !mapContainerRef.current) return undefined
+    activePropertyRef.current = activeProperty
+  }, [activeProperty])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_MAP_QUERY)
+    const sync = () => setIsMobileView(mediaQuery.matches)
+    sync()
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', sync)
+      return () => mediaQuery.removeEventListener('change', sync)
+    }
+    mediaQuery.addListener(sync)
+    return () => mediaQuery.removeListener(sync)
+  }, [])
+
+  useEffect(() => {
+    if (mapFactsTimerRef.current) {
+      window.clearTimeout(mapFactsTimerRef.current)
+      mapFactsTimerRef.current = null
+    }
+
+    if (!(isMobileView && (isOpen || isSplit))) {
+      setShowMapFacts(false)
+      return undefined
+    }
+
+    setShowMapFacts(false)
+    mapFactsTimerRef.current = window.setTimeout(() => {
+      setShowMapFacts(true)
+      mapFactsTimerRef.current = null
+    }, MAP_FACTS_REVEAL_DELAY_MS)
+
+    return () => {
+      if (mapFactsTimerRef.current) {
+        window.clearTimeout(mapFactsTimerRef.current)
+        mapFactsTimerRef.current = null
+      }
+    }
+  }, [isMobileView, isOpen, isSplit])
+
+  useEffect(() => {
+    if (!HAS_MAPBOX_TOKEN || !mapContainerRef.current) {
+      setMapStatus('unavailable')
+      return undefined
+    }
 
     mapboxgl.accessToken = MAPBOX_TOKEN
+    setMapStatus('loading')
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
@@ -536,9 +651,24 @@ export default function AboutVault() {
     mapRef.current = map
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
+    applyAboutMapInteractions(map)
+
+    const mediaQuery = window.matchMedia(MOBILE_MAP_QUERY)
+    const syncMapInteractions = () => applyAboutMapInteractions(map)
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMapInteractions)
+    } else {
+      mediaQuery.addListener(syncMapInteractions)
+    }
+
+    const handleMapError = () => {
+      setMapStatus((current) => (current === 'ready' ? current : 'error'))
+    }
+    map.on('error', handleMapError)
 
     map.on('load', () => {
       map.resize()
+      applyAboutMapInteractions(map)
 
       const geo = buildLayoutsGeoJSON()
 
@@ -688,15 +818,29 @@ export default function AboutVault() {
         hoveredIdRef.current = layoutId
         isHoveringRef.current = Boolean(layoutId)
         setHoveredIdRef.current(layoutId)
-        if (layoutId) openPanelRef.current(layoutId)
+        if (layoutId && !isMobileMapViewport()) openPanelRef.current(layoutId)
         map.getCanvas().style.cursor = layoutId ? 'pointer' : ''
       }
 
       map.on('mousemove', (event) => {
+        if (isMobileMapViewport()) return
         applyHover(readLayoutIdFromPoint(event.point))
       })
 
+      map.on('click', (event) => {
+        if (!isMobileMapViewport()) return
+        const layoutId = readLayoutIdFromPoint(event.point)
+        if (!layoutId) {
+          // Empty-map tap: clear hover pause and keep the auto tour running.
+          applyHover(null)
+          return
+        }
+        applyHover(layoutId)
+        openPanelRef.current(layoutId)
+      })
+
       map.on('mouseout', () => {
+        if (isMobileMapViewport()) return
         applyHover(null)
       })
 
@@ -705,15 +849,23 @@ export default function AboutVault() {
         element.style.pointerEvents = 'auto'
         element.style.cursor = 'pointer'
         element.addEventListener('mouseenter', () => {
+          if (isMobileMapViewport()) return
           applyHover(placement.layout.id)
         })
         element.addEventListener('mouseleave', () => {
+          if (isMobileMapViewport()) return
           applyHover(null)
+        })
+        element.addEventListener('click', (event) => {
+          if (!isMobileMapViewport()) return
+          event.stopPropagation()
+          applyHover(placement.layout.id)
+          openPanelRef.current(placement.layout.id)
         })
         new mapboxgl.Marker({
           element,
           anchor: placement.anchor,
-          offset: [0, placement.anchor.startsWith('top') ? 8 : 0],
+          offset: [0, placement.anchor.startsWith('top') ? (isMobileMapViewport() ? 4 : 8) : 0],
         })
           .setLngLat([placement.lng, placement.lat])
           .addTo(map)
@@ -721,13 +873,21 @@ export default function AboutVault() {
       })
 
       map.fitBounds(getLayoutsBounds(), {
-        padding: 56,
+        padding: isMobileMapViewport() ? 72 : 56,
         duration: 0,
-        maxZoom: 11.2,
+        maxZoom: isMobileMapViewport() ? MOBILE_OVERVIEW_MAX_ZOOM : DESKTOP_OVERVIEW_MAX_ZOOM,
       })
+
+      setMapStatus('ready')
     })
 
     return () => {
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', syncMapInteractions)
+      } else {
+        mediaQuery.removeListener(syncMapInteractions)
+      }
+      map.off('error', handleMapError)
       stopLayoutShine(shinePulseRef)
       map.remove()
       mapRef.current = null
@@ -741,15 +901,19 @@ export default function AboutVault() {
     const map = mapRef.current
 
     const frameId = window.requestAnimationFrame(() => {
+      const mobile = isMobileMapViewport()
+      map.resize()
       map.fitBounds(getLayoutsBounds(), {
-        padding: {
-          top: 48,
-          bottom: 48,
-          left: Math.min(window.innerWidth * 0.48, 560) + 24,
-          right: 48,
-        },
+        padding: mobile
+          ? { top: 36, bottom: 132, left: 28, right: 28 }
+          : {
+              top: 48,
+              bottom: 48,
+              left: Math.min(window.innerWidth * 0.48, 560) + 24,
+              right: 48,
+            },
         duration: 700,
-        maxZoom: 11.4,
+        maxZoom: mobile ? MOBILE_OVERVIEW_MAX_ZOOM : 11.4,
         essential: true,
       })
     })
@@ -767,8 +931,13 @@ export default function AboutVault() {
     const showNext = () => {
       if (cancelled) return
 
-      // Pause auto-tour while the user is hovering a layout
-      if (isHoveringRef.current) {
+      const mobile = isMobileMapViewport()
+      // Desktop: pause while hovering. Mobile: pause only while the sheet is open.
+      const shouldPause = mobile
+        ? Boolean(activePropertyRef.current)
+        : isHoveringRef.current
+
+      if (shouldPause) {
         timeoutId = window.setTimeout(showNext, 250)
         return
       }
@@ -777,21 +946,34 @@ export default function AboutVault() {
       if (!layout) return
 
       setAutoIndex(index)
-      openPanel(layout.id)
 
       const map = mapRef.current
       if (map) {
+        map.resize()
+      }
+
+      // Mobile: cycle map highlights only — details open on tap.
+      if (mobile) {
+        highlightSelectedLayout(mapRef.current, layout.id, shinePulseRef)
+        syncMarkerSelection(markerElementsRef.current, layout.id)
+      } else {
+        openPanel(layout.id)
+      }
+
+      if (map) {
         map.easeTo({
           center: [layout.lng, layout.lat],
-          zoom: Math.max(map.getZoom(), 11.05),
+          zoom: mobile ? MOBILE_TOUR_ZOOM : Math.max(map.getZoom(), DESKTOP_TOUR_ZOOM),
           duration: 700,
           essential: true,
-          padding: {
-            top: 40,
-            bottom: 40,
-            left: Math.min(window.innerWidth * 0.42, 520),
-            right: 360,
-          },
+          padding: mobile
+            ? { top: 36, bottom: 128, left: 36, right: 36 }
+            : {
+                top: 40,
+                bottom: 40,
+                left: Math.min(window.innerWidth * 0.42, 520),
+                right: 360,
+              },
         })
       }
 
@@ -800,7 +982,8 @@ export default function AboutVault() {
       timeoutId = window.setTimeout(showNext, 2000)
     }
 
-    showNext()
+    // Give the mobile split layout a beat to settle/resize before the tour starts.
+    timeoutId = window.setTimeout(showNext, isMobileMapViewport() ? 320 : 0)
 
     return () => {
       cancelled = true
@@ -842,72 +1025,93 @@ export default function AboutVault() {
     const section = sectionRef.current
     if (!section) return undefined
 
-    const revealedIds = []
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return
         observer.unobserve(section)
-
-        setIsOpen(true)
-
-        timersRef.current.push(
-          window.setTimeout(() => {
-            mapRef.current?.resize()
-            mapRef.current?.fitBounds(getLayoutsBounds(), {
-              padding: 56,
-              duration: 700,
-              maxZoom: 11.2,
-            })
-          }, 1400),
-        )
-
-        shuffle(propertyLayouts).forEach((layout, index) => {
-          timersRef.current.push(
-            window.setTimeout(() => {
-              const map = mapRef.current
-              const element = markerElementsRef.current.find(
-                (item) => item.dataset.layoutId === layout.id,
-              )
-              element?.classList.add('is-visible')
-              revealedIds.push(layout.id)
-              setLayoutsVisible(map, [...revealedIds])
-            }, 1500 + index * 110),
-          )
-        })
-
-        timersRef.current.push(
-          window.setTimeout(() => setIsSplit(true), 1900),
-        )
-        timersRef.current.push(
-          window.setTimeout(() => setShowAbout(true), 2300),
-        )
-        timersRef.current.push(
-          window.setTimeout(() => setShowStats(true), 2900),
-        )
-        // Start auto-selecting layouts one by one
-        timersRef.current.push(
-          window.setTimeout(() => setIsAutoSelecting(true), 3400),
-        )
+        setShouldReveal(true)
       },
-      { threshold: 0.2 },
+      { threshold: [0, 0.08, 0.15, 0.2], rootMargin: '0px 0px -8% 0px' },
     )
 
     observer.observe(section)
+    return () => observer.disconnect()
+  }, [])
 
+  useEffect(() => {
+    if (!shouldReveal || hasRevealedRef.current) return
+    if (mapStatus === 'loading') return
+
+    hasRevealedRef.current = true
+    const revealedIds = []
+
+    setIsOpen(true)
+
+    timersRef.current.push(
+      window.setTimeout(() => {
+        mapRef.current?.resize()
+        mapRef.current?.fitBounds(getLayoutsBounds(), {
+          padding: isMobileMapViewport() ? 72 : 56,
+          duration: 700,
+          maxZoom: isMobileMapViewport()
+            ? MOBILE_OVERVIEW_MAX_ZOOM
+            : DESKTOP_OVERVIEW_MAX_ZOOM,
+        })
+      }, 1400),
+    )
+
+    shuffle(propertyLayouts).forEach((layout, index) => {
+      timersRef.current.push(
+        window.setTimeout(() => {
+          const map = mapRef.current
+          const element = markerElementsRef.current.find(
+            (item) => item.dataset.layoutId === layout.id,
+          )
+          element?.classList.add('is-visible')
+          revealedIds.push(layout.id)
+          setLayoutsVisible(map, [...revealedIds])
+        }, 1500 + index * 110),
+      )
+    })
+
+    timersRef.current.push(
+      window.setTimeout(() => setIsSplit(true), 1900),
+    )
+    timersRef.current.push(
+      window.setTimeout(() => setShowAbout(true), 2300),
+    )
+    timersRef.current.push(
+      window.setTimeout(() => setShowStats(true), 2900),
+    )
+    timersRef.current.push(
+      window.setTimeout(() => setIsAutoSelecting(true), 3400),
+    )
+  }, [shouldReveal, mapStatus])
+
+  useEffect(() => {
     return () => {
-      observer.disconnect()
       timersRef.current.forEach((timer) => window.clearTimeout(timer))
       timersRef.current = []
     }
   }, [])
 
   const handleClosePanel = () => {
-    setIsAutoSelecting(false)
+    // Mobile: closing the sheet should not stop the automatic layout tour.
+    if (!isMobileView) {
+      setIsAutoSelecting(false)
+    }
     setHoveredId(null)
     isHoveringRef.current = false
     hoveredIdRef.current = null
     closePanel()
+
+    if (isMobileView && isAutoSelecting) {
+      const tourId = propertyLayouts[autoIndex]?.id ?? null
+      highlightSelectedLayout(mapRef.current, tourId, shinePulseRef)
+      syncMarkerSelection(markerElementsRef.current, tourId)
+      return
+    }
+
     highlightSelectedLayout(mapRef.current, null, shinePulseRef)
     syncMarkerSelection(markerElementsRef.current, null)
   }
@@ -917,7 +1121,7 @@ export default function AboutVault() {
     const section = sectionRef.current
     if (!section) return undefined
 
-    const dismissDetails = () => {
+    const dismissAll = () => {
       setIsAutoSelecting(false)
       setHoveredId(null)
       isHoveringRef.current = false
@@ -927,16 +1131,34 @@ export default function AboutVault() {
       syncMarkerSelection(markerElementsRef.current, null)
     }
 
+    const dismissSheetOnly = () => {
+      setHoveredId(null)
+      isHoveringRef.current = false
+      hoveredIdRef.current = null
+      closePanel()
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Close early while scrolling to the next section (not only when fully gone).
+        const mobile = isMobileMapViewport()
+
+        // Mobile About is tall; only stop the tour when the section leaves the viewport.
+        if (mobile) {
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.02) {
+            dismissAll()
+          } else if (entry.intersectionRatio < 0.2) {
+            dismissSheetOnly()
+          }
+          return
+        }
+
         if (entry.intersectionRatio < 0.35) {
-          dismissDetails()
+          dismissAll()
         }
       },
       {
-        threshold: [0, 0.15, 0.35, 0.5, 0.75, 1],
-        rootMargin: '0px 0px -20% 0px',
+        threshold: [0, 0.02, 0.1, 0.2, 0.35, 0.5, 0.75, 1],
+        rootMargin: isMobileMapViewport() ? '0px' : '0px 0px -20% 0px',
       },
     )
 
@@ -948,10 +1170,22 @@ export default function AboutVault() {
     ? propertyLayouts.find((layout) => layout.id === hoveredId) ?? null
     : null
 
-  const panelProperty = hoveredProperty
-    ?? (isAutoSelecting ? propertyLayouts[autoIndex] ?? activeProperty : activeProperty)
+  const factsProperty =
+    hoveredProperty
+    ?? (isAutoSelecting ? propertyLayouts[autoIndex] ?? null : null)
+    ?? activeProperty
+    ?? propertyLayouts[0]
+    ?? null
 
-  const panelAutoSelecting = isAutoSelecting && !hoveredId
+  // Mobile: show details only after an explicit layout / name-tag tap (openPanel).
+  const panelProperty = isMobileView
+    ? activeProperty
+    : (hoveredProperty
+      ?? (isAutoSelecting ? propertyLayouts[autoIndex] ?? activeProperty : activeProperty))
+
+  const panelAutoSelecting = !isMobileView && isAutoSelecting && !hoveredId
+  // Show once the About map is open on mobile (doors open / split), with selected layout facts.
+  const showMobileMapFacts = isMobileView && (isOpen || isSplit) && Boolean(factsProperty)
 
   return (
     <section
@@ -962,6 +1196,8 @@ export default function AboutVault() {
         isSplit ? 'is-split' : '',
         showAbout ? 'show-about' : '',
         showStats ? 'show-stats' : '',
+        isMobileView && panelProperty ? 'has-mobile-sheet' : '',
+        mapStatus === 'loading' ? 'is-map-loading' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -971,6 +1207,78 @@ export default function AboutVault() {
       <div className="about-vault__map-pane">
         <div className="about-vault__map" ref={mapContainerRef} />
         <div className="about-vault__overlay" aria-hidden="true" />
+        {mapStatus === 'loading' ? (
+          <div className="about-vault__loader" role="status" aria-live="polite">
+            <span className="about-vault__loader-ring" aria-hidden="true" />
+            <p className="about-vault__loader-label">Loading About Us</p>
+          </div>
+        ) : null}
+        {mapStatus === 'error' ? (
+          <div className="about-vault__loader about-vault__loader--error" role="status">
+            <p className="about-vault__loader-label">Map could not load. Please refresh.</p>
+          </div>
+        ) : null}
+        {showMobileMapFacts ? (
+          <aside
+            className={`about-vault__map-facts${showMapFacts ? ' is-ready' : ''}`}
+            key={factsProperty.id}
+            aria-hidden={!showMapFacts}
+            aria-label={`${factsProperty.label} quick details`}
+          >
+            <div className="about-vault__fact-chip about-vault__fact-chip--tl">
+              <span className="about-vault__fact-chip-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 8h12a3 3 0 010 6H8" />
+                  <path d="M8 14h8a3 3 0 010 6H4" />
+                  <path d="M8 5v14" />
+                </svg>
+              </span>
+              <span>
+                <strong>Price Range</strong>
+                <em>{factsProperty.priceRange}</em>
+              </span>
+            </div>
+
+            <div className="about-vault__fact-chip about-vault__fact-chip--tr">
+              <span className="about-vault__fact-chip-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="M8.5 12.5l2.2 2.2 4.8-5" />
+                </svg>
+              </span>
+              <span>
+                <strong>Status</strong>
+                <em>{factsProperty.status}</em>
+              </span>
+            </div>
+
+            <div className="about-vault__fact-chip about-vault__fact-chip--bl">
+              <span className="about-vault__fact-chip-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 20V9l4-2 4 2 4-2 4 2v11" />
+                  <path d="M4 20h16M8 20v-6h3v6M13 20v-4h3v4" />
+                </svg>
+              </span>
+              <span>
+                <strong>Plot Size</strong>
+                <em>{factsProperty.plotSizes}</em>
+              </span>
+            </div>
+
+            <div className="about-vault__fact-chip about-vault__fact-chip--br">
+              <span className="about-vault__fact-chip-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="M12 8l2.5 6H9.5L12 8z" fill="currentColor" stroke="none" />
+                </svg>
+              </span>
+              <span>
+                <strong>Facing</strong>
+                <em>{factsProperty.facing}</em>
+              </span>
+            </div>
+          </aside>
+        ) : null}
       </div>
 
       <div className="about-vault__content">
@@ -1010,6 +1318,14 @@ export default function AboutVault() {
       <div className="about-vault__door about-vault__door--right" aria-hidden="true" />
       <div className="about-vault__seam" aria-hidden="true" />
 
+      {isMobileView && panelProperty ? (
+        <button
+          type="button"
+          className="about-vault__sheet-scrim"
+          aria-label="Close property details"
+          onClick={handleClosePanel}
+        />
+      ) : null}
       <PropertyPanel
         property={panelProperty}
         onClose={handleClosePanel}

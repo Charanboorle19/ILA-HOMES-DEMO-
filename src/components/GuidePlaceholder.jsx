@@ -1,8 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import explainingVideo from '../assets/real-estate-person-explaining.mp4'
+import mobilePresenterVideo from '../assets/video.mp4'
 import propertyVoiceOver from '../assets/ElevenLabs_2026-09-16T05_52_25_Adam - Articulate Engineering Professor_pvc_s50_m2.mp3'
 import PropertyMap from './PropertyMap'
 import PropertyPanel from './PropertyPanel'
+
+const MOBILE_QUERY = '(max-width: 900px)'
+const MAP_FACTS_REVEAL_DELAY_MS = 2200
+
+function useIsMobileViewport() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(MOBILE_QUERY).matches : false,
+  )
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY)
+    const sync = () => setIsMobile(media.matches)
+    sync()
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', sync)
+      return () => media.removeEventListener('change', sync)
+    }
+    media.addListener(sync)
+    return () => media.removeListener(sync)
+  }, [])
+
+  return isMobile
+}
 
 const properties = [
   {
@@ -67,11 +91,15 @@ export default function GuidePlaceholder() {
   const [detailDelay, setDetailDelay] = useState(5)
   const [inView, setInView] = useState(true)
   const [showPanel, setShowPanel] = useState(false)
+  const [showMapFacts, setShowMapFacts] = useState(false)
+  const isMobile = useIsMobileViewport()
+  const presenterVideoSrc = isMobile ? mobilePresenterVideo : explainingVideo
   const sectionRef = useRef(null)
   const videoRef = useRef(null)
   const audioRef = useRef(null)
   const fallbackTimerRef = useRef(null)
   const transitionTimerRef = useRef(null)
+  const mapFactsTimerRef = useRef(null)
   const currentRef = useRef(0)
   const advanceRef = useRef(() => {})
   const inViewRef = useRef(true)
@@ -79,6 +107,22 @@ export default function GuidePlaceholder() {
 
   currentRef.current = current
   inViewRef.current = inView
+
+  const clearMapFactsTimer = useCallback(() => {
+    if (mapFactsTimerRef.current) {
+      window.clearTimeout(mapFactsTimerRef.current)
+      mapFactsTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleMapFactsReveal = useCallback(() => {
+    clearMapFactsTimer()
+    setShowMapFacts(false)
+    mapFactsTimerRef.current = window.setTimeout(() => {
+      setShowMapFacts(true)
+      mapFactsTimerRef.current = null
+    }, MAP_FACTS_REVEAL_DELAY_MS)
+  }, [clearMapFactsTimer])
 
   const stopVoiceOver = useCallback(() => {
     if (fallbackTimerRef.current) {
@@ -140,9 +184,11 @@ export default function GuidePlaceholder() {
     if (transitioning) return
     stopVoiceOver()
     clearTransitionTimer()
+    clearMapFactsTimer()
+    setShowMapFacts(false)
     setTransitioning(true)
     setTravelTarget(properties[nextIndex])
-  }, [clearTransitionTimer, stopVoiceOver, transitioning])
+  }, [clearMapFactsTimer, clearTransitionTimer, stopVoiceOver, transitioning])
 
   const handleTravelComplete = useCallback(() => {
     if (!travelTarget) return
@@ -150,8 +196,9 @@ export default function GuidePlaceholder() {
     setTravelTarget(null)
     setCurrent(properties.indexOf(nextProperty))
     setTransitioning(false)
+    scheduleMapFactsReveal()
     playVoiceOver(nextProperty)
-  }, [playVoiceOver, travelTarget])
+  }, [playVoiceOver, scheduleMapFactsReveal, travelTarget])
 
   advanceRef.current = advanceToNext
 
@@ -161,12 +208,14 @@ export default function GuidePlaceholder() {
     setTransitioning(false)
     setTravelTarget(null)
     setCurrent(0)
+    scheduleMapFactsReveal()
     playVoiceOver(properties[0])
-  }, [clearTransitionTimer, playVoiceOver, stopVoiceOver])
+  }, [clearTransitionTimer, playVoiceOver, scheduleMapFactsReveal, stopVoiceOver])
 
   useEffect(() => {
     begin()
-  }, [begin])
+    return () => clearMapFactsTimer()
+  }, [begin, clearMapFactsTimer])
 
   useEffect(() => {
     const section = sectionRef.current
@@ -236,12 +285,17 @@ export default function GuidePlaceholder() {
         <div className="presentation__top-logo">ILA <span>Homes</span></div>
         <div className="presentation__main">
           <div className="presentation__presenter">
+            <header className="presentation__welcome presentation__welcome--on-video">
+              <p className="presentation__welcome-eyebrow">ILA Homes</p>
+              <h3>Welcome to ILA Homes</h3>
+            </header>
             <div className="presentation__bubble"><strong>Arjun · ILA Homes</strong></div>
             <div className="presentation__avatar">
               <video
                 ref={videoRef}
                 className="presenter-video"
-                src={explainingVideo}
+                key={presenterVideoSrc}
+                src={presenterVideoSrc}
                 autoPlay
                 loop
                 muted
@@ -252,9 +306,11 @@ export default function GuidePlaceholder() {
           </div>
           <div className="presentation__property">
             <div className="presentation__card">
-              <p className="presentation__step">Property {current + 1} of {properties.length}</p>
-              <h3>{property.name}</h3>
-              <p className="presentation__location">{property.location}</p>
+              <header className="presentation__welcome presentation__welcome--on-map">
+                <p className="presentation__welcome-eyebrow">ILA Homes</p>
+                <h3>Welcome to ILA Homes</h3>
+              </header>
+
               <div className="presentation__map-data">
                 <div className="presentation__map">
                   <PropertyMap
@@ -265,15 +321,98 @@ export default function GuidePlaceholder() {
                     travelTarget={travelTarget}
                     onTravelComplete={handleTravelComplete}
                   />
-                  <div className="presentation__map-panel">
-                    <PropertyPanel
-                      property={showPanel ? property : null}
-                      onClose={() => setShowPanel(false)}
-                      autoSelecting={showPanel}
-                      autoIndex={current}
-                      autoTotal={properties.length}
-                    />
-                  </div>
+                  <aside
+                    className={`presentation__map-facts${showMapFacts ? ' is-ready' : ''}`}
+                    key={property.id}
+                    aria-hidden={!showMapFacts}
+                    aria-label={`${property.name} property details`}
+                  >
+                      <div className="presentation__fact-chip presentation__fact-chip--tl">
+                        <span className="presentation__fact-chip-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M4 20V9l4-2 4 2 4-2 4 2v11" />
+                            <path d="M4 20h16M8 20v-6h3v6M13 20v-4h3v4" />
+                          </svg>
+                        </span>
+                        <span>
+                          <strong>Plot Sizes</strong>
+                          <em>{property.plotSizes}</em>
+                        </span>
+                      </div>
+
+                      <div className="presentation__fact-chip presentation__fact-chip--ml">
+                        <span className="presentation__fact-chip-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M4 16l8 4 8-4M4 12l8 4 8-4M4 8l8 4 8-4" />
+                          </svg>
+                        </span>
+                        <span>
+                          <strong>Total Plots</strong>
+                          <em>{property.plots}</em>
+                        </span>
+                      </div>
+
+                      <div className="presentation__fact-chip presentation__fact-chip--bl">
+                        <span className="presentation__fact-chip-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M12 3c-3.5 4.2-5.5 7.2-5.5 9.5a5.5 5.5 0 0011 0C17.5 10.2 15.5 7.2 12 3z" />
+                          </svg>
+                        </span>
+                        <span>
+                          <strong>Water Supply</strong>
+                          <em>{property.water}</em>
+                        </span>
+                      </div>
+
+                      <div className="presentation__fact-chip presentation__fact-chip--tr">
+                        <span className="presentation__fact-chip-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M4 12h16M8 8v8M16 8v8M12 6v12" strokeDasharray="0" />
+                            <path d="M11 6h2M11 18h2" />
+                          </svg>
+                        </span>
+                        <span>
+                          <strong>Road Width</strong>
+                          <em>{property.road}</em>
+                        </span>
+                      </div>
+
+                      <div className="presentation__fact-chip presentation__fact-chip--mr">
+                        <span className="presentation__fact-chip-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <circle cx="12" cy="12" r="8" />
+                            <path d="M12 8l2.5 6H9.5L12 8z" fill="currentColor" stroke="none" />
+                          </svg>
+                        </span>
+                        <span>
+                          <strong>Facing</strong>
+                          <em>{property.facing}</em>
+                        </span>
+                      </div>
+
+                      <div className="presentation__fact-chip presentation__fact-chip--br">
+                        <span className="presentation__fact-chip-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M13 3L6 13h5l-1 8 8-12h-5l1-6z" />
+                          </svg>
+                        </span>
+                        <span>
+                          <strong>Power Supply</strong>
+                          <em>{property.power}</em>
+                        </span>
+                      </div>
+                    </aside>
+                  {!isMobile ? (
+                    <div className="presentation__map-panel">
+                      <PropertyPanel
+                        property={showPanel ? property : null}
+                        onClose={() => setShowPanel(false)}
+                        autoSelecting={showPanel}
+                        autoIndex={current}
+                        autoTotal={properties.length}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

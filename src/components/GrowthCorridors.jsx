@@ -12,6 +12,44 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
 const HAS_MAPBOX_TOKEN =
   Boolean(MAPBOX_TOKEN) && MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN'
 const MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
+const MOBILE_MAP_QUERY = '(max-width: 720px)'
+
+function isMobileMapViewport() {
+  return typeof window !== 'undefined' && window.matchMedia(MOBILE_MAP_QUERY).matches
+}
+
+function applyCorridorMapInteractions(map, mobile) {
+  if (!map) return
+
+  if (mobile) {
+    map.dragPan.disable()
+    map.scrollZoom.disable()
+    map.boxZoom.disable()
+    map.dragRotate.disable()
+    map.keyboard.disable()
+    map.doubleClickZoom.disable()
+    map.touchPitch.disable()
+    map.touchZoomRotate.enable()
+    map.touchZoomRotate.disableRotation()
+    // pan-y: one finger scrolls the page; Mapbox still gets two-finger pinch zoom.
+    map.getCanvas().style.touchAction = 'pan-y'
+    const container = map.getCanvasContainer()
+    if (container) container.style.touchAction = 'pan-y'
+  } else {
+    map.dragPan.enable()
+    map.scrollZoom.enable()
+    map.boxZoom.enable()
+    map.dragRotate.enable()
+    map.keyboard.enable()
+    map.doubleClickZoom.enable()
+    map.touchPitch.enable()
+    map.touchZoomRotate.enable()
+    map.touchZoomRotate.enableRotation()
+    map.getCanvas().style.touchAction = ''
+    const container = map.getCanvasContainer()
+    if (container) container.style.touchAction = ''
+  }
+}
 
 const CORRIDOR_CONTENT = [
   {
@@ -302,8 +340,10 @@ function MapIcon() {
 
 export default function GrowthCorridors() {
   const mapRef = useRef(null)
+  const sectionRef = useRef(null)
   const [active, setActive] = useState(0)
   const [showMap, setShowMap] = useState(false)
+  const [isMobileView, setIsMobileView] = useState(() => isMobileMapViewport())
   const [viewState, setViewState] = useState({
     longitude: SOUTH_HYDERABAD_VIEW.longitude,
     latitude: SOUTH_HYDERABAD_VIEW.latitude,
@@ -313,6 +353,23 @@ export default function GrowthCorridors() {
   })
 
   const current = CORRIDORS[active]
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_MAP_QUERY)
+    const sync = () => {
+      const mobile = mediaQuery.matches
+      setIsMobileView(mobile)
+      const map = mapRef.current?.getMap?.() ?? mapRef.current
+      applyCorridorMapInteractions(map, mobile)
+    }
+    sync()
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', sync)
+      return () => mediaQuery.removeEventListener('change', sync)
+    }
+    mediaQuery.addListener(sync)
+    return () => mediaQuery.removeListener(sync)
+  }, [])
 
   const highlightGeoJson = useMemo(
     () => ({
@@ -325,22 +382,89 @@ export default function GrowthCorridors() {
   const infraOverlay = useMemo(() => buildInfraOverlay(current), [current])
 
   const flyToCorridor = useCallback((corridor) => {
+    if (!corridor?.coordinates) return false
+
     const [longitude, latitude] = corridor.coordinates
-    mapRef.current?.flyTo({
+    const zoom = Math.max(corridor.zoom ?? 12.2, 12.4)
+    const mobile = isMobileMapViewport()
+    const nextView = {
+      longitude,
+      latitude,
+      zoom,
+      pitch: 0,
+      bearing: 0,
+    }
+
+    setViewState((prev) => ({
+      ...prev,
+      ...nextView,
+    }))
+
+    const mapRefObj = mapRef.current
+    if (!mapRefObj) return false
+
+    const map = typeof mapRefObj.getMap === 'function' ? mapRefObj.getMap() : mapRefObj
+    if (!map || typeof map.flyTo !== 'function') return false
+
+    try {
+      map.resize?.()
+    } catch {
+      // Map may not be fully attached yet.
+    }
+
+    map.flyTo({
       center: [longitude, latitude],
-      zoom: Math.max(corridor.zoom ?? 12.2, 12.4),
+      zoom,
       duration: 1100,
       essential: true,
-      padding: { top: 48, bottom: 88, left: 40, right: 40 },
+      padding: mobile
+        ? { top: 24, bottom: 32, left: 24, right: 24 }
+        : { top: 48, bottom: 88, left: 40, right: 40 },
     })
+
+    return true
   }, [])
 
   useEffect(() => {
-    if (!showMap) return
-    flyToCorridor(CORRIDORS[active])
+    if (!showMap) return undefined
+
+    let cancelled = false
+    let attempts = 0
+    let timerId = 0
+
+    const tryFly = () => {
+      if (cancelled) return
+      const moved = flyToCorridor(CORRIDORS[active])
+      if (moved || attempts >= 40) return
+      attempts += 1
+      timerId = window.setTimeout(tryFly, 50)
+    }
+
+    // Wait a beat for the mobile details + map layout to settle, then fly.
+    timerId = window.setTimeout(tryFly, 120)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timerId)
+    }
   }, [active, showMap, flyToCorridor])
 
+  useEffect(() => {
+    if (!showMap) return undefined
+    const frameId = window.requestAnimationFrame(() => {
+      const mapRefObj = mapRef.current
+      const map = mapRefObj?.getMap?.() ?? mapRefObj
+      applyCorridorMapInteractions(map, isMobileView)
+      map?.resize?.()
+    })
+    return () => window.cancelAnimationFrame(frameId)
+  }, [showMap, isMobileView])
+
   const handleMapLoad = useCallback(() => {
+    const mapRefObj = mapRef.current
+    const map = mapRefObj?.getMap?.() ?? mapRefObj
+    applyCorridorMapInteractions(map, isMobileMapViewport())
+    map?.resize?.()
     flyToCorridor(CORRIDORS[active])
   }, [active, flyToCorridor])
 
@@ -349,6 +473,18 @@ export default function GrowthCorridors() {
   }
 
   const openMap = (index = active) => {
+    const corridor = CORRIDORS[index] ?? CORRIDORS[active]
+    if (corridor?.coordinates) {
+      const [longitude, latitude] = corridor.coordinates
+      setViewState((prev) => ({
+        ...prev,
+        longitude,
+        latitude,
+        zoom: Math.max(corridor.zoom ?? 12.2, 12.4),
+        pitch: 0,
+        bearing: 0,
+      }))
+    }
     setActive(index)
     setShowMap(true)
   }
@@ -357,15 +493,59 @@ export default function GrowthCorridors() {
     setShowMap(false)
   }
 
+  useEffect(() => {
+    if (!showMap || !isMobileView) return undefined
+
+    const section = sectionRef.current
+    if (!section) return undefined
+
+    let timeoutId = 0
+    const scrollToSectionStart = () => {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const map = mapRef.current?.getMap?.() ?? mapRef.current
+      map?.resize?.()
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      scrollToSectionStart()
+      timeoutId = window.setTimeout(scrollToSectionStart, 160)
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [showMap, isMobileView])
+
   return (
     <section
-      className={`section growth-corridors${showMap ? ' is-map-mode' : ' is-browse-mode'}`}
+      ref={sectionRef}
+      className={`section growth-corridors${showMap ? ' is-map-mode' : ' is-browse-mode'}${isMobileView ? ' is-mobile' : ''}`}
       id="growth-corridors"
       aria-label="Hyderabad growth corridors"
     >
       <div className="growth-corridors__shell">
         {showMap ? (
           <>
+            <div className="growth-corridors__mobile-focus">
+              <p className="growth-corridors__eyebrow">South Hyderabad · Growth corridors</p>
+              <div className="growth-corridors__mobile-focus-body">
+                <p className="growth-corridors__mobile-focus-name">{current.name}</p>
+                <p className="growth-corridors__mobile-focus-tag">{current.tag}</p>
+                <p className="growth-corridors__desc">{current.description}</p>
+                <div className="growth-corridors__stats">
+                  {current.stats.map((stat) => (
+                    <div className="growth-corridors__stat" key={stat.label}>
+                      <div className={`growth-corridors__stat-val${stat.gold ? ' is-gold' : ''}`}>
+                        {stat.value}
+                      </div>
+                      <div className="growth-corridors__stat-lbl">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <aside className="growth-corridors__side">
               <header className="growth-corridors__intro">
                 <div className="growth-corridors__intro-copy">
@@ -445,6 +625,13 @@ export default function GrowthCorridors() {
 
             <div className="growth-corridors__map-pane">
               <div className="growth-corridors__map-wrap">
+                <button
+                  type="button"
+                  className="growth-corridors__map-back"
+                  onClick={closeMap}
+                >
+                  ← Back
+                </button>
                 {HAS_MAPBOX_TOKEN ? (
                   <Map
                     ref={mapRef}
@@ -456,6 +643,14 @@ export default function GrowthCorridors() {
                     style={{ width: '100%', height: '100%' }}
                     attributionControl={false}
                     reuseMaps
+                    dragPan={!isMobileView}
+                    dragRotate={!isMobileView}
+                    scrollZoom={!isMobileView}
+                    boxZoom={!isMobileView}
+                    doubleClickZoom={!isMobileView}
+                    keyboard={!isMobileView}
+                    touchPitch={!isMobileView}
+                    touchZoomRotate={isMobileView}
                   >
                     <Source id="corridor-highlight" type="geojson" data={highlightGeoJson}>
                       <Layer
@@ -547,16 +742,22 @@ export default function GrowthCorridors() {
                         longitude={corridor.coordinates[0]}
                         latitude={corridor.coordinates[1]}
                         anchor="bottom"
-                        onClick={(event) => {
-                          event.originalEvent.stopPropagation()
-                          selectCorridor(index)
-                        }}
+                        style={isMobileView ? { pointerEvents: 'none' } : undefined}
+                        onClick={
+                          isMobileView
+                            ? undefined
+                            : (event) => {
+                                event.originalEvent.stopPropagation()
+                                selectCorridor(index)
+                              }
+                        }
                       >
                         <button
                           type="button"
                           className={`growth-corridors__marker${index === active ? ' is-active' : ''}`}
                           aria-label={`Select ${corridor.name}`}
-                          onClick={() => selectCorridor(index)}
+                          tabIndex={isMobileView ? -1 : 0}
+                          onClick={isMobileView ? undefined : () => selectCorridor(index)}
                         >
                           <span className="growth-corridors__marker-dot" aria-hidden="true" />
                           <span className="growth-corridors__marker-label">{corridor.name}</span>
@@ -649,20 +850,44 @@ export default function GrowthCorridors() {
                 const num = String(index + 1).padStart(2, '0')
 
                 return (
-                  <button
+                  <div
                     key={corridor.id}
-                    type="button"
                     role="listitem"
                     className={`growth-corridors__pick${isActive ? ' is-active' : ''}`}
-                    aria-pressed={isActive}
-                    onClick={() => selectCorridor(index)}
                   >
-                    <span className="growth-corridors__num">{num}</span>
-                    <span className="growth-corridors__titles">
-                      <span className="growth-corridors__name">{corridor.name}</span>
-                      <span className="growth-corridors__tag">{corridor.tag}</span>
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      className="growth-corridors__pick-select"
+                      aria-pressed={isActive}
+                      onClick={() => selectCorridor(index)}
+                    >
+                      <span className="growth-corridors__num">{num}</span>
+                      <span className="growth-corridors__titles">
+                        <span className="growth-corridors__name">{corridor.name}</span>
+                        <span className="growth-corridors__tag">{corridor.tag}</span>
+                      </span>
+                    </button>
+                    <div className="growth-corridors__pick-foot">
+                      <button
+                        type="button"
+                        className="growth-corridors__pick-map"
+                        onClick={() => openMap(index)}
+                      >
+                        <span className="growth-corridors__pick-map-label">View on map</span>
+                        <span className="growth-corridors__pick-map-arrow" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path
+                              d="M5 12h12.5M13 6.5 18.5 12 13 17.5"
+                              stroke="currentColor"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 )
               })}
             </div>

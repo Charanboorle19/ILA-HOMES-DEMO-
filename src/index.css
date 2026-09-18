@@ -75,6 +75,19 @@ body {
   min-height: 100svh;
 }
 
+@media (max-width: 900px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+  }
+}
+
 img {
   display: block;
   max-width: 100%;
