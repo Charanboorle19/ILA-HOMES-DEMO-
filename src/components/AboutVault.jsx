@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './AboutVault.css'
@@ -1190,6 +1191,7 @@ export default function AboutVault() {
   useEffect(() => {
     const sheetOpen = isMobileView && Boolean(panelProperty)
     if (!sheetOpen) {
+      document.documentElement.classList.remove('is-property-sheet-open')
       document.body.style.removeProperty('overflow')
       document.documentElement.style.removeProperty('overflow')
       document.body.style.removeProperty('position')
@@ -1207,6 +1209,7 @@ export default function AboutVault() {
     }
     const prevHtml = document.documentElement.style.overflow
 
+    document.documentElement.classList.add('is-property-sheet-open')
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
     document.body.style.position = 'fixed'
@@ -1214,6 +1217,7 @@ export default function AboutVault() {
     document.body.style.width = '100%'
 
     return () => {
+      document.documentElement.classList.remove('is-property-sheet-open')
       document.documentElement.style.overflow = prevHtml
       document.body.style.overflow = prevBody.overflow
       document.body.style.position = prevBody.position
@@ -1354,21 +1358,37 @@ export default function AboutVault() {
       <div className="about-vault__door about-vault__door--right" aria-hidden="true" />
       <div className="about-vault__seam" aria-hidden="true" />
 
-      {isMobileView && panelProperty ? (
-        <button
-          type="button"
-          className="about-vault__sheet-scrim"
-          aria-label="Close property details"
-          onClick={handleClosePanel}
-        />
-      ) : null}
-      <PropertyPanel
-        property={panelProperty}
-        onClose={handleClosePanel}
-        autoSelecting={panelAutoSelecting}
-        autoIndex={autoIndex}
-        autoTotal={propertyLayouts.length}
-      />
+      {isMobileView
+        ? createPortal(
+            <>
+              {panelProperty ? (
+                <button
+                  type="button"
+                  className="about-vault__sheet-scrim"
+                  aria-label="Close property details"
+                  onClick={handleClosePanel}
+                />
+              ) : null}
+              <PropertyPanel
+                property={panelProperty}
+                onClose={handleClosePanel}
+                autoSelecting={false}
+                autoIndex={autoIndex}
+                autoTotal={propertyLayouts.length}
+                sheet
+              />
+            </>,
+            document.body,
+          )
+        : (
+          <PropertyPanel
+            property={panelProperty}
+            onClose={handleClosePanel}
+            autoSelecting={panelAutoSelecting}
+            autoIndex={autoIndex}
+            autoTotal={propertyLayouts.length}
+          />
+        )}
     </section>
   )
 }

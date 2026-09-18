@@ -91,6 +91,22 @@ body {
   }
 }
 
+html.is-property-sheet-open,
+html.is-property-sheet-open body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+html.is-property-sheet-open .property-panel--sheet,
+html.is-property-sheet-open .property-panel--sheet * {
+  touch-action: auto;
+}
+
+html.is-property-sheet-open .property-panel--sheet .property-panel__scroll {
+  touch-action: pan-y;
+}
+
 img {
   display: block;
   max-width: 100%;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import explainingVideo from '../assets/real-estate-person-explaining.mp4'
 import mobilePresenterVideo from '../assets/video.mp4'
 import propertyVoiceOver from '../assets/ElevenLabs_2026-09-16T05_52_25_Adam - Articulate Engineering Professor_pvc_s50_m2.mp3'
@@ -283,6 +284,7 @@ export default function GuidePlaceholder() {
 
   useEffect(() => {
     if (!(isMobile && showPanel)) {
+      document.documentElement.classList.remove('is-property-sheet-open')
       document.body.style.removeProperty('overflow')
       document.documentElement.style.removeProperty('overflow')
       document.body.style.removeProperty('position')
@@ -300,6 +302,7 @@ export default function GuidePlaceholder() {
     }
     const prevHtml = document.documentElement.style.overflow
 
+    document.documentElement.classList.add('is-property-sheet-open')
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
     document.body.style.position = 'fixed'
@@ -307,6 +310,7 @@ export default function GuidePlaceholder() {
     document.body.style.width = '100%'
 
     return () => {
+      document.documentElement.classList.remove('is-property-sheet-open')
       document.documentElement.style.overflow = prevHtml
       document.body.style.overflow = prevBody.overflow
       document.body.style.position = prevBody.position
@@ -480,23 +484,29 @@ export default function GuidePlaceholder() {
         </div>
       </div>
 
-      {isMobile && showPanel ? (
-        <button
-          type="button"
-          className="presentation-hero__sheet-scrim"
-          aria-label="Close property details"
-          onClick={closePanel}
-        />
-      ) : null}
-      {isMobile ? (
-        <PropertyPanel
-          property={showPanel ? property : null}
-          onClose={closePanel}
-          autoSelecting={false}
-          autoIndex={current}
-          autoTotal={properties.length}
-        />
-      ) : null}
+      {isMobile
+        ? createPortal(
+            <>
+              {showPanel ? (
+                <button
+                  type="button"
+                  className="presentation-hero__sheet-scrim"
+                  aria-label="Close property details"
+                  onClick={closePanel}
+                />
+              ) : null}
+              <PropertyPanel
+                property={showPanel ? property : null}
+                onClose={closePanel}
+                autoSelecting={false}
+                autoIndex={current}
+                autoTotal={properties.length}
+                sheet
+              />
+            </>,
+            document.body,
+          )
+        : null}
     </section>
   )
 }

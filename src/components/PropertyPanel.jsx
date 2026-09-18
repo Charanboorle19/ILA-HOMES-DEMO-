@@ -15,13 +15,21 @@ export default function PropertyPanel({
   autoSelecting = false,
   autoIndex = 0,
   autoTotal = 0,
+  sheet = false,
 }) {
   const isActive = Boolean(property)
   const stepLabel = `${String(autoIndex + 1).padStart(2, '0')} / ${String(autoTotal).padStart(2, '0')}`
 
   return (
     <aside
-      className={`property-panel${isActive ? ' is-active' : ''}${autoSelecting ? ' is-auto' : ''}`}
+      className={[
+        'property-panel',
+        isActive ? 'is-active' : '',
+        autoSelecting ? 'is-auto' : '',
+        sheet ? 'property-panel--sheet' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       aria-hidden={!isActive}
       aria-live="polite"
     >
