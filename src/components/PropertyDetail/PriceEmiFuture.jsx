@@ -105,7 +105,7 @@ export default function PriceEmiFuture({ property }) {
           </div>
 
           <div className="pd-price__story">
-            <p className="pd-price__story-kicker">Appreciation story</p>
+            <p className="pd-price__story-kicker">How this plot grows in value</p>
             <p className="pd-price__story-lead">
               If you buy {property.name} at {priceLabel} with {downPct}% down,
               your EMI is <strong>{formatRupee(story.emi)}/month</strong>. At
@@ -116,22 +116,22 @@ export default function PriceEmiFuture({ property }) {
 
             <div className="pd-price__timeline">
               <div className="pd-price__point">
-                <span>Today (2026)</span>
+                <span>What you pay today — 2026</span>
                 <strong>{priceLabel}</strong>
               </div>
               <div className="pd-price__point">
-                <span>In 2028 (38% corridor avg.)</span>
+                <span>Estimated value in 2028</span>
                 <strong>~{formatLakhs(story.value2028)}</strong>
               </div>
               <div className="pd-price__point pd-price__point--peak">
-                <span>In 2030 (ORR Phase 3)</span>
+                <span>Projected value in 2030 — when ORR Phase 3 completes</span>
                 <strong>~{formatLakhs(story.value2030)}</strong>
               </div>
             </div>
 
             <p className="pd-price__disclaimer">
-              Based on ORR corridor 3yr avg. of 38% appreciation. Not a
-              guarantee — indicative of area trends.
+              Estimated from 3 years of corridor growth data. Indicative only, not a
+              guaranteed return.
             </p>
           </div>
         </div>

@@ -155,15 +155,12 @@ export default function PlotCompare() {
     <section className="plot-compare" id="compare-plots" aria-label="Compare plots">
       <div className="plot-compare__frame">
         <header className="plot-compare__intro">
-          <p className="plot-compare__eyebrow">New — Idea 6</p>
           <h2 className="plot-compare__heading">
-            Compare plots
-            <br />
-            side by side.
+            Pick the right plot — compare before you decide.
           </h2>
           <p className="plot-compare__lede">
-            Shortlist up to 3 plots and compare everything that matters — price per sq.yd,
-            infra score, legal status, appreciation potential. Converts browsers into callers.
+            Price, legal status, location, growth potential — see it all side by side before
+            you decide.
           </p>
         </header>
 

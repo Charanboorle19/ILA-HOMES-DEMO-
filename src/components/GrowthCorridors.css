@@ -835,31 +835,34 @@
 }
 
 @media (max-width: 720px) {
-  /* Same floor as About Us: full viewport min-height; can grow taller. */
+  /* Browse hugs content; map restores full viewport height with a smooth grow. */
   .growth-corridors.is-browse-mode.section,
   .growth-corridors.is-map-mode.section {
     display: flex;
     flex-direction: column;
     height: auto;
-    min-height: var(--section-floor);
     max-height: none;
+    transition: min-height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .growth-corridors.is-browse-mode.section {
+    min-height: 0;
     overflow: visible;
   }
 
   .growth-corridors.is-map-mode.section {
+    min-height: var(--section-floor);
     overflow: hidden;
   }
 
   .growth-corridors.is-browse-mode .growth-corridors__shell {
     display: flex;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     flex-direction: column;
-    min-height: var(--section-floor);
+    min-height: 0;
     height: auto;
     overflow: visible;
+    transition: min-height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .growth-corridors.is-map-mode .growth-corridors__shell {
@@ -870,11 +873,12 @@
     height: auto;
     min-height: var(--section-floor);
     overflow: hidden;
+    transition: min-height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .growth-corridors.is-browse-mode .growth-corridors__browse {
     display: flex;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     flex-direction: column;
     min-height: 0;
   }
@@ -888,7 +892,8 @@
     align-items: stretch;
     gap: 0.65rem;
     min-height: 0;
-    padding: 0.35rem max(0.9rem, env(safe-area-inset-left)) 0.75rem
+    padding: 0.35rem max(0.9rem, env(safe-area-inset-left))
+      max(1.1rem, env(safe-area-inset-bottom))
       max(0.9rem, env(safe-area-inset-right));
   }
 
@@ -1034,11 +1039,9 @@
     height: 0.75rem;
   }
 
+  /* Spotlight copy removed on mobile — cards already carry the location. */
   .growth-corridors.is-browse-mode .growth-corridors__spotlight {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    display: none;
   }
 
   /* Desktop accordion stays desktop-only. */
@@ -1180,23 +1183,8 @@
     display: none;
   }
 
-  .growth-corridors.is-browse-mode .growth-corridors__spotlight {
-    gap: 0.75rem;
-    padding: 0.75rem max(0.9rem, env(safe-area-inset-left)) 1rem
-      max(0.9rem, env(safe-area-inset-right));
-  }
-
   .growth-corridors.is-browse-mode .growth-corridors__spotlight-name {
     font-size: 1.05rem;
-  }
-
-  .growth-corridors.is-browse-mode .growth-corridors__desc {
-    font-size: 0.8rem;
-    line-height: 1.5;
-  }
-
-  .growth-corridors.is-browse-mode .growth-corridors__stats {
-    gap: 0.55rem 1rem;
   }
 
   .growth-corridors.is-map-mode .growth-corridors__desc,
@@ -1219,5 +1207,12 @@
   .growth-corridors__pick {
     transition: none;
     animation: none;
+  }
+
+  .growth-corridors.is-browse-mode.section,
+  .growth-corridors.is-map-mode.section,
+  .growth-corridors.is-browse-mode .growth-corridors__shell,
+  .growth-corridors.is-map-mode .growth-corridors__shell {
+    transition: none;
   }
 }

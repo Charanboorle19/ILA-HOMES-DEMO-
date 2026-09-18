@@ -46,15 +46,15 @@ const PLOTS = [
 const INSIGHTS = [
   {
     title: 'Your EMI pays the bank. The land pays you back.',
-    copy: "While you pay monthly, the plot's value grows. In a few years, corridor appreciation may equal or exceed what you've paid in EMIs.",
+    copy: 'Every month you pay, your plot grows in value. Buyers in our corridors have seen appreciation cover their EMI cost within 4–5 years.',
   },
   {
-    title: 'Loan assistance included',
-    copy: 'We work with SBI, HDFC, and Axis. Pre-approval checks in 24 hours. We handle the paperwork.',
+    title: 'Loans made easy',
+    copy: 'We coordinate with SBI, HDFC and Axis Bank — pre-approval in 24 hours, paperwork handled by us.',
   },
   {
-    title: 'Try it on any plot',
-    copy: 'Select a plot first, then change the down payment to see affordability and projected value update together.',
+    title: 'See it for yourself',
+    copy: 'Select any plot and adjust your down payment to see your monthly cost and projected returns update live.',
   },
 ]
 
@@ -102,6 +102,7 @@ export default function EmiAppreciation() {
   const [selectedId, setSelectedId] = useState(null)
   const [downPct, setDownPct] = useState(20)
   const [hint, setHint] = useState(false)
+  const [storyOpen, setStoryOpen] = useState(false)
 
   const plot = useMemo(
     () => PLOTS.find((item) => item.id === selectedId) ?? null,
@@ -142,13 +143,12 @@ export default function EmiAppreciation() {
     >
       <div className="emi-appreciation__frame">
         <header className="emi-appreciation__intro">
-          <p className="emi-appreciation__eyebrow">New — Idea 9</p>
           <h2 className="emi-appreciation__heading">
-            What does a plot actually look like month to month?
+            Plan your purchase — see size, cost and returns together
           </h2>
           <p className="emi-appreciation__lede">
-            Not a boring EMI calculator. A story that shows affordability and investment return
-            together — select a property to unlock the controls.
+            Pick a plot to see your payment breakdown, plot dimensions and estimated
+            appreciation — all in one place.
           </p>
         </header>
 
@@ -234,46 +234,69 @@ export default function EmiAppreciation() {
               </div>
             </div>
 
-            <div className="emi-appreciation__story">
-              <p className="emi-appreciation__story-kicker">Appreciation story</p>
-              <p className={`emi-appreciation__story-lead${isLocked ? ' is-blank' : ''}`}>
-                {isLocked ? (
-                  '—'
-                ) : (
-                  <>
-                    If you buy {plot.name} at {plot.priceLabel} with {downPct}% down, your EMI
-                    is <strong>{formatRupee(story.emi)}/month</strong>. At the ORR corridor&apos;s
-                    3-year avg. appreciation of 38%, this plot could be worth{' '}
-                    <strong>{formatLakhs(story.value2028)} in 2028</strong>.
-                  </>
-                )}
-              </p>
+            <div className={`emi-appreciation__story${storyOpen ? ' is-open' : ''}`}>
+              <button
+                type="button"
+                className="emi-appreciation__story-toggle"
+                aria-expanded={storyOpen}
+                aria-controls="emi-appreciation-story-body"
+                onClick={() => setStoryOpen((open) => !open)}
+              >
+                <span>How this plot grows in value</span>
+                <span className="emi-appreciation__story-chevron" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </button>
 
-              <div className="emi-appreciation__timeline">
-                <div className="emi-appreciation__point">
-                  <span>Today (2026)</span>
-                  <strong className={isLocked ? 'is-blank' : ''}>
-                    {isLocked ? '—' : plot.priceLabel}
-                  </strong>
-                </div>
-                <div className="emi-appreciation__point">
-                  <span>In 2028 (38% corridor avg.)</span>
-                  <strong className={isLocked ? 'is-blank' : ''}>
-                    {isLocked ? '—' : `~${formatLakhs(story.value2028)}`}
-                  </strong>
-                </div>
-                <div className="emi-appreciation__point emi-appreciation__point--peak">
-                  <span>In 2030 (ORR Phase 3)</span>
-                  <strong className={isLocked ? 'is-blank' : ''}>
-                    {isLocked ? '—' : `~${formatLakhs(story.value2030)}`}
-                  </strong>
+              <div
+                id="emi-appreciation-story-body"
+                className="emi-appreciation__story-body"
+                role="region"
+                aria-label="How this plot grows in value"
+              >
+                <div className="emi-appreciation__story-body-inner">
+                  <p className={`emi-appreciation__story-lead${isLocked ? ' is-blank' : ''}`}>
+                    {isLocked ? (
+                      '—'
+                    ) : (
+                      <>
+                        If you buy {plot.name} at {plot.priceLabel} with {downPct}% down, your EMI
+                        is <strong>{formatRupee(story.emi)}/month</strong>. At the ORR
+                        corridor&apos;s 3-year avg. appreciation of 38%, this plot could be worth{' '}
+                        <strong>{formatLakhs(story.value2028)} in 2028</strong>.
+                      </>
+                    )}
+                  </p>
+
+                  <div className="emi-appreciation__timeline">
+                    <div className="emi-appreciation__point">
+                      <span>What you pay today — 2026</span>
+                      <strong className={isLocked ? 'is-blank' : ''}>
+                        {isLocked ? '—' : plot.priceLabel}
+                      </strong>
+                    </div>
+                    <div className="emi-appreciation__point">
+                      <span>Estimated value in 2028</span>
+                      <strong className={isLocked ? 'is-blank' : ''}>
+                        {isLocked ? '—' : `~${formatLakhs(story.value2028)}`}
+                      </strong>
+                    </div>
+                    <div className="emi-appreciation__point emi-appreciation__point--peak">
+                      <span>Projected value in 2030 — when ORR Phase 3 completes</span>
+                      <strong className={isLocked ? 'is-blank' : ''}>
+                        {isLocked ? '—' : `~${formatLakhs(story.value2030)}`}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <p className="emi-appreciation__disclaimer">
+                    Estimated from 3 years of corridor growth data. Indicative only, not a
+                    guaranteed return.
+                  </p>
                 </div>
               </div>
-
-              <p className="emi-appreciation__disclaimer">
-                Based on ORR corridor 3yr avg. of 38% appreciation. Not a guarantee — indicative of
-                area trends.
-              </p>
             </div>
           </div>
 

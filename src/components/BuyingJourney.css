@@ -401,25 +401,23 @@
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: stretch;
-    gap: 0.55rem;
+    gap: 0;
     width: calc(100% + (var(--space) * 2));
     max-width: none;
     margin: 0 calc(var(--space) * -1);
     box-sizing: border-box;
     border: 0;
-    border-block: 1px solid rgba(154, 123, 50, 0.28);
+    border-block: 1px solid rgba(201, 168, 76, 0.22);
     border-radius: 0;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 55%),
-      #e8c96a;
+    background: #f8efd2;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
     scrollbar-width: thin;
-    scrollbar-color: rgba(90, 70, 20, 0.35) transparent;
-    padding: 0.7rem var(--space);
+    scrollbar-color: rgba(154, 123, 50, 0.35) transparent;
+    padding: 0 var(--space);
   }
 
   .buying-journey__steps::-webkit-scrollbar {
@@ -427,81 +425,93 @@
   }
 
   .buying-journey__steps::-webkit-scrollbar-thumb {
-    background: rgba(90, 70, 20, 0.35);
+    background: rgba(154, 123, 50, 0.35);
     border-radius: 999px;
   }
 
   .buying-journey__steps > li {
     flex: 0 0 auto;
-    width: min(78vw, 16rem);
-    scroll-snap-align: center;
+    width: max-content;
+    max-width: 16.5rem;
+    min-width: 13.5rem;
+    scroll-snap-align: start;
+    border-right: 1px solid rgba(154, 123, 50, 0.28);
+  }
+
+  .buying-journey__steps > li:last-child {
+    border-right: 0;
   }
 
   .buying-journey__step {
     display: flex;
     flex-direction: row;
-    align-items: center;
-    gap: 0.7rem;
+    align-items: flex-start;
+    gap: 0.55rem;
     width: 100%;
     height: auto;
     min-height: 0;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid rgba(90, 70, 20, 0.14);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.42);
+    padding: 0.95rem 0.85rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     box-shadow: none;
     box-sizing: border-box;
   }
 
   .buying-journey__step:hover {
-    background: rgba(255, 255, 255, 0.62);
-    border-color: rgba(90, 70, 20, 0.22);
+    background: transparent;
+    border-color: transparent;
     transform: none;
   }
 
   .buying-journey__step.is-active {
-    background: #fffaf0;
-    border-color: rgba(154, 123, 50, 0.65);
-    box-shadow:
-      0 0 0 1px rgba(201, 168, 76, 0.35),
-      0 8px 18px rgba(120, 90, 20, 0.14);
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
   }
 
   .buying-journey__step-index {
     flex: 0 0 auto;
-    width: 1.85rem;
-    height: 1.85rem;
-    border-radius: 8px;
-    background: rgba(15, 17, 20, 0.1);
-    color: #3a3220;
-    font-size: 0.62rem;
+    width: auto;
+    height: auto;
+    margin-top: 0.1rem;
+    border-radius: 0;
+    background: transparent;
+    color: var(--bj-gold);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
   }
 
   .buying-journey__step.is-active .buying-journey__step-index {
-    background: var(--accent, #c9a84c);
-    color: #2a2418;
+    background: transparent;
+    color: var(--bj-gold);
   }
 
   .buying-journey__step-name {
     flex: 1 1 auto;
     min-width: 0;
-    color: #2a2418;
-    font-size: 0.78rem;
-    font-weight: 600;
-    line-height: 1.25;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    max-width: 100%;
+    color: var(--bj-muted);
+    font-size: 0.84rem;
+    font-weight: 500;
+    line-height: 1.35;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    display: block;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
   }
 
   .buying-journey__step:not(.is-active) .buying-journey__step-name {
-    color: #3a3220;
+    color: var(--bj-muted);
     font-weight: 500;
   }
 
   .buying-journey__step.is-active .buying-journey__step-name {
-    color: #2a2418;
+    color: var(--bj-ink);
+    font-weight: 700;
   }
 
   .buying-journey__step-arrow {

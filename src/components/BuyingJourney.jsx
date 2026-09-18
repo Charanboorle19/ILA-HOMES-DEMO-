@@ -198,12 +198,11 @@ export default function BuyingJourney() {
           <header className="buying-journey__intro">
             <p className="buying-journey__eyebrow">Your buying journey</p>
             <h2 className="buying-journey__heading">
-              A transparent roadmap for land acquisition
+              Your step-by-step guide to buying a plot
             </h2>
             <p className="buying-journey__lede">
-              A transparent roadmap demystifies the land acquisition process, directly
-              neutralizing the fear of hidden legal snags, opaque schedules, or surprise
-              charges.
+              No hidden charges, no legal surprises — just a clear process from site visit
+              to registration.
             </p>
           </header>
 
