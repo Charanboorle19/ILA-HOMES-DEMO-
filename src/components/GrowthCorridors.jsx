@@ -6,6 +6,11 @@ import {
   mapReferencePoints,
   SOUTH_HYDERABAD_VIEW,
 } from '../data/locations'
+import southImage from '../assets/south-image.png'
+import maheshwaramImage from '../assets/Maheshwaram.png'
+import thukkugudaImage from '../assets/Thukkuguda.png'
+import mansanpallyImage from '../assets/Mansanpally.png'
+import futureCityImage from '../assets/Future City.png'
 import './GrowthCorridors.css'
 
 const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
@@ -56,6 +61,7 @@ const CORRIDOR_CONTENT = [
     id: 'south-hyderabad',
     name: 'South Hyderabad',
     tag: 'Growth epicentre',
+    image: southImage,
     description:
       'The next Gachibowli. ORR and airport corridor infrastructure is already in place. The window to buy before prices reflect it is narrowing fast.',
     infrastructure: [
@@ -92,6 +98,7 @@ const CORRIDOR_CONTENT = [
     id: 'maheshwaram',
     name: 'Maheshwaram',
     tag: 'ORR · Srisailam highway',
+    image: maheshwaramImage,
     description:
       '3 km from ORR Exit 14. IT corridor expansion actively drawing residential demand. Land prices up 38% over 3 years.',
     infrastructure: [
@@ -128,6 +135,7 @@ const CORRIDOR_CONTENT = [
     id: 'thukkuguda',
     name: 'Thukkuguda',
     tag: 'ORR Exit 14 · Employment hub',
+    image: thukkugudaImage,
     description:
       'Just 1.5 km from ORR Exit 14. Infrastructure-led residential boom with strong employment hub proximity and rising buyer demand.',
     infrastructure: [
@@ -164,6 +172,7 @@ const CORRIDOR_CONTENT = [
     id: 'mansanpally',
     name: 'Mansanpally',
     tag: 'Srisailam highway · Value zone',
+    image: mansanpallyImage,
     description:
       'Strong appreciation at competitive entry pricing. Industrial and residential mix driving consistent long-term growth along the Srisailam corridor.',
     infrastructure: [
@@ -200,6 +209,7 @@ const CORRIDOR_CONTENT = [
     id: 'future-city',
     name: 'Future City',
     tag: 'Master planned · Airport corridor',
+    image: futureCityImage,
     description:
       'Government master plan active. 1.5 million residents projected. Long-horizon planning zones designed for the next phase of Hyderabad’s expansion.',
     infrastructure: [
@@ -861,16 +871,43 @@ export default function GrowthCorridors() {
                       aria-pressed={isActive}
                       onClick={() => selectCorridor(index)}
                     >
-                      <span className="growth-corridors__num">{num}</span>
-                      <span className="growth-corridors__titles">
-                        <span className="growth-corridors__name">{corridor.name}</span>
-                        <span className="growth-corridors__tag">{corridor.tag}</span>
+                      <img
+                        className="growth-corridors__pick-image"
+                        src={corridor.image}
+                        alt=""
+                        loading="lazy"
+                      />
+                      <span className="growth-corridors__pick-shade" aria-hidden="true" />
+                      <span className="growth-corridors__pick-content">
+                        <span className="growth-corridors__num">{num}</span>
+                        <span className="growth-corridors__titles">
+                          <span className="growth-corridors__name">{corridor.name}</span>
+                          <span className="growth-corridors__tag">{corridor.tag}</span>
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="growth-corridors__pick-map growth-corridors__pick-map--on-image"
+                      onClick={() => openMap(index)}
+                    >
+                      <span className="growth-corridors__pick-map-label">View on map</span>
+                      <span className="growth-corridors__pick-map-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M5 12h12.5M13 6.5 18.5 12 13 17.5"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
                       </span>
                     </button>
                     <div className="growth-corridors__pick-foot">
                       <button
                         type="button"
-                        className="growth-corridors__pick-map"
+                        className="growth-corridors__pick-map growth-corridors__pick-map--foot"
                         onClick={() => openMap(index)}
                       >
                         <span className="growth-corridors__pick-map-label">View on map</span>
@@ -893,31 +930,37 @@ export default function GrowthCorridors() {
             </div>
 
             <div className="growth-corridors__spotlight" aria-live="polite">
-              <div className="growth-corridors__spotlight-copy">
-                <p className="growth-corridors__spotlight-name">{current.name}</p>
-                <p className="growth-corridors__desc">{current.description}</p>
+              <div className="growth-corridors__spotlight-media">
+                <img src={current.image} alt="" loading="lazy" />
               </div>
 
-              <div className="growth-corridors__spotlight-meta">
-                <div className="growth-corridors__stats">
-                  {current.stats.map((stat) => (
-                    <div className="growth-corridors__stat" key={stat.label}>
-                      <div className={`growth-corridors__stat-val${stat.gold ? ' is-gold' : ''}`}>
-                        {stat.value}
-                      </div>
-                      <div className="growth-corridors__stat-lbl">{stat.label}</div>
-                    </div>
-                  ))}
+              <div className="growth-corridors__spotlight-body">
+                <div className="growth-corridors__spotlight-copy">
+                  <p className="growth-corridors__spotlight-name">{current.name}</p>
+                  <p className="growth-corridors__desc">{current.description}</p>
                 </div>
 
-                <button
-                  type="button"
-                  className="growth-corridors__mode-btn growth-corridors__mode-btn--compact"
-                  onClick={() => openMap(active)}
-                >
-                  <MapIcon />
-                  View {current.name} on map
-                </button>
+                <div className="growth-corridors__spotlight-meta">
+                  <div className="growth-corridors__stats">
+                    {current.stats.map((stat) => (
+                      <div className="growth-corridors__stat" key={stat.label}>
+                        <div className={`growth-corridors__stat-val${stat.gold ? ' is-gold' : ''}`}>
+                          {stat.value}
+                        </div>
+                        <div className="growth-corridors__stat-lbl">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="growth-corridors__mode-btn growth-corridors__mode-btn--compact"
+                    onClick={() => openMap(active)}
+                  >
+                    <MapIcon />
+                    View {current.name} on map
+                  </button>
+                </div>
               </div>
             </div>
           </div>

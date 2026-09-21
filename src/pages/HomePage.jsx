@@ -6,6 +6,7 @@ import BuyingJourney from '../components/BuyingJourney'
 import PlotCompare from '../components/PlotCompare'
 import ShortlistShare from '../components/ShortlistShare'
 import EmiAppreciation from '../components/EmiAppreciation'
+import FromTheField from '../components/FromTheField'
 import PlotsWithPulse from '../components/PlotsWithPulse'
 import TrustStrip from '../components/TrustStrip'
 import Faq from '../components/Faq'
@@ -22,6 +23,7 @@ export default function HomePage() {
       <PlotCompare />
       <ShortlistShare />
       <EmiAppreciation />
+      <FromTheField />
       <PlotsWithPulse />
       <TrustStrip />
       <Faq />

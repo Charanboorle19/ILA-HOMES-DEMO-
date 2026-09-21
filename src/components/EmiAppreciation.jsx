@@ -1,4 +1,10 @@
 import { useMemo, useState } from 'react'
+import WhatsAppBudgetModal from './WhatsAppBudgetModal'
+import plotImageA12 from '../assets/extra-image-3.png'
+import plotImageB7 from '../assets/extra-image-5.png'
+import plotImageC3 from '../assets/extra-image-8.png'
+import plotImageKokapet from '../assets/extra-image-6.png'
+import plotImageMansanpally from '../assets/IMAGE-6-ORG.png'
 import './EmiAppreciation.css'
 
 const ANNUAL_RATE = 0.085
@@ -10,36 +16,46 @@ const PLOTS = [
     id: 'a12',
     name: 'Plot A12',
     location: 'Narsingi',
+    size: '267 sq.yd',
     price: 5200000,
     priceLabel: '₹52 Lakhs',
+    image: plotImageA12,
   },
   {
     id: 'b7',
     name: 'Plot B7',
     location: 'Mokila',
+    size: '200 sq.yd',
     price: 3800000,
     priceLabel: '₹38 Lakhs',
+    image: plotImageB7,
   },
   {
     id: 'c3',
     name: 'Plot C3',
     location: 'Tukkuguda',
+    size: '300 sq.yd',
     price: 4400000,
     priceLabel: '₹44 Lakhs',
+    image: plotImageC3,
   },
   {
     id: 'kokapet',
     name: 'Kokapet Heights',
     location: 'Financial District Belt',
+    size: '240 sq.yd',
     price: 6800000,
     priceLabel: '₹68 Lakhs',
+    image: plotImageKokapet,
   },
   {
     id: 'mansanpally',
     name: 'Mansanpally Meadows',
     location: 'Shamshabad Belt',
+    size: '220 sq.yd',
     price: 2900000,
     priceLabel: '₹29 Lakhs',
+    image: plotImageMansanpally,
   },
 ]
 
@@ -103,6 +119,7 @@ export default function EmiAppreciation() {
   const [downPct, setDownPct] = useState(20)
   const [hint, setHint] = useState(false)
   const [storyOpen, setStoryOpen] = useState(false)
+  const [budgetOpen, setBudgetOpen] = useState(false)
 
   const plot = useMemo(
     () => PLOTS.find((item) => item.id === selectedId) ?? null,
@@ -170,8 +187,14 @@ export default function EmiAppreciation() {
                         setHint(false)
                       }}
                     >
-                      <span>{item.name}</span>
-                      <small>{item.priceLabel}</small>
+                      <span className="emi-appreciation__chip-media">
+                        <img src={item.image} alt="" loading="lazy" />
+                      </span>
+                      <span className="emi-appreciation__chip-copy">
+                        <span className="emi-appreciation__chip-name">{item.name}</span>
+                        <small className="emi-appreciation__chip-size">{item.size}</small>
+                        <small className="emi-appreciation__chip-price">{item.priceLabel}</small>
+                      </span>
                     </button>
                   )
                 })}
@@ -187,7 +210,7 @@ export default function EmiAppreciation() {
             <p className={`emi-appreciation__plot${isLocked ? ' is-blank' : ''}`}>
               {isLocked
                 ? 'Select a property'
-                : `${plot.name} · ${plot.location} · ${plot.priceLabel}`}
+                : `${plot.name} · ${plot.size} · ${plot.location} · ${plot.priceLabel}`}
             </p>
 
             <label
@@ -312,10 +335,14 @@ export default function EmiAppreciation() {
             ))}
 
             {plot ? (
-              <a className="emi-appreciation__cta" href="#contact">
+              <button
+                type="button"
+                className="emi-appreciation__cta"
+                onClick={() => setBudgetOpen(true)}
+              >
                 Calculate for my budget
                 <span aria-hidden="true">→</span>
-              </a>
+              </button>
             ) : (
               <button
                 type="button"
@@ -329,6 +356,12 @@ export default function EmiAppreciation() {
           </div>
         </div>
       </div>
+
+      <WhatsAppBudgetModal
+        open={budgetOpen}
+        onClose={() => setBudgetOpen(false)}
+        propertyLabel={plot ? `${plot.name} (${plot.size})` : ''}
+      />
     </section>
   )
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import WhatsAppBudgetModal from '../WhatsAppBudgetModal'
 import './PriceEmiFuture.css'
 
 const ANNUAL_RATE = 0.085
@@ -38,6 +39,7 @@ function buildStory(price, downPct) {
 
 export default function PriceEmiFuture({ property }) {
   const [downPct, setDownPct] = useState(20)
+  const [budgetOpen, setBudgetOpen] = useState(false)
 
   const story = useMemo(
     () => buildStory(property.price, downPct),
@@ -98,10 +100,14 @@ export default function PriceEmiFuture({ property }) {
               </div>
             </div>
 
-            <a className="pd-price__cta" href="mailto:hello@ilahomes.example">
+            <button
+              type="button"
+              className="pd-price__cta"
+              onClick={() => setBudgetOpen(true)}
+            >
               Calculate for my budget
               <span aria-hidden="true">→</span>
-            </a>
+            </button>
           </div>
 
           <div className="pd-price__story">
@@ -136,6 +142,12 @@ export default function PriceEmiFuture({ property }) {
           </div>
         </div>
       </div>
+
+      <WhatsAppBudgetModal
+        open={budgetOpen}
+        onClose={() => setBudgetOpen(false)}
+        propertyLabel={property.name}
+      />
     </section>
   )
 }

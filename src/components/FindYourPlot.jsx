@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { propertyLayouts } from '../data/propertyLayouts'
 import './FindYourPlot.css'
 
@@ -609,8 +610,12 @@ export default function FindYourPlot() {
                     <article
                       key={`${isFeelMode ? 'feel' : stage?.id}-${match.id}`}
                       className="find-your-plot__match"
-                      style={{ '--match-i': index }}
+                      style={{
+                        '--match-i': index,
+                        '--match-image': `url(${match.image})`,
+                      }}
                     >
+                      <div className="find-your-plot__match-shade" aria-hidden="true" />
                       <div className="find-your-plot__match-top">
                         <span className="find-your-plot__match-index">
                           {String(index + 1).padStart(2, '0')}
@@ -629,9 +634,12 @@ export default function FindYourPlot() {
                         <p className="find-your-plot__match-reason">{match.reason}</p>
                         <div className="find-your-plot__match-foot">
                           <span className="find-your-plot__match-price">{match.priceRange}</span>
-                          <a className="find-your-plot__match-link" href="#explore-properties">
-                            View on map
-                          </a>
+                          <Link
+                            className="find-your-plot__match-link"
+                            to={`/properties/${match.id}`}
+                          >
+                            View property
+                          </Link>
                         </div>
                       </div>
                     </article>
