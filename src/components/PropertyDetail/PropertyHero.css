@@ -105,6 +105,35 @@
   text-transform: uppercase;
 }
 
+.pd-hero__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.55rem 0.28rem 0.35rem;
+  border: 1px solid rgba(15, 17, 20, 0.12);
+  background: #0f1114;
+  color: #e2c97e;
+}
+
+.pd-hero__score strong {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.2);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.pd-hero__score span {
+  color: rgba(247, 248, 250, 0.7);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .pd-hero__actions {
   display: flex;
   flex-wrap: wrap;

@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import InfraIcon from './InfraIcon'
+import {
+  CONNECTIVITY_LABELS,
+  computeConnectivityScore,
+  getNearestAmenities,
+} from '../../lib/connectivity'
 import './Connectivity.css'
 
 const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
@@ -77,6 +82,8 @@ function buildOverlay(origin, items, activeId) {
 export default function Connectivity({ property }) {
   const { connectivity, testimonial, coordinates, zoom, name } = property
   const mapRef = useRef(null)
+  const score = useMemo(() => computeConnectivityScore(property), [property])
+  const nearest = useMemo(() => getNearestAmenities(property, 6), [property])
   const [activeId, setActiveId] = useState(connectivity[0]?.id ?? null)
   const [viewState, setViewState] = useState({
     longitude: coordinates[0],
@@ -100,6 +107,7 @@ export default function Connectivity({ property }) {
   )
 
   const activeItem = connectivity.find((item) => item.id === activeId) ?? connectivity[0]
+  const factorEntries = Object.entries(score.factors ?? {})
 
   const flyTo = useCallback(() => {
     mapRef.current?.flyTo({
@@ -130,6 +138,44 @@ export default function Connectivity({ property }) {
             Select a landmark to highlight it on the map — distances from this
             layout to everyday destinations that matter.
           </p>
+
+          <div className="pd-connect__score" aria-label="Location connectivity score">
+            <div className="pd-connect__score-main">
+              <div
+                className="pd-connect__score-ring"
+                style={{ '--score': score.total }}
+                aria-hidden="true"
+              >
+                <strong>{score.total}</strong>
+              </div>
+              <div>
+                <p className="pd-connect__score-badge">{score.badge}</p>
+                <p className="pd-connect__score-note">Location score · 0–100</p>
+              </div>
+            </div>
+            <ul className="pd-connect__factors" role="list">
+              {factorEntries.map(([key, value]) => (
+                <li key={key}>
+                  <span>{CONNECTIVITY_LABELS[key] ?? key}</span>
+                  <span className="pd-connect__factor-bar" aria-hidden="true">
+                    <i style={{ width: `${value}%` }} />
+                  </span>
+                  <strong>{value}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="pd-connect__nearest-label">Nearest amenities</p>
+          <ul className="pd-connect__nearest" role="list">
+            {nearest.map((item) => (
+              <li key={item.id}>
+                <span className="pd-connect__nearest-cat">{item.category}</span>
+                <strong>{item.name}</strong>
+                <span>{item.distance ?? `${item.distanceKm} km`}</span>
+              </li>
+            ))}
+          </ul>
 
           <ul className="pd-connect__list" role="list">
             {connectivity.map((item) => {

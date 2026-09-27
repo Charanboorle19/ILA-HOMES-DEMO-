@@ -57,6 +57,137 @@
   line-height: 1.55;
 }
 
+.pd-connect__score {
+  margin: 0 0 1.1rem;
+  padding: 0.9rem 0.85rem;
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.pd-connect__score-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.pd-connect__score-ring {
+  --score: 70;
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #0f1114 58%, transparent 59%),
+    conic-gradient(
+      #c9a84c calc(var(--score) * 1%),
+      rgba(255, 255, 255, 0.1) 0
+    );
+  color: #e2c97e;
+}
+
+.pd-connect__score-ring strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.pd-connect__score-badge {
+  margin: 0 0 0.15rem;
+  color: #f7f8fa;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.pd-connect__score-note {
+  margin: 0;
+  color: rgba(247, 248, 250, 0.45);
+  font-size: 0.68rem;
+}
+
+.pd-connect__factors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pd-connect__factors li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgba(247, 248, 250, 0.62);
+  font-size: 0.65rem;
+}
+
+.pd-connect__factors strong {
+  color: #e2c97e;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-connect__factor-bar {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pd-connect__factor-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #a6862e, #e2c97e);
+}
+
+.pd-connect__nearest-label {
+  margin: 0 0 0.45rem;
+  color: rgba(247, 248, 250, 0.45);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pd-connect__nearest {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 1.15rem;
+  padding: 0;
+  list-style: none;
+}
+
+.pd-connect__nearest li {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 0.45rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(247, 248, 250, 0.55);
+  font-size: 0.68rem;
+}
+
+.pd-connect__nearest strong {
+  color: #f7f8fa;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.pd-connect__nearest-cat {
+  color: #c9a84c;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .pd-connect__list {
   display: flex;
   flex-direction: column;
