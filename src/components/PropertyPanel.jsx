@@ -1,4 +1,9 @@
 import { Link } from 'react-router-dom'
+import { properties } from '../data/properties'
+import {
+  computeConnectivityScore,
+  getNearestAmenities,
+} from '../lib/connectivity'
 import './PropertyPanel.css'
 
 const STATUS_CLASS = {
@@ -19,6 +24,11 @@ export default function PropertyPanel({
 }) {
   const isActive = Boolean(property)
   const stepLabel = `${String(autoIndex + 1).padStart(2, '0')} / ${String(autoTotal).padStart(2, '0')}`
+  const detail = property
+    ? properties.find((item) => item.id === property.id)
+    : null
+  const score = detail ? computeConnectivityScore(detail) : null
+  const nearest = detail ? getNearestAmenities(detail, 5) : []
 
   return (
     <aside
@@ -106,6 +116,26 @@ export default function PropertyPanel({
                 </svg>
               </Link>
             </div>
+
+            {score ? (
+              <div className="property-panel__connect property-panel__block">
+                <div className="property-panel__connect-head">
+                  <div>
+                    <p className="property-panel__connect-label">Location score</p>
+                    <p className="property-panel__connect-badge">{score.badge}</p>
+                  </div>
+                  <strong className="property-panel__connect-score">{score.total}</strong>
+                </div>
+                <ul className="property-panel__amenities">
+                  {nearest.map((item) => (
+                    <li key={item.id}>
+                      <span>{item.name}</span>
+                      <strong>{item.distance ?? `${item.distanceKm} km`}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             <div className="property-panel__divider" aria-hidden="true" />
 

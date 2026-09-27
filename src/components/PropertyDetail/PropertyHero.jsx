@@ -4,12 +4,9 @@ import mainPhoto from '../../assets/G1.webp'
 import thumbDrone from '../../assets/extra-image-3.png'
 import thumbView from '../../assets/extra-image-4.png'
 import thumbSite from '../../assets/extra-image-5.png'
+import { computeConnectivityScore } from '../../lib/connectivity'
+import { formatPrice } from '../../lib/format'
 import './PropertyHero.css'
-
-function formatPrice(price) {
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`
-  return `₹${(price / 100000).toFixed(price >= 1000000 ? 1 : 0)} L`
-}
 
 const GALLERY = [
   { id: 'main', src: mainPhoto, label: 'Entrance gate' },
@@ -22,6 +19,7 @@ export default function PropertyHero({ property, heroRef }) {
   const [activeId, setActiveId] = useState(GALLERY[0].id)
   const active = GALLERY.find((item) => item.id === activeId) ?? GALLERY[0]
   const thumbs = GALLERY.filter((item) => item.id !== activeId).slice(0, 3)
+  const score = computeConnectivityScore(property)
 
   const whatsappText = encodeURIComponent(
     `Hi ILA Homes, I'm interested in ${property.name} (${property.location}).`,
@@ -67,6 +65,10 @@ export default function PropertyHero({ property, heroRef }) {
           <div className="pd-hero__price-row">
             <p className="pd-hero__price">{formatPrice(property.price)}</p>
             <span className="pd-hero__badge">{property.approval} Approved</span>
+            <span className="pd-hero__score" title={score.badge}>
+              <strong>{score.total}</strong>
+              <span>Location</span>
+            </span>
           </div>
 
           <div className="pd-hero__actions">
