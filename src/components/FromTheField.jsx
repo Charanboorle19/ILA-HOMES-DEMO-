@@ -4,27 +4,30 @@ import nallagandlaThumb from '../assets/plots-pulse/nallagandla.jpg'
 import defaultProfile from '../assets/about-panel/hero-property.jpg'
 import './FromTheField.css'
 
+const INSTAGRAM_URL =
+  'https://www.instagram.com/ila.homes?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw=='
+
 const DEFAULT_REELS = [
   {
     thumbnail: mansanpallyThumb,
     title: 'Plot A3',
     location: 'Mansanpally',
     duration: '0:42',
-    reelUrl: 'https://www.instagram.com/ila_homes/',
+    reelUrl: INSTAGRAM_URL,
   },
   {
     thumbnail: kokapetThumb,
     title: 'Corner plot walk',
     location: 'Kokapet Heights',
     duration: '0:58',
-    reelUrl: 'https://www.instagram.com/ila_homes/',
+    reelUrl: INSTAGRAM_URL,
   },
   {
     thumbnail: nallagandlaThumb,
     title: 'Road-facing lot',
     location: 'Nallagandla',
     duration: '0:36',
-    reelUrl: 'https://www.instagram.com/ila_homes/',
+    reelUrl: INSTAGRAM_URL,
   },
 ]
 
@@ -39,8 +42,8 @@ function PlayIcon() {
 
 export default function FromTheField({
   reels = DEFAULT_REELS,
-  handle = '@ila_homes',
-  profileUrl = 'https://www.instagram.com/ila_homes/',
+  handle = '@ila.homes',
+  profileUrl = INSTAGRAM_URL,
   profileImage = defaultProfile,
   followers = '26K+',
   reelCount = '50+',

@@ -1596,6 +1596,7 @@
 .presentation__map-data .presentation__map > .presentation__map-facts,
 .presentation__map-data .presentation__map > .presentation__map-hero-title,
 .presentation__map-data .presentation__map > .presentation__map-tag,
+.presentation__map-data .presentation__map > .presentation__map-zoom-hint,
 .presentation__map-data .presentation__map > .presentation__map-panel {
   width: auto;
   height: auto;
@@ -1724,12 +1725,14 @@
 
 .presentation__map--master-plan {
   position: relative;
+  touch-action: none;
 }
 
 .presentation__map--master-plan .master-plan-map {
   display: block;
   border: 0;
   background: #0a0a0a;
+  touch-action: none;
 }
 
 .presentation__map-tag {
@@ -1784,6 +1787,10 @@
   flex: none;
 }
 
+.presentation__map-zoom-hint {
+  display: none;
+}
+
 .presentation__map-hero-title {
   display: none;
 }
@@ -1819,6 +1826,54 @@
   .presentation__map-tag-loc svg {
     width: 0.75rem;
     height: 0.75rem;
+  }
+
+  .presentation__map-zoom-hint {
+    display: inline-flex;
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    z-index: 9;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: min(46%, 10.5rem);
+    margin: 0;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(58, 50, 40, 0.12);
+    border-radius: 999px;
+    background: rgba(251, 250, 247, 0.94);
+    box-shadow: 0 8px 20px rgba(15, 17, 20, 0.14);
+    color: #3a3228;
+    font-family: var(--font-body);
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    pointer-events: none;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+      opacity 280ms ease,
+      transform 280ms ease,
+      visibility 0s linear 0s;
+  }
+
+  .presentation__map-zoom-hint.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition:
+      opacity 280ms ease,
+      transform 280ms ease,
+      visibility 0s linear 280ms;
+  }
+
+  .presentation__map-zoom-hint svg {
+    width: 0.78rem;
+    height: 0.78rem;
+    flex: none;
+    color: #8b6f47;
   }
 
   .presentation__map-hero-title {
@@ -3590,11 +3645,14 @@
     border-color: rgba(17, 17, 17, 0.28);
   }
 
-  /* One-finger scroll passes through; zoom only via pinch or +/- controls. */
+  /* Map owns pinch zoom; page scroll happens outside the map. */
+  .presentation__map,
+  .presentation__map--master-plan,
+  .presentation__map--master-plan .master-plan-map,
   .presentation__map .mapboxgl-canvas-container,
   .presentation__map .mapboxgl-canvas-container.mapboxgl-interactive,
   .presentation__map .mapboxgl-canvas {
-    touch-action: pan-y !important;
+    touch-action: none !important;
   }
 
   .presentation__map .mapboxgl-ctrl-top-right {

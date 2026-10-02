@@ -36,7 +36,7 @@ const MasterPlanMap = forwardRef(function MasterPlanMap(
   }, [])
 
   const params = new URLSearchParams({
-    v: 'hero-plot-status-colors-1',
+    v: 'hero-no-page-zoom-1',
     channel,
     theme,
   })

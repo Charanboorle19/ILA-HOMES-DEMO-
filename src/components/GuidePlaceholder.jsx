@@ -312,6 +312,19 @@ export default function GuidePlaceholder() {
                       Tukkuguda
                     </span>
                   </div>
+                  {isMobile ? (
+                    <p
+                      className={`presentation__map-zoom-hint${heroTitleReady ? ' is-hidden' : ''}`}
+                      aria-hidden={heroTitleReady}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
+                        <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                        <path d="M8.5 11h5M11 8.5v5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                      </svg>
+                      <span>Zoom in &amp; out to view plots</span>
+                    </p>
+                  ) : null}
                   <div
                     className={`presentation__map-hero-title${heroTitleReady ? ' is-revealed' : ''}`}
                     aria-hidden={!heroTitleReady}

@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
   <title>Master Plan — 3D Connectivity</title>
 
   <!-- Local/system fonts only — no font API -->
@@ -834,9 +837,17 @@
       map.scrollZoom.disable();
       map.touchZoomRotate.enable();
       map.touchZoomRotate.disableRotation();
-      map.getCanvas().style.touchAction = 'pan-y';
+      // Own all touches so pinch zooms the map, not the parent page.
+      map.getCanvas().style.touchAction = 'none';
       const container = map.getCanvasContainer();
-      if (container) container.style.touchAction = 'pan-y';
+      if (container) container.style.touchAction = 'none';
+      const root = document.getElementById('map');
+      if (root) root.style.touchAction = 'none';
+      document.documentElement.style.touchAction = 'manipulation';
+      document.body.style.touchAction = 'manipulation';
+      ;['gesturestart', 'gesturechange', 'gestureend'].forEach((type) => {
+        document.addEventListener(type, (event) => event.preventDefault(), { passive: false });
+      });
     }
 
     applyHeroMobileInteractions();
