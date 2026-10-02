@@ -1,5 +1,9 @@
 /* Plot Compare — dark palette, pin 2–3 plots side-by-side */
 
+.plot-compare[hidden] {
+  display: none !important;
+}
+
 .plot-compare {
   --pc-bg: #0f1114;
   --pc-earth: #16191e;

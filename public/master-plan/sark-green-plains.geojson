@@ -1,0 +1,54 @@
+{
+  "type": "FeatureCollection",
+  "name": "Sark Green Plains",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+  },
+  "properties": {
+    "project": "Sark Green Plains",
+    "location": "Almasguda Village · Tukkuguda · Hyderabad",
+    "center": [78.453805556, 17.209444444],
+    "source": "https://geojson.io/?data=gz:H4sIAAAAAAAACmXNMQuDMBQE4L9S3hxEbVKta6FdhY6SIdhXCY15EtNBJP-9qKlDu3533M3gpwGhgisq_3Z4IWOw9ZosMHhuNkLVzD89YDA4GtB5veQzWNUv8V251-HmEO2hNkrbEQKDDqlH76alF2dqMlO3nrRE7qGt8utP0xRlwsWxTMWJZUWSp2fOOZdsc55FLHcRUcQueZQv_I1JGYIMH1JFLnr7AAAA",
+    "notes": [
+      "Outer property-boundary digitized from the supplied geojson.io layout.",
+      "Future: add up to 239 individual plot Polygon features with properties.kind = \"plot\"."
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "sark-green-plains-center",
+      "properties": {
+        "name": "Sark Green Plains",
+        "kind": "project-center",
+        "layer": "reference"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [78.453805556, 17.209444444]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "sark-green-plains-boundary",
+      "properties": {
+        "name": "Sark Green Plains",
+        "kind": "property-boundary",
+        "layer": "property-boundary"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [78.4538056, 17.2094444],
+            [78.4541, 17.2098],
+            [78.4545, 17.2095],
+            [78.4542, 17.209],
+            [78.4538056, 17.2094444]
+          ]
+        ]
+      }
+    }
+  ]
+}

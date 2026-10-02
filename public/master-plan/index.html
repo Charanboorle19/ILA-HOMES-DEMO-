@@ -1,0 +1,3716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master Plan — 3D Connectivity</title>
+
+  <!-- Local/system fonts only — no font API -->
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import { createModelBuildingsLayer } from './model-buildings.js';
+    import { loadPropertyData, getProjectCenter } from './property-data.js';
+    window.createModelBuildingsLayer = createModelBuildingsLayer;
+    window.loadPropertyData = loadPropertyData;
+    window.getProjectCenter = getProjectCenter;
+    window.dispatchEvent(new Event('gltf-ready'));
+    window.dispatchEvent(new Event('property-data-ready'));
+  </script>
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --panel: rgba(12, 12, 12, 0.9);
+      --panel-border: rgba(255, 255, 255, 0.1);
+      --ink: #f4f4f4;
+      --muted: #8a8a8a;
+      --line: rgba(255, 255, 255, 0.14);
+      --available: #2f9e44;
+      --accent: #69db7c;
+      --bike: #63e6be;
+      --car: #74c0fc;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: var(--bg); color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden;
+    }
+    #map { width: 100%; height: 100%; background: #111; }
+
+    .map-overlay[hidden] {
+      display: none !important;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px; font-size: 0.62rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .map-overlay h1 {
+      margin: 0 0 4px; font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400; font-size: 1.25rem; line-height: 1.05;
+    }
+    .lede { margin: 0 0 8px; font-size: 0.72rem; line-height: 1.4; color: var(--muted); }
+
+    .section-label {
+      margin: 12px 0 8px; font-size: 0.6rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #777;
+    }
+
+    .year-grid, .mode-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .mode-grid { grid-template-columns: 1fr 1fr; }
+
+    .year-btn, .mode-btn, .tour-btn {
+      border: 1px solid var(--panel-border); background: transparent; color: #cfcfcf;
+      font-family: inherit; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .year-btn { font-size: 0.76rem; font-weight: 600; padding: 9px 4px; }
+    .mode-btn { font-size: 0.78rem; font-weight: 600; padding: 11px 8px; }
+    .year-btn:hover, .mode-btn:hover, .tour-btn:hover {
+      border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.04);
+    }
+    .year-btn.active { background: var(--accent); color: #0b1a0e; border-color: var(--accent); }
+    .mode-btn.active.bike { background: var(--bike); color: #06261c; border-color: var(--bike); }
+    .mode-btn.active.car { background: var(--car); color: #062033; border-color: var(--car); }
+
+    .year-note { margin: 8px 0 0; font-size: 0.76rem; line-height: 1.4; color: #bdbdbd; }
+
+    .tour-controls { display: flex; gap: 6px; margin-top: 10px; }
+    .tour-btn {
+      flex: 1; font-size: 0.66rem; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 9px 6px; color: var(--ink);
+    }
+    .tour-btn.active { background: #f4f4f4; color: #111; border-color: #f4f4f4; }
+
+    .connect-list { display: grid; gap: 6px; margin-top: 4px; }
+    .connect-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 4px 10px;
+      padding: 10px 10px; border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.02); cursor: pointer; text-align: left;
+      color: inherit; font-family: inherit; width: 100%;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .connect-item:hover, .connect-item.active {
+      border-color: rgba(105, 219, 124, 0.45);
+      background: rgba(47, 158, 68, 0.08);
+    }
+    .connect-item .name { font-size: 0.78rem; font-weight: 600; color: #eee; }
+    .connect-item .type { font-size: 0.65rem; color: #888; letter-spacing: 0.04em; text-transform: uppercase; }
+    .connect-item .stats {
+      grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right;
+      font-size: 0.72rem; color: #cfcfcf; line-height: 1.35;
+    }
+    .connect-item .stats strong { display: block; color: var(--accent); font-weight: 600; }
+    .connect-item.locked { opacity: 0.35; pointer-events: none; }
+
+    .legend {
+      display: grid; gap: 7px; margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .legend-item { display: flex; align-items: center; gap: 9px; font-size: 0.72rem; color: #cfcfcf; }
+    .legend-swatch {
+      width: 13px; height: 13px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.25);
+    }
+    .legend-swatch.available { background: var(--available); }
+    .legend-swatch.landmark { background: #f0f0f0; }
+    .legend-swatch.bike { background: #ffffff; height: 3px; border: none; }
+    .legend-swatch.car { background: #cfcfcf; height: 3px; border: none; }
+    .legend-swatch.icon3d {
+      width: 18px; height: 18px; border: none; border-radius: 4px;
+      background: linear-gradient(145deg, #2a2a2a, #111);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+
+    /* Free Fluent Emoji 3D icons floating above campuses */
+    .icon3d-marker {
+      display: flex; flex-direction: column; align-items: center;
+      cursor: pointer; transform: translateY(-6px);
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,0.55));
+      transition: transform 0.2s ease, opacity 0.35s ease;
+      opacity: 1;
+    }
+    .icon3d-marker:hover { transform: translateY(-10px) scale(1.06); }
+    .icon3d-marker.hidden { opacity: 0; pointer-events: none; transform: translateY(4px) scale(0.85); }
+    .icon3d-marker img {
+      width: 52px; height: 52px; object-fit: contain;
+      image-rendering: auto;
+    }
+    .icon3d-marker .icon3d-base {
+      width: 28px; height: 8px; margin-top: -4px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 70%);
+    }
+    .icon3d-marker .icon3d-caption {
+      margin-top: 2px; padding: 2px 7px;
+      font-size: 0.58rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #f1f1f1;
+      background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.12);
+      white-space: nowrap;
+    }
+    .place-label {
+      padding: 2px 6px;
+      background: rgba(0,0,0,0.72);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: #ffffff;
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      pointer-events: auto;
+      opacity: 0.9;
+    }
+    .place-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #2f9e44;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.15), 0 6px 16px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+    .place-dot.active {
+      background: #69db7c;
+      border-color: #ffffff;
+      transform: scale(1.25);
+    }
+    .gate-marker {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #69db7c;
+      border: 2px solid #fff;
+      box-shadow: 0 0 12px rgba(105,219,124,0.7);
+    }
+    .route-label {
+      padding: 3px 7px;
+      background: rgba(0, 0, 0, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #ffffff;
+      font-size: 0.66rem;
+      font-weight: 600;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+
+    .insight-card {
+      display: none !important;
+      position: absolute; right: 10px; top: 10px; z-index: 10;
+      width: min(240px, calc(100% - 20px));
+      padding: 12px 14px;
+      background: var(--panel); border: 1px solid var(--panel-border);
+      backdrop-filter: blur(18px);
+    }
+    .insight-card .year-tag {
+      display: inline-block; margin-bottom: 8px; padding: 3px 8px;
+      font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      border: 1px solid rgba(105,219,124,0.45); color: var(--accent);
+    }
+    .insight-card h2 {
+      margin: 0 0 6px; font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.25rem; font-weight: 400;
+    }
+    .insight-card p { margin: 0; font-size: 0.8rem; line-height: 1.45; color: #c4c4c4; }
+
+    .route-chip {
+      display: none !important;
+      position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%);
+      z-index: 10; min-width: 180px; max-width: calc(100% - 20px);
+      padding: 8px 12px; text-align: center;
+      background: var(--panel); border: 1px solid var(--panel-border);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .route-chip.visible { opacity: 1; }
+    .route-chip .to { font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; margin-bottom: 4px; }
+    .route-chip .detail { font-size: 0.78rem; color: #bdbdbd; }
+
+    .timeline-bar {
+      display: none !important;
+      position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+      z-index: 10; width: min(420px, calc(100% - 20px));
+      padding: 8px 10px; display: flex; align-items: center; gap: 8px;
+      background: var(--panel); border: 1px solid var(--panel-border);
+    }
+
+    /* Soft cinematic frame over the live satellite layout */
+    body::after {
+      content: "";
+      position: absolute; inset: 0; z-index: 4; pointer-events: none;
+      background:
+        radial-gradient(ellipse 75% 70% at 50% 45%, transparent 40%, rgba(0,0,0,0.42) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.28) 0%, transparent 18%, transparent 78%, rgba(0,0,0,0.38) 100%);
+    }
+
+    .map-legend {
+      display: none !important;
+    }
+    .map-legend__title {
+      margin: 0 0 2px;
+      font-size: 0.58rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+    .map-legend__row {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .map-legend__swatch {
+      width: 14px; height: 10px; flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .map-legend__swatch.plot {
+      background: linear-gradient(180deg, #6ee7b7 0%, #059669 100%);
+      border-color: rgba(167, 243, 208, 0.85);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+      transform: translateY(-1px);
+    }
+    .map-legend__swatch.road {
+      background: linear-gradient(90deg, #fff 0 12%, #1c1c1c 12% 44%, #fff 44% 56%, #1c1c1c 56% 88%, #fff 88%);
+      border-color: rgba(255,255,255,0.7);
+    }
+    .map-legend__swatch.main {
+      background: linear-gradient(90deg, #fff 0 10%, #1a1a1a 10% 42%, #facc15 42% 58%, #1a1a1a 58% 90%, #fff 90%);
+      border-color: rgba(255,255,255,0.7);
+    }
+    .map-legend__swatch.greenbelt { background: rgba(74, 222, 128, 0.45); border-color: rgba(134, 239, 172, 0.65); }
+
+    .layout-toggle-wrap {
+      display: none !important;
+      position: absolute; top: 10px; left: 10px; z-index: 12;
+      flex-direction: column; gap: 6px;
+    }
+    .layout-toggle {
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      color: var(--ink);
+      font: 600 0.72rem/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      cursor: pointer;
+      backdrop-filter: blur(18px);
+    }
+    .layout-toggle .layout-toggle-state {
+      margin-left: 6px;
+      color: var(--muted);
+    }
+    .layout-toggle.active {
+      border-color: rgba(57, 217, 138, 0.55);
+      color: #d8ffe9;
+    }
+    .layout-toggle.active .layout-toggle-state {
+      color: #39D98A;
+    }
+
+    .boundary-draw-wrap {
+      display: none !important;
+      position: absolute; top: 96px; left: 10px; z-index: 13;
+      flex-direction: column; gap: 6px;
+      width: min(220px, calc(100% - 20px));
+    }
+    .boundary-draw-wrap button {
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      color: var(--ink);
+      font: 600 0.68rem/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      cursor: pointer;
+      text-align: left;
+      backdrop-filter: blur(18px);
+    }
+    .boundary-draw-wrap button:hover {
+      border-color: rgba(255,255,255,0.35);
+    }
+    .boundary-draw-wrap button.active {
+      border-color: rgba(250, 204, 21, 0.65);
+      color: #fef9c3;
+    }
+    .boundary-draw-wrap button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .boundary-draw-meta {
+      padding: 8px 10px;
+      background: rgba(0,0,0,0.72);
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      color: #f5f5f4;
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+    .boundary-draw-meta strong { color: #facc15; }
+    body.is-drawing-boundary .maplibregl-canvas,
+    body.is-pen-pick .maplibregl-canvas {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 28l6.5-1.8L26 10.7a2.5 2.5 0 00-3.5-3.5L7.1 22.5 4 28z' fill='%23f8fafc' stroke='%230f172a' stroke-width='1.5'/%3E%3Cpath d='M21.2 8.5l3.5 3.5' stroke='%23facc15' stroke-width='2'/%3E%3C/svg%3E") 2 28, crosshair !important;
+    }
+
+    .coord-pick-panel {
+      display: none !important;
+      position: absolute;
+      right: 10px;
+      bottom: 72px;
+      z-index: 14;
+      width: min(280px, calc(100% - 20px));
+      padding: 12px 14px;
+      background: rgba(12, 12, 12, 0.92);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      color: #f5f5f4;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      backdrop-filter: blur(14px);
+    }
+    .coord-pick-panel.visible { display: none !important; }
+    .coord-pick-panel strong { color: #facc15; }
+    .coord-pick-panel code {
+      display: block;
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #e2e8f0;
+      font-size: 0.7rem;
+      word-break: break-all;
+    }
+    .coord-pick-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .coord-pick-actions button {
+      flex: 1;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #f5f5f4;
+      font: 600 0.62rem/1 system-ui, sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 8px 6px;
+      cursor: pointer;
+    }
+
+    .boundary-vertex-marker {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.92);
+      border: 2px solid #e2e8f0;
+      color: #f8fafc;
+      font: 700 0.65rem/18px system-ui, -apple-system, "Segoe UI", sans-serif;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+      pointer-events: none;
+      user-select: none;
+    }
+    .boundary-vertex-handle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #facc15;
+      border: 2px solid #111;
+      box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.35);
+      cursor: grab;
+    }
+    .boundary-vertex-handle:active { cursor: grabbing; }
+    .boundary-midpoint-handle {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: rgba(248, 250, 252, 0.95);
+      border: 2px solid #ca8a04;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      cursor: pointer;
+      opacity: 0.9;
+    }
+    .boundary-midpoint-handle:hover {
+      transform: scale(1.15);
+      background: #fef08a;
+    }
+
+    .plot-panel {
+      display: none !important;
+      position: absolute; top: 14px; right: 14px; z-index: 12;
+      width: min(280px, calc(100% - 28px));
+      padding: 16px 18px;
+      background: rgba(8, 12, 10, 0.78);
+      border: 1px solid rgba(167, 243, 208, 0.28);
+      backdrop-filter: blur(22px);
+      box-shadow:
+        0 22px 50px rgba(0,0,0,0.45),
+        0 0 0 1px rgba(255,255,255,0.04) inset;
+      opacity: 0; pointer-events: none; transform: translateY(10px) scale(0.98);
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+    .plot-panel.visible {
+      display: none !important;
+      opacity: 0; pointer-events: none;
+    }
+    .plot-panel__eyebrow {
+      margin: 0 0 4px; font-size: 0.58rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: #86efac;
+    }
+    .plot-panel__title {
+      margin: 0 0 12px; font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.35rem; font-weight: 400; letter-spacing: 0.01em;
+    }
+    .plot-panel__row {
+      display: flex; justify-content: space-between; gap: 12px;
+      padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem;
+    }
+    .plot-panel__row span { color: #9ca3af; }
+    .plot-panel__row strong { color: #f5f5f4; font-weight: 600; }
+    .plot-panel__status {
+      display: inline-block; margin-top: 12px; padding: 5px 9px;
+      font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .plot-panel__status.available { color: #86efac; border-color: rgba(52,211,153,0.5); background: rgba(16,185,129,0.12); }
+    .plot-panel__status.reserved { color: #fcd34d; border-color: rgba(245,158,11,0.45); background: rgba(245,158,11,0.1); }
+    .plot-panel__status.sold { color: #fca5a5; border-color: rgba(239,68,68,0.45); background: rgba(239,68,68,0.1); }
+    .plot-panel__close {
+      position: absolute; top: 8px; right: 8px;
+      border: 0; background: transparent; color: #aaa;
+      font-size: 1rem; cursor: pointer; line-height: 1;
+    }
+    .timeline-bar .label {
+      font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    }
+    .timeline-track {
+      flex: 1; display: flex; justify-content: space-between; position: relative;
+    }
+    .timeline-track::before {
+      content: ""; position: absolute; left: 10px; right: 10px; top: 50%;
+      height: 1px; background: rgba(255,255,255,0.18); transform: translateY(-50%);
+    }
+    .timeline-dot {
+      position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.25); background: #111; color: #bbb;
+      font-size: 0.6rem; font-weight: 600; cursor: pointer; display: grid; place-items: center;
+    }
+    .timeline-dot.active { background: var(--accent); color: #0b1a0e; border-color: var(--accent); }
+
+    #status {
+      position: absolute; bottom: 88px; left: 14px; z-index: 11;
+      padding: 7px 10px; background: rgba(0,0,0,0.75);
+      border: 1px solid var(--panel-border); color: #d0d0d0; font-size: 0.7rem;
+    }
+
+    .maplibregl-ctrl-group {
+      background: rgba(12,12,12,0.9) !important;
+      border: 1px solid var(--panel-border) !important;
+      border-radius: 0 !important; box-shadow: none !important;
+    }
+    .maplibregl-ctrl-group button {
+      background: transparent !important; width: 34px !important; height: 34px !important;
+    }
+    .maplibregl-ctrl-group button span { filter: invert(1) brightness(1.2); }
+    .maplibregl-ctrl-attrib { background: rgba(0,0,0,0.55) !important; color: #777 !important; font-size: 10px !important; }
+    .maplibregl-popup-content {
+      background: #111 !important; color: var(--ink); border: 1px solid var(--panel-border);
+      border-radius: 0 !important; padding: 14px 16px !important; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .maplibregl-popup-tip { border-top-color: #111 !important; border-bottom-color: #111 !important; }
+    .popup-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; margin-bottom: 6px; }
+    .popup-metric { font-size: 0.76rem; color: #b5b5b5; margin: 4px 0; }
+    .popup-metric strong { color: #f0f0f0; font-weight: 500; }
+
+    /* Light theme — Future Neighbourhood / property embeds */
+    body.theme-light {
+      --bg: #eef1f5;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-border: rgba(15, 17, 20, 0.12);
+      --ink: #1c2420;
+      --muted: #6b7280;
+      --line: rgba(15, 17, 20, 0.1);
+      --available: #2f8a4a;
+      --accent: #3d9b5f;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    body.theme-light #map { background: #e8ecf1; }
+    body.theme-light .status {
+      background: rgba(255, 255, 255, 0.92);
+      color: #1c2420;
+      border-color: rgba(15, 17, 20, 0.12);
+    }
+    body.theme-light .legend,
+    body.theme-light .insight-card,
+    body.theme-light .route-chip,
+    body.theme-light .layout-toggle-wrap,
+    body.theme-light .coord-pick-panel,
+    body.theme-light .timeline-bar,
+    body.theme-light .boundary-draw-wrap {
+      display: none !important;
+    }
+    body.is-embed-minimal .map-overlay,
+    body.is-embed-minimal .insight-card,
+    body.is-embed-minimal .route-chip,
+    body.is-embed-minimal .legend,
+    body.is-embed-minimal .layout-toggle-wrap,
+    body.is-embed-minimal .coord-pick-panel,
+    body.is-embed-minimal .timeline-bar,
+    body.is-embed-minimal .boundary-draw-wrap,
+    body.is-embed-minimal .plot-panel {
+      display: none !important;
+    }
+    body.is-mobile-hero .map-overlay,
+    body.is-mobile-hero .insight-card,
+    body.is-mobile-hero .route-chip,
+    body.is-mobile-hero .legend,
+    body.is-mobile-hero .layout-toggle-wrap,
+    body.is-mobile-hero .coord-pick-panel,
+    body.is-mobile-hero .timeline-bar,
+    body.is-mobile-hero .boundary-draw-wrap,
+    body.is-mobile-hero .plot-panel,
+    body.is-mobile-hero .status,
+    body.is-mobile-hero .maplibregl-ctrl-bottom-right,
+    body.is-mobile-hero .maplibregl-ctrl-top-right {
+      display: none !important;
+    }
+
+    .connectivity-marker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.22rem;
+      pointer-events: none;
+    }
+    .connectivity-marker__icon {
+      display: grid;
+      place-items: center;
+      width: 1.85rem;
+      height: 1.85rem;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: #2d8c50;
+      box-shadow: 0 4px 12px rgba(15, 17, 20, 0.2);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .connectivity-marker.is-construction .connectivity-marker__icon {
+      background: #c9a84c;
+      color: #1c2420;
+    }
+    .connectivity-marker.is-planned .connectivity-marker__icon {
+      background: #3b6eb4;
+    }
+    .connectivity-marker__copy {
+      max-width: 9.5rem;
+      padding: 0.28rem 0.45rem;
+      border: 1px solid rgba(15, 17, 20, 0.1);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 6px 16px rgba(15, 17, 20, 0.12);
+      text-align: left;
+    }
+    .connectivity-marker__label {
+      display: block;
+      color: #1c2420;
+      font-size: 0.62rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .connectivity-marker__meta {
+      display: block;
+      margin-top: 0.1rem;
+      color: #6b7280;
+      font-size: 0.56rem;
+      line-height: 1.3;
+    }
+
+    @media (max-width: 900px) {
+      .insight-card { display: none; }
+      .map-overlay { max-height: 42%; width: min(240px, calc(100% - 16px)); }
+      .legend { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="map-overlay" hidden aria-hidden="true">
+    <p class="section-label">Development year</p>
+    <div class="year-grid" id="yearGrid">
+      <button class="year-btn" data-year="2015" type="button">2015</button>
+      <button class="year-btn" data-year="2021" type="button">2021</button>
+      <button class="year-btn active" data-year="2026" type="button">2026</button>
+      <button class="year-btn" data-year="2031" type="button">2031</button>
+    </div>
+    <p class="year-note" id="yearNote"></p>
+
+    <p class="section-label">Travel mode</p>
+    <div class="mode-grid">
+      <button class="mode-btn bike active" id="modeBike" type="button">Bike</button>
+      <button class="mode-btn car" id="modeCar" type="button">Car</button>
+    </div>
+
+    <p class="section-label">From plot gate (tap one)</p>
+    <div class="connect-list" id="connectList"></div>
+
+    <div class="tour-controls">
+      <button class="tour-btn" id="tourToggle" type="button">Play tour</button>
+      <button class="tour-btn" id="playYears" type="button">Play years</button>
+      <button class="tour-btn" id="clearRoute" type="button">Resume auto</button>
+    </div>
+  </div>
+
+  <div class="insight-card">
+    <span class="year-tag" id="insightYear">2026 view</span>
+    <h2 id="insightTitle">Today’s corridor</h2>
+    <p id="insightBody"></p>
+  </div>
+
+  <div class="route-chip" id="routeChip">
+    <div class="to" id="routeTo">—</div>
+    <div class="detail" id="routeDetail">—</div>
+  </div>
+
+  <div class="layout-toggle-wrap" hidden aria-hidden="true">
+    <button class="layout-toggle active" id="layoutToggle" type="button" aria-pressed="true">
+      Layout <span class="layout-toggle-state">ON</span>
+    </button>
+    <button class="layout-toggle" id="boundaryCheckBtn" type="button" aria-pressed="false" hidden>
+      Boundary Check <span class="layout-toggle-state">OFF</span>
+    </button>
+  </div>
+
+  <div class="boundary-draw-wrap" id="boundaryDrawWrap" hidden aria-hidden="true">
+    <button type="button" id="penPickBtn">Pen · Pick Coord</button>
+    <button type="button" id="drawBoundaryBtn">Draw Boundary</button>
+    <button type="button" id="satelliteToggleBtn">Satellite OFF</button>
+    <button type="button" id="finishBoundaryBtn" disabled>Finish &amp; Download</button>
+    <button type="button" id="clearBoundaryBtn" disabled>Clear</button>
+    <div class="boundary-draw-meta" id="boundaryDrawMeta" hidden>
+      Dev tool · <strong id="boundaryPointCount">0</strong> points
+    </div>
+  </div>
+
+  <div class="coord-pick-panel" id="coordPickPanel" aria-live="polite" hidden>
+    <div>Pen picker · hover for live · click to lock</div>
+    <div style="margin-top:6px">Live: <strong id="coordPickLive">—</strong></div>
+    <div style="margin-top:4px">Clicked:</div>
+    <code id="coordPickLocked">Click the map to capture [lng, lat]</code>
+    <div class="coord-pick-actions">
+      <button type="button" id="coordCopyBtn">Copy</button>
+      <button type="button" id="coordClearBtn">Clear</button>
+    </div>
+  </div>
+
+  <div class="map-legend" hidden aria-hidden="true"></div>
+
+  <aside class="plot-panel" id="plotPanel" aria-live="polite" hidden>
+    <button class="plot-panel__close" id="plotPanelClose" type="button" aria-label="Close plot details">×</button>
+    <p class="plot-panel__eyebrow" id="plotPanelProject">Plot</p>
+    <h2 class="plot-panel__title" id="plotPanelTitle">—</h2>
+    <div class="plot-panel__row"><span>Area</span><strong id="plotPanelArea">—</strong></div>
+    <div class="plot-panel__row"><span>Facing</span><strong id="plotPanelFacing">—</strong></div>
+    <div class="plot-panel__row"><span>Status</span><strong id="plotPanelStatusText">—</strong></div>
+    <span class="plot-panel__status" id="plotPanelStatus">—</span>
+  </aside>
+
+  <div class="timeline-bar">
+    <span class="label">Timeline</span>
+    <div class="timeline-track" id="timelineTrack">
+      <button class="timeline-dot" data-year="2015" type="button">15</button>
+      <button class="timeline-dot" data-year="2021" type="button">21</button>
+      <button class="timeline-dot active" data-year="2026" type="button">26</button>
+      <button class="timeline-dot" data-year="2031" type="button">31</button>
+    </div>
+  </div>
+
+  <div id="status">Loading map…</div>
+  <div id="map"></div>
+
+  <script>
+    // Set false to hide the temporary Boundary Check debug control entirely.
+    const DEBUG_BOUNDARY = false;
+
+    const YEARS = [2015, 2021, 2026, 2031];
+    let currentYear = 2026;
+    let travelMode = 'bike'; // bike | car
+    let activeDest = null;
+
+    const statusEl = document.getElementById('status');
+    const yearNote = document.getElementById('yearNote');
+    const insightYear = document.getElementById('insightYear');
+    const insightTitle = document.getElementById('insightTitle');
+    const insightBody = document.getElementById('insightBody');
+    const connectList = document.getElementById('connectList');
+    const routeChip = document.getElementById('routeChip');
+    const routeTo = document.getElementById('routeTo');
+    const routeDetail = document.getElementById('routeDetail');
+    const modeBike = document.getElementById('modeBike');
+    const modeCar = document.getElementById('modeCar');
+    const tourToggle = document.getElementById('tourToggle');
+    const playYearsBtn = document.getElementById('playYears');
+    const clearRouteBtn = document.getElementById('clearRoute');
+    const layoutToggle = document.getElementById('layoutToggle');
+    const plotPanel = document.getElementById('plotPanel');
+    const plotPanelClose = document.getElementById('plotPanelClose');
+    const plotPanelProject = document.getElementById('plotPanelProject');
+    const plotPanelTitle = document.getElementById('plotPanelTitle');
+    const plotPanelArea = document.getElementById('plotPanelArea');
+    const plotPanelFacing = document.getElementById('plotPanelFacing');
+    const plotPanelStatusText = document.getElementById('plotPanelStatusText');
+    const plotPanelStatus = document.getElementById('plotPanelStatus');
+
+    // Loaded from ./property1.json — single source of truth (no hardcoded plot data)
+    const PROPERTY_URL = './property1.json';
+    let layoutVisible = true;
+    let propertyBundle = null;
+    let projectCenter = null;
+    let selectedPlotNumber = null;
+    let hoveredPlotNumber = null;
+
+    const GATE = [78.38185, 17.44795]; // plot gate / road entry (demo connectivity)
+
+    const yearStories = {
+      2015: {
+        title: 'Greenfield beginnings',
+        body: 'Open land and a thin village track. Airport road exists far south — no metro, school campus, or formal bus stop yet.'
+      },
+      2021: {
+        title: 'First urban wave',
+        body: 'Boulevard and school campus open. Metro is under construction. Early car / bike links to school and ring road become meaningful.'
+      },
+      2026: {
+        title: 'Live sale corridor',
+        body: 'Metro station, bus terminal, hospital and park stand as full 3D buildings. Use Bike / Car to read exact minutes and kilometres from the plot gate.'
+      },
+      2031: {
+        title: 'Mature skyline',
+        body: 'Mall, IT campus and Phase II tower complete the node. Connectivity lines stay the same — destinations get denser and more valuable.'
+      }
+    };
+
+    const MAP_PARAMS = new URLSearchParams(window.location.search);
+    const MAP_CHANNEL = MAP_PARAMS.get('channel') || 'hero';
+    const MAP_THEME = (MAP_PARAMS.get('theme') || 'dark').toLowerCase() === 'light' ? 'light' : 'dark';
+    const IS_LIGHT_THEME = MAP_THEME === 'light';
+    const IS_EMBED_MINIMAL = MAP_CHANNEL === 'neighbourhood' || MAP_CHANNEL === 'property';
+    const IS_MOBILE_VIEW =
+      MAP_PARAMS.get('mobile') === '1' || window.matchMedia('(max-width: 900px)').matches;
+    const IS_MOBILE_HERO = IS_MOBILE_VIEW && MAP_CHANNEL === 'hero';
+
+    if (IS_LIGHT_THEME) document.body.classList.add('theme-light');
+    if (IS_EMBED_MINIMAL) document.body.classList.add('is-embed-minimal');
+    if (IS_MOBILE_HERO) document.body.classList.add('is-mobile-hero');
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      // OpenFreeMap — lifetime free, no account, no API key (not MapTiler / Esri)
+      style: IS_LIGHT_THEME
+        ? 'https://tiles.openfreemap.org/styles/positron'
+        : 'https://tiles.openfreemap.org/styles/dark',
+      // Temporary until property1.json loads; then recentered from project.location
+      center: [78.4553, 17.2076],
+      zoom: IS_MOBILE_HERO ? 16.8 : 16.2,
+      pitch: IS_LIGHT_THEME ? 42 : (IS_MOBILE_HERO ? 48 : 48),
+      bearing: -18,
+      antialias: true,
+      maxPitch: 70,
+      // Avoid globe mode which can blank the map on MapLibre 4
+      projection: { type: 'mercator' }
+    });
+
+    function applyHeroMobileInteractions() {
+      if (!IS_MOBILE_HERO || !map) return;
+      map.dragPan.disable();
+      map.dragRotate.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+      map.doubleClickZoom.disable();
+      map.touchPitch.disable();
+      map.scrollZoom.disable();
+      map.touchZoomRotate.enable();
+      map.touchZoomRotate.disableRotation();
+      map.getCanvas().style.touchAction = 'pan-y';
+      const container = map.getCanvasContainer();
+      if (container) container.style.touchAction = 'pan-y';
+    }
+
+    applyHeroMobileInteractions();
+    map.on('load', applyHeroMobileInteractions);
+
+    // Block accidental paid tile hosts if anything tries to load them
+    map.setTransformRequest((url, resourceType) => {
+      const bad = /maptiler\.com|mapbox\.com|stadia\.maps|tiles\.stadiamaps|api\.mapbox/i;
+      if (bad.test(url)) {
+        console.warn('Blocked paid/API tile URL:', url);
+        return { url: 'data:,' };
+      }
+      return { url };
+    });
+
+    if (!IS_MOBILE_HERO) {
+      map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    }
+
+    function rect(w, s, e, n) {
+      return [[[w, s], [e, s], [e, n], [w, n], [w, s]]];
+    }
+
+    function dLat(meters) { return meters / 111320; }
+    function dLng(meters, lat) { return meters / (111320 * Math.cos((lat * Math.PI) / 180)); }
+
+    function years(since, h2015, h2021, h2026, h2031) {
+      return { since, h2015, h2021, h2026, h2031 };
+    }
+
+    function heightForYear(p, year) {
+      if (year < p.since) return 0;
+      if (year <= 2015) return p.h2015 || 0;
+      if (year <= 2021) return p.h2021 || 0;
+      if (year <= 2026) return p.h2026 || 0;
+      return p.h2031 || 0;
+    }
+
+    // Spaced campus anchors — wider gaps so icons don’t overlap
+    const SITE = {
+      metro:    [78.3748, 17.4522],
+      bus:      [78.3872, 17.4408],
+      school:   [78.3958, 17.4510],
+      hospital: [78.3945, 17.4595],
+      park:     [78.3920, 17.4385],
+      finance:  [78.3670, 17.4415],
+      airport:  [78.3525, 17.4285],
+      mall:     [78.3995, 17.4355],
+      it:       [78.3680, 17.4588]
+    };
+
+    const availableCells = (() => {
+      const west = 78.3812, east = 78.3828, south = 17.4476, north = 17.4488;
+      const cols = 3, rows = 2, gap = 0.00003;
+      const dx = (east - west) / cols, dy = (north - south) / rows;
+      const out = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x0 = west + c * dx + gap, x1 = west + (c + 1) * dx - gap;
+          const y0 = south + r * dy + gap, y1 = south + (r + 1) * dy - gap;
+          out.push({
+            type: 'Feature',
+            properties: {
+              id: 'PL-101', title: 'Plot 101 — Commercial unit', status: 'available',
+              area_sqft: '750 sq.ft', price: '$20,000 / unit',
+              ...years(2026, 0, 0, 18, 22), color: '#2f9e44', base: 0,
+              story: 'Green sale unit.'
+            },
+            geometry: { type: 'Polygon', coordinates: rect(x0, y0, x1, y1) }
+          });
+        }
+      }
+      return out;
+    })();
+
+    const saleAndPhase = [
+      ...availableCells,
+      {
+        type: 'Feature',
+        properties: {
+          id: 'PL-102', title: 'Plot 102 — Villa', status: 'sold', area_sqft: '3,200 sq.ft', price: '$95,000',
+          ...years(2026, 0, 0, 14, 14), color: '#5a5a5a', base: 0, story: 'Reserved villa plot.'
+        },
+        geometry: { type: 'Polygon', coordinates: rect(78.3830, 17.4476, 78.3840, 17.4488) }
+      }
+    ];
+
+    // Smaller floating icons
+    const modelPlacements = [
+      { id: 'park',     url: './cafe.glb',     lngLat: SITE.park,     since: 2026, sizeMeters: 100, floatMeters: 26 },
+      { id: 'airport',  url: './airport.glb',  lngLat: SITE.airport,  since: 2015, sizeMeters: 200, floatMeters: 36 },
+      { id: 'mall',     url: './store.glb',    lngLat: SITE.mall,     since: 2031, sizeMeters: 145, floatMeters: 30 },
+      { id: 'finance',  url: './bank.glb',     lngLat: SITE.finance,  since: 2021, sizeMeters: 155, floatMeters: 32 },
+      { id: 'school',   url: './school.gltf',  lngLat: SITE.school,   since: 2021, sizeMeters: 155, floatMeters: 30 },
+      { id: 'hospital', url: './hospital.glb', lngLat: SITE.hospital, since: 2026, sizeMeters: 165, floatMeters: 34 }
+    ];
+
+    let gltfLayer = null;
+
+    const destinations = [
+      {
+        id: 'metro', name: 'Metro', short: 'Metro', type: 'Transit', since: 2026, center: SITE.metro,
+        bike: { km: 0.9, min: 5, path: [GATE, SITE.metro] },
+        car:  { km: 1.1, min: 5, path: [GATE, [78.3780, 17.4495], SITE.metro] }
+      },
+      {
+        id: 'bus', name: 'Bus', short: 'Bus', type: 'Transit', since: 2026, center: SITE.bus,
+        bike: { km: 0.9, min: 5, path: [GATE, SITE.bus] },
+        car:  { km: 1.0, min: 4, path: [GATE, SITE.bus] }
+      },
+      {
+        id: 'school', name: 'School', short: 'School', type: 'Education', since: 2021, center: SITE.school,
+        bike: { km: 1.5, min: 8, path: [GATE, [78.3880, 17.4490], SITE.school] },
+        car:  { km: 1.7, min: 7, path: [GATE, [78.3880, 17.4490], SITE.school] }
+      },
+      {
+        id: 'hospital', name: 'Hospital', short: 'Hospital', type: 'Healthcare', since: 2026, center: SITE.hospital,
+        bike: { km: 1.8, min: 10, path: [GATE, [78.3880, 17.4520], SITE.hospital] },
+        car:  { km: 2.0, min: 8, path: [GATE, [78.3880, 17.4520], SITE.hospital] }
+      },
+      {
+        id: 'park', name: 'Park', short: 'Park', type: 'Lifestyle', since: 2026, center: SITE.park,
+        bike: { km: 1.4, min: 7, path: [GATE, SITE.bus, SITE.park] },
+        car:  { km: 1.6, min: 6, path: [GATE, SITE.bus, SITE.park] }
+      },
+      {
+        id: 'finance', name: 'Finance', short: 'Finance', type: 'Famous area', since: 2021, center: SITE.finance,
+        bike: { km: 1.9, min: 10, path: [GATE, SITE.metro, SITE.finance] },
+        car:  { km: 2.2, min: 9, path: [GATE, SITE.metro, SITE.finance] }
+      },
+      {
+        id: 'airport', name: 'Airport', short: 'Airport', type: 'Airport', since: 2015, center: SITE.airport,
+        bike: { km: 4.2, min: 20, path: [GATE, SITE.finance, SITE.airport] },
+        car:  { km: 4.6, min: 14, path: [GATE, SITE.finance, SITE.airport] }
+      },
+      {
+        id: 'mall', name: 'Mall', short: 'Mall', type: 'Retail', since: 2031, center: SITE.mall,
+        bike: { km: 2.2, min: 11, path: [GATE, SITE.park, SITE.mall] },
+        car:  { km: 2.5, min: 9, path: [GATE, SITE.park, SITE.mall] }
+      },
+      {
+        id: 'it', name: 'IT', short: 'IT', type: 'Employment', since: 2031, center: SITE.it,
+        bike: { km: 1.8, min: 9, path: [GATE, SITE.metro, SITE.it] },
+        car:  { km: 2.0, min: 8, path: [GATE, SITE.metro, SITE.it] }
+      }
+    ];
+
+    // Free HTML labels + dots (no MapLibre glyphs / font API)
+    const placeLabelMarkers = [];
+    const placeDotMarkers = [];
+    const routeLabelMarkers = [];
+    let gateMarker = null;
+
+    function makeHtmlLabel(text, className) {
+      const el = document.createElement('div');
+      el.className = className;
+      el.textContent = text;
+      return el;
+    }
+
+    function createPlaceLabels() {
+      // Plot gate anchor
+      const gateEl = document.createElement('div');
+      gateEl.className = 'gate-marker';
+      gateEl.title = 'Plot gate';
+      gateMarker = new maplibregl.Marker({ element: gateEl, anchor: 'center' })
+        .setLngLat(GATE)
+        .addTo(map);
+
+      destinations.forEach((d) => {
+        const el = makeHtmlLabel(d.short || d.name, 'place-label');
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          focusDestination(d.id);
+        });
+        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -22] })
+          .setLngLat(d.center)
+          .addTo(map);
+        placeLabelMarkers.push({ id: d.id, since: d.since, el, marker });
+
+        const dot = document.createElement('div');
+        dot.className = 'place-dot';
+        dot.title = d.name;
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          focusDestination(d.id);
+        });
+        const dotMarker = new maplibregl.Marker({ element: dot, anchor: 'center' })
+          .setLngLat(d.center)
+          .addTo(map);
+        placeDotMarkers.push({ id: d.id, since: d.since, el: dot, marker: dotMarker });
+      });
+      updatePlaceLabels(currentYear);
+    }
+
+    function updatePlaceLabels(year) {
+      placeLabelMarkers.forEach(({ since, el }) => {
+        el.style.display = year >= since ? 'block' : 'none';
+      });
+      placeDotMarkers.forEach(({ id, since, el }) => {
+        el.style.display = year >= since ? 'block' : 'none';
+        el.classList.toggle('active', activeDest === id);
+      });
+    }
+
+    function clearRouteLabels() {
+      routeLabelMarkers.forEach((m) => m.remove());
+      routeLabelMarkers.length = 0;
+    }
+
+    function refreshRouteLabels(mode, year, highlightId) {
+      clearRouteLabels();
+      if (!highlightId) return;
+      const d = destinations.find((x) => x.id === highlightId);
+      if (!d || year < d.since) return;
+      const trip = d[mode];
+      const el = makeHtmlLabel(`${trip.km} km · ${trip.min} min`, 'route-label');
+      const coords = trip.path;
+      const mid = coords.length === 2
+        ? [(coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2]
+        : coords[Math.floor(coords.length / 2)];
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(mid)
+        .addTo(map);
+      routeLabelMarkers.push(marker);
+    }
+
+    function buildSale(year) {
+      return {
+        type: 'FeatureCollection',
+        features: saleAndPhase.map((f) => {
+          const h = heightForYear(f.properties, year);
+          if (h <= 0) return null;
+          const base = f.properties.base || 0;
+          return { ...f, properties: { ...f.properties, height: h, base } };
+        }).filter(Boolean)
+      };
+    }
+
+    function midPoint(coords) {
+      const i = Math.floor(coords.length / 2);
+      if (coords.length === 2) {
+        return [(coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2];
+      }
+      return coords[i];
+    }
+
+    function buildConnectivity(mode, year, highlightId) {
+      // Only ONE connection at a time — keeps the map clean
+      const lines = [];
+      if (!highlightId) {
+        return { lines: { type: 'FeatureCollection', features: [] } };
+      }
+
+      const d = destinations.find((x) => x.id === highlightId);
+      if (!d || year < d.since) {
+        return { lines: { type: 'FeatureCollection', features: [] } };
+      }
+
+      const trip = d[mode];
+      lines.push({
+        type: 'Feature',
+        properties: {
+          id: d.id,
+          name: d.name,
+          mode,
+          km: trip.km,
+          min: trip.min,
+          label: `${trip.km} km · ${trip.min} min`,
+          active: 1,
+          color: mode === 'bike' ? '#ffffff' : '#d0d0d0'
+        },
+        geometry: { type: 'LineString', coordinates: trip.path }
+      });
+
+      return { lines: { type: 'FeatureCollection', features: lines } };
+    }
+
+    function renderConnectList() {
+      connectList.innerHTML = destinations.map((d) => {
+        const locked = currentYear < d.since;
+        const trip = d[travelMode];
+        return `
+          <button class="connect-item ${locked ? 'locked' : ''} ${activeDest === d.id ? 'active' : ''}"
+            data-id="${d.id}" type="button" ${locked ? 'disabled' : ''}>
+            <span class="name">${d.short || d.name}</span>
+            <span class="type">${d.type}${locked ? ` · from ${d.since}` : ''}</span>
+            <span class="stats">
+              <strong>${trip.min} min</strong>
+              ${trip.km} km · ${travelMode}
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function updateConnectivity() {
+      if (!map.getSource('connect-lines')) return;
+      const data = buildConnectivity(travelMode, currentYear, activeDest);
+      map.getSource('connect-lines').setData(data.lines);
+
+      map.setPaintProperty('connect-line', 'line-opacity', activeDest ? 1 : 0);
+      map.setPaintProperty('connect-glow', 'line-opacity', activeDest ? 0.35 : 0);
+
+      refreshRouteLabels(travelMode, currentYear, activeDest);
+      renderConnectList();
+      updatePlaceLabels(currentYear);
+    }
+
+    function showRouteChip(dest) {
+      if (!dest || currentYear < dest.since) {
+        routeChip.classList.remove('visible');
+        return;
+      }
+      const trip = dest[travelMode];
+      routeTo.textContent = `${dest.name}`;
+      routeDetail.textContent = `${travelMode === 'bike' ? 'Bike' : 'Car'} · ${trip.km} km · ${trip.min} min from plot gate`;
+      routeChip.classList.add('visible');
+    }
+
+    function focusDestination(id, opts = {}) {
+      const dest = destinations.find((d) => d.id === id);
+      if (!dest || currentYear < dest.since) return;
+
+      // User taps stop auto route cycle + tour; guided tour passes { keepTour: true }
+      if (!opts.keepTour) {
+        pauseTour();
+        pauseYearPlay();
+        pauseRouteCycle();
+        routeLockedByUser = true;
+      }
+
+      activeDest = id;
+      updateConnectivity();
+      showRouteChip(dest);
+      if (gltfLayer) gltfLayer.focus(id);
+
+      // Tour drives its own zoom in/out framing
+      if (opts.skipCamera) return;
+
+      map.easeTo({
+        center: dest.center,
+        zoom: id === 'airport' ? 14.2 : 15.6,
+        pitch: 58,
+        duration: 1200
+      });
+    }
+
+    function framePlotAndPlace(dest, opts = {}) {
+      const pad = opts.padding || 100;
+      const bounds = new maplibregl.LngLatBounds();
+      bounds.extend(GATE);
+      bounds.extend(dest.center);
+      // Include a bit of the sale plot block so green plots stay visible
+      bounds.extend([78.3812, 17.4476]);
+      bounds.extend([78.3840, 17.4488]);
+      map.fitBounds(bounds, {
+        padding: { top: pad, bottom: pad + 80, left: pad + 160, right: pad + 140 },
+        pitch: opts.pitch != null ? opts.pitch : 52,
+        bearing: opts.bearing != null ? opts.bearing : map.getBearing(),
+        duration: opts.duration != null ? opts.duration : 1600,
+        maxZoom: opts.maxZoom != null ? opts.maxZoom : 15.2
+      });
+    }
+
+    function setTourCard(stop, dest) {
+      insightYear.textContent = `${stop.year} · tour`;
+      insightTitle.textContent = stop.title;
+      insightBody.textContent = stop.body;
+      yearNote.textContent = stop.body;
+    }
+
+    function updateInsight(year) {
+      const s = yearStories[year];
+      insightYear.textContent = `${year} view`;
+      insightTitle.textContent = s.title;
+      insightBody.textContent = s.body;
+      yearNote.textContent = s.body;
+      document.querySelectorAll('.year-btn, .timeline-dot').forEach((el) => {
+        el.classList.toggle('active', Number(el.dataset.year) === year);
+      });
+    }
+
+    function setYear(year, animateCamera = true) {
+      currentYear = year;
+      if (!map.getSource('sale-data')) return;
+
+      map.getSource('sale-data').setData(buildSale(year));
+
+      if (activeDest) {
+        const d = destinations.find((x) => x.id === activeDest);
+        if (!d || year < d.since) {
+          activeDest = null;
+          routeChip.classList.remove('visible');
+        } else {
+          showRouteChip(d);
+        }
+      }
+
+      updateConnectivity();
+      updateInsight(year);
+      updatePlaceLabels(year);
+      if (gltfLayer) gltfLayer.setYear(year);
+
+      if (animateCamera) {
+        const center = projectCenter || [78.453805556, 17.209444444];
+        const views = {
+          2015: { center, zoom: 15.4, pitch: 42, bearing: -8 },
+          2021: { center, zoom: 15.7, pitch: 44, bearing: -4 },
+          2026: { center, zoom: 16, pitch: 45, bearing: 0 },
+          2031: { center, zoom: 15.8, pitch: 48, bearing: 6 }
+        };
+        map.easeTo({ ...views[year], duration: 1300 });
+      }
+
+      statusEl.style.display = 'block';
+      statusEl.textContent = `${year} · local icons only · no map API`;
+      clearTimeout(statusEl._hide);
+      statusEl._hide = setTimeout(() => { statusEl.style.display = 'none'; }, 2600);
+
+    }
+
+    function setMode(mode) {
+      travelMode = mode;
+      modeBike.classList.toggle('active', mode === 'bike');
+      modeCar.classList.toggle('active', mode === 'car');
+      updateConnectivity();
+      if (activeDest) {
+        const d = destinations.find((x) => x.id === activeDest);
+        showRouteChip(d);
+      }
+    }
+
+    // Tour / year play / auto route cycle (one line at a time)
+    let tourRunning = false, yearPlaying = false, tourIndex = 0;
+    let rotateRaf = null, stepTimeout = null, yearPlayTimeout = null, userInteracting = false;
+    let routeCycling = false, routeCycleIndex = 0, routeCycleTimeout = null, routeLockedByUser = false;
+    let autoOrbit = true;
+    let orbitResumeTimer = null;
+
+    const tourStops = [
+      {
+        year: 2026, dest: 'metro', ms: 9000,
+        title: 'Plot → Metro',
+        body: 'From the green sale plots, metro is a short hop. Zoom out shows both gate and station; zoom in reads the place.'
+      },
+      {
+        year: 2026, dest: 'school', ms: 9000,
+        title: 'Plot → School',
+        body: 'Master plots and school stay in frame — watch the route, then ease in on the school icon.'
+      },
+      {
+        year: 2026, dest: 'hospital', ms: 9000,
+        title: 'Plot → Hospital',
+        body: 'Healthcare link from the gate. Time and distance stay on the route while both ends stay visible.'
+      },
+      {
+        year: 2026, dest: 'airport', ms: 10000,
+        title: 'Plot → Airport',
+        body: 'Longer corridor: wide zoom for the full link, then a nudge toward the airport icon.'
+      },
+      {
+        year: 2031, dest: 'mall', ms: 9000,
+        title: 'Plot → Mall',
+        body: '2031 retail node — master plots and mall share the screen so the connection reads clearly.'
+      }
+    ];
+
+    let tourMoveHandler = null;
+
+    function unlockedDestinations() {
+      return destinations.filter((d) => currentYear >= d.since);
+    }
+
+    function pauseRouteCycle() {
+      routeCycling = false;
+      clearTimeout(routeCycleTimeout);
+      routeCycleTimeout = null;
+    }
+
+    function showRouteOnly(id, keepCamera) {
+      const dest = destinations.find((d) => d.id === id);
+      if (!dest || currentYear < dest.since) return;
+      activeDest = id;
+      updateConnectivity();
+      showRouteChip(dest);
+      if (gltfLayer) gltfLayer.focus(id);
+      if (!keepCamera) {
+        map.easeTo({
+          center: dest.center,
+          zoom: id === 'airport' ? 14.0 : 14.8,
+          pitch: 52,
+          duration: 900
+        });
+      }
+    }
+
+    function goRouteCycle() {
+      if (!routeCycling || routeLockedByUser) return;
+      const list = unlockedDestinations();
+      if (!list.length) return;
+      routeCycleIndex = routeCycleIndex % list.length;
+      const dest = list[routeCycleIndex];
+      showRouteOnly(dest.id, true);
+      routeCycleIndex += 1;
+      routeCycleTimeout = setTimeout(goRouteCycle, 3200);
+    }
+
+    function startRouteCycle() {
+      if (routeLockedByUser) return;
+      pauseRouteCycle();
+      routeCycling = true;
+      goRouteCycle();
+    }
+
+    function stopRotation() { cancelAnimationFrame(rotateRaf); rotateRaf = null; }
+    function startOrbit() {
+      if (!autoOrbit && !tourRunning) return;
+      stopRotation();
+      const spin = () => {
+        if (!userInteracting && (autoOrbit || tourRunning) && map) {
+          // Direct transform update — avoids gesture event loops that pause the orbit
+          map.setBearing(map.getBearing() + 0.12);
+        }
+        rotateRaf = requestAnimationFrame(spin);
+      };
+      rotateRaf = requestAnimationFrame(spin);
+    }
+
+    function noteUserInteraction() {
+      userInteracting = true;
+      clearTimeout(orbitResumeTimer);
+      orbitResumeTimer = setTimeout(() => {
+        userInteracting = false;
+      }, 2800);
+    }
+
+    function beginAutoOrbitSoon(delayMs = 400) {
+      clearTimeout(orbitResumeTimer);
+      userInteracting = false;
+      window.setTimeout(() => {
+        userInteracting = false;
+        if (autoOrbit) startOrbit();
+      }, delayMs);
+    }
+
+    function pauseTour() {
+      tourRunning = false;
+      tourToggle.textContent = 'Play tour';
+      tourToggle.classList.remove('active');
+      clearTimeout(stepTimeout);
+      stopRotation();
+      if (tourMoveHandler) {
+        map.off('moveend', tourMoveHandler);
+        tourMoveHandler = null;
+      }
+      updateInsight(currentYear);
+      if (autoOrbit && !userInteracting) startOrbit();
+    }
+
+    function goTour(i) {
+      if (!tourRunning) return;
+      tourIndex = i % tourStops.length;
+      const stop = tourStops[tourIndex];
+      const dest = destinations.find((d) => d.id === stop.dest);
+      if (!dest) {
+        stepTimeout = setTimeout(() => goTour(tourIndex + 1), 400);
+        return;
+      }
+
+      clearTimeout(stepTimeout);
+      stopRotation();
+      if (tourMoveHandler) {
+        map.off('moveend', tourMoveHandler);
+        tourMoveHandler = null;
+      }
+
+      if (currentYear !== stop.year) setYear(stop.year, false);
+      setTourCard(stop, dest);
+      focusDestination(stop.dest, { keepTour: true, skipCamera: true });
+
+      // 1) Zoom OUT — plot + place together
+      framePlotAndPlace(dest, {
+        pitch: 48,
+        bearing: map.getBearing() + 18,
+        duration: 1800,
+        maxZoom: stop.dest === 'airport' ? 13.6 : 14.8,
+        padding: 90
+      });
+
+      let phase = 0;
+      tourMoveHandler = () => {
+        if (!tourRunning) return;
+        phase += 1;
+
+        if (phase === 1) {
+          // 2) Zoom IN on the place
+          map.easeTo({
+            center: dest.center,
+            zoom: stop.dest === 'airport' ? 14.4 : 15.4,
+            pitch: 58,
+            bearing: map.getBearing() + 20,
+            duration: 1600
+          });
+          return;
+        }
+
+        if (phase === 2) {
+          // 3) Zoom OUT again — both visible
+          framePlotAndPlace(dest, {
+            pitch: 52,
+            bearing: map.getBearing() + 12,
+            duration: 1600,
+            maxZoom: stop.dest === 'airport' ? 13.8 : 14.9,
+            padding: 100
+          });
+          return;
+        }
+
+        // 4) Soft orbit, then next card
+        map.off('moveend', tourMoveHandler);
+        tourMoveHandler = null;
+        startOrbit();
+        stepTimeout = setTimeout(() => goTour(tourIndex + 1), Math.max(2800, stop.ms - 5000));
+      };
+
+      map.on('moveend', tourMoveHandler);
+    }
+
+    function startTour() {
+      pauseYearPlay();
+      pauseRouteCycle();
+      routeLockedByUser = true;
+      tourRunning = true;
+      tourToggle.textContent = 'Pause tour';
+      tourToggle.classList.add('active');
+      goTour(tourIndex);
+    }
+
+    function pauseYearPlay() {
+      yearPlaying = false;
+      playYearsBtn.textContent = 'Play years';
+      playYearsBtn.classList.remove('active');
+      clearTimeout(yearPlayTimeout);
+    }
+
+    function playYears() {
+      pauseTour();
+      yearPlaying = true;
+      playYearsBtn.textContent = 'Stop years';
+      playYearsBtn.classList.add('active');
+      let i = 0;
+      const step = () => {
+        if (!yearPlaying) return;
+        setYear(YEARS[i]);
+        i += 1;
+        if (i >= YEARS.length) { pauseYearPlay(); return; }
+        yearPlayTimeout = setTimeout(step, 3200);
+      };
+      step();
+    }
+
+    function addLayers() {
+      map.addSource('sale-data', { type: 'geojson', data: buildSale(currentYear) });
+
+      const conn = buildConnectivity(travelMode, currentYear, null);
+      map.addSource('connect-lines', { type: 'geojson', data: conn.lines });
+
+      // Property layout from property1.json (boundary / plots / roads / common areas)
+      const emptyFc = { type: 'FeatureCollection', features: [] };
+      map.addSource('property-boundary', { type: 'geojson', data: emptyFc });
+      map.addSource('property-common', { type: 'geojson', data: emptyFc });
+      map.addSource('property-roads', { type: 'geojson', data: emptyFc });
+      map.addSource('property-plots', { type: 'geojson', data: emptyFc });
+      map.addSource('property-plot-labels', { type: 'geojson', data: emptyFc });
+
+      map.addLayer({
+        id: 'property-boundary-fill',
+        type: 'fill',
+        source: 'property-boundary',
+        paint: { 'fill-color': '#39D98A', 'fill-opacity': 0.18 }
+      });
+      map.addLayer({
+        id: 'property-boundary-outline',
+        type: 'line',
+        source: 'property-boundary',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-color': '#39D98A', 'line-width': 3, 'line-opacity': 1 }
+      });
+
+      // Real Sark Green Plains boundary (from QGIS → WGS84 GeoJSON)
+      map.addSource('sark-green-plains-boundary', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+      map.addLayer({
+        id: 'sark-boundary-fill',
+        type: 'fill',
+        source: 'sark-green-plains-boundary',
+        layout: { visibility: 'none' },
+        paint: {
+          'fill-color': '#064e3b',
+          'fill-opacity': 0.08
+        }
+      });
+      map.addLayer({
+        id: 'sark-boundary-outline',
+        type: 'line',
+        source: 'sark-green-plains-boundary',
+        layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+        paint: {
+          'line-color': '#a7f3d0',
+          'line-width': 2,
+          'line-opacity': 0.5
+        }
+      });
+      map.addSource('sark-boundary-vertices', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+      map.addLayer({
+        id: 'sark-boundary-vertices',
+        type: 'circle',
+        source: 'sark-boundary-vertices',
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#f8fafc',
+          'circle-stroke-color': '#0f172a',
+          'circle-stroke-width': 2
+        }
+      });
+
+      // Main approach roads / ORR / green belt
+      map.addSource('sark-main-roads', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+      map.addSource('sark-main-road-stripes', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+      // Wide asphalt body
+      map.addLayer({
+        id: 'sark-main-roads-fill',
+        type: 'fill',
+        source: 'sark-main-roads',
+        paint: {
+          'fill-color': [
+            'match', ['get', 'kind'],
+            'orr', '#171717',
+            '#1f1f1f'
+          ],
+          'fill-opacity': 0.97
+        }
+      });
+      // Dark outer curb
+      map.addLayer({
+        id: 'sark-main-roads-casing',
+        type: 'line',
+        source: 'sark-main-roads',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#050505',
+          'line-width': [
+            'match', ['get', 'kind'],
+            'orr', 7,
+            5.5
+          ],
+          'line-opacity': 0.95
+        }
+      });
+      // Solid white edge strips (both sides of pavement)
+      map.addLayer({
+        id: 'sark-main-roads-outline',
+        type: 'line',
+        source: 'sark-main-roads',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            14.5,
+            ['match', ['get', 'kind'], 'orr', 2.4, 2],
+            17,
+            ['match', ['get', 'kind'], 'orr', 3.4, 2.8],
+            18.5,
+            ['match', ['get', 'kind'], 'orr', 4, 3.2]
+          ],
+          'line-opacity': 1
+        }
+      });
+      // Lane / divider strip along corridor center
+      map.addLayer({
+        id: 'sark-main-roads-center',
+        type: 'line',
+        source: 'sark-main-road-stripes',
+        minzoom: 14.8,
+        layout: { 'line-join': 'round', 'line-cap': 'butt' },
+        paint: {
+          'line-color': [
+            'match', ['get', 'kind'],
+            'orr', '#facc15',
+            '#ffffff'
+          ],
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            15, ['match', ['get', 'kind'], 'orr', 2.2, 1.8],
+            17, ['match', ['get', 'kind'], 'orr', 3.2, 2.4],
+            18.5, ['match', ['get', 'kind'], 'orr', 4, 3]
+          ],
+          'line-dasharray': [5, 3.5],
+          'line-opacity': 0.98
+        }
+      });
+      // Soft carriageway sheen on all main corridors
+      map.addLayer({
+        id: 'sark-main-roads-inner-edge',
+        type: 'line',
+        source: 'sark-main-road-stripes',
+        minzoom: 15,
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#e5e5e5',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            15, ['match', ['get', 'kind'], 'orr', 12, 8],
+            17, ['match', ['get', 'kind'], 'orr', 18, 12],
+            18.5, ['match', ['get', 'kind'], 'orr', 24, 16]
+          ],
+          'line-opacity': [
+            'match', ['get', 'kind'],
+            'orr', 0.14,
+            0.1
+          ],
+          'line-blur': 0.6
+        }
+      });
+
+      map.addLayer({
+        id: 'property-common-fill',
+        type: 'fill',
+        source: 'property-common',
+        paint: {
+          'fill-color': [
+            'match', ['get', 'subtype'],
+            'social-infrastructure', '#60a5fa',
+            'utility', '#a78bfa',
+            '#34d399'
+          ],
+          'fill-opacity': 0.28
+        }
+      });
+      map.addLayer({
+        id: 'property-common-outline',
+        type: 'line',
+        source: 'property-common',
+        paint: { 'line-color': '#e2e8f0', 'line-width': 1.4, 'line-opacity': 0.7 }
+      });
+
+      // Internal layout roads — asphalt + solid white edges + dashed center strip
+      map.addSource('property-road-stripes', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+      map.addLayer({
+        id: 'property-roads-fill',
+        type: 'fill',
+        source: 'property-roads',
+        paint: {
+          'fill-color': '#1c1c1c',
+          'fill-opacity': 0.97
+        }
+      });
+      map.addLayer({
+        id: 'property-roads-casing',
+        type: 'line',
+        source: 'property-roads',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#050505',
+          'line-width': 4.5,
+          'line-opacity': 0.9
+        }
+      });
+      map.addLayer({
+        id: 'property-roads-outline',
+        type: 'line',
+        source: 'property-roads',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            15, 1.8,
+            17, 2.6,
+            18.5, 3.2
+          ],
+          'line-opacity': 1
+        }
+      });
+      map.addLayer({
+        id: 'property-roads-center',
+        type: 'line',
+        source: 'property-road-stripes',
+        minzoom: 15,
+        layout: { 'line-join': 'round', 'line-cap': 'butt' },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            15, 1.3,
+            17, 2,
+            18.5, 2.6
+          ],
+          'line-dasharray': [4.5, 3.2],
+          'line-opacity': 0.95
+        }
+      });
+      map.addLayer({
+        id: 'property-roads-line',
+        type: 'line',
+        source: 'property-roads',
+        filter: ['==', ['geometry-type'], 'LineString'],
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#1c1c1c',
+          'line-width': 8,
+          'line-opacity': 0.95
+        }
+      });
+
+      // Floating glass plots — soft ground shadow + thin airborne plate
+      map.addLayer({
+        id: 'property-plots-shadow',
+        type: 'fill',
+        source: 'property-plots',
+        paint: {
+          'fill-color': '#000000',
+          'fill-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 0.45,
+            ['==', ['get', 'number'], hoveredPlotNumber], 0.36,
+            0.26
+          ],
+          'fill-translate': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], ['literal', [14, 18]],
+            ['==', ['get', 'number'], hoveredPlotNumber], ['literal', [10, 13]],
+            ['literal', [7, 9]]
+          ],
+          'fill-translate-anchor': 'viewport'
+        }
+      });
+      map.addLayer({
+        id: 'property-plots-shadow-soft',
+        type: 'line',
+        source: 'property-plots',
+        paint: {
+          'line-color': '#000000',
+          'line-width': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 14,
+            ['==', ['get', 'number'], hoveredPlotNumber], 11,
+            7
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 0.22,
+            ['==', ['get', 'number'], hoveredPlotNumber], 0.16,
+            0.1
+          ],
+          'line-blur': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 6,
+            ['==', ['get', 'number'], hoveredPlotNumber], 5,
+            3.5
+          ],
+          'line-translate': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], ['literal', [10, 14]],
+            ['==', ['get', 'number'], hoveredPlotNumber], ['literal', [7, 10]],
+            ['literal', [4, 6]]
+          ],
+          'line-translate-anchor': 'viewport'
+        }
+      });
+      map.addLayer({
+        id: 'property-plots-fill',
+        type: 'fill',
+        source: 'property-plots',
+        paint: {
+          'fill-color': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], '#d1fae5',
+            ['==', ['get', 'number'], hoveredPlotNumber], '#a7f3d0',
+            [
+              'match', ['get', 'status'],
+              'available', '#34d399',
+              'reserved', '#fbbf24',
+              'sold', '#f87171',
+              '#34d399'
+            ]
+          ],
+          'fill-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 0.82,
+            ['==', ['get', 'number'], hoveredPlotNumber], 0.74,
+            0.48
+          ]
+        }
+      });
+      map.addLayer({
+        id: 'property-plots-extrusion',
+        type: 'fill-extrusion',
+        source: 'property-plots',
+        paint: {
+          'fill-extrusion-color': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], '#ecfdf5',
+            ['==', ['get', 'number'], hoveredPlotNumber], '#bbf7d0',
+            [
+              'match', ['get', 'status'],
+              'available', '#6ee7b7',
+              'reserved', '#fcd34d',
+              'sold', '#fca5a5',
+              '#6ee7b7'
+            ]
+          ],
+          // Thin floating plate: small air gap under the slab
+          'fill-extrusion-base': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 6.8,
+            ['==', ['get', 'number'], hoveredPlotNumber], 5.2,
+            3.1
+          ],
+          'fill-extrusion-height': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 8.4,
+            ['==', ['get', 'number'], hoveredPlotNumber], 6.6,
+            4.2
+          ],
+          'fill-extrusion-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 0.9,
+            ['==', ['get', 'number'], hoveredPlotNumber], 0.84,
+            0.72
+          ],
+          'fill-extrusion-vertical-gradient': true
+        }
+      });
+      map.addLayer({
+        id: 'property-plots-glow',
+        type: 'line',
+        source: 'property-plots',
+        paint: {
+          'line-color': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], '#ffffff',
+            ['==', ['get', 'number'], hoveredPlotNumber], '#d1fae5',
+            '#86efac'
+          ],
+          'line-width': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 10,
+            ['==', ['get', 'number'], hoveredPlotNumber], 8,
+            4
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 0.45,
+            ['==', ['get', 'number'], hoveredPlotNumber], 0.32,
+            0.12
+          ],
+          'line-blur': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 3.5,
+            ['==', ['get', 'number'], hoveredPlotNumber], 2.8,
+            1.8
+          ]
+        }
+      });
+      map.addLayer({
+        id: 'property-plots-outline',
+        type: 'line',
+        source: 'property-plots',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], '#ffffff',
+            ['==', ['get', 'number'], hoveredPlotNumber], '#f0fdf4',
+            'rgba(255,255,255,0.88)'
+          ],
+          'line-width': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 2.4,
+            ['==', ['get', 'number'], hoveredPlotNumber], 2,
+            1.15
+          ],
+          'line-opacity': 0.98
+        }
+      });
+      map.addLayer({
+        id: 'property-plots-hover',
+        type: 'line',
+        source: 'property-plots',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 1.4,
+            ['==', ['get', 'number'], hoveredPlotNumber], 1.15,
+            0
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 0.95,
+            ['==', ['get', 'number'], hoveredPlotNumber], 0.8,
+            0
+          ]
+        }
+      });
+      map.addLayer({
+        id: 'property-plot-labels',
+        type: 'symbol',
+        source: 'property-plot-labels',
+        minzoom: 15.1,
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-size': [
+            'interpolate', ['linear'], ['zoom'],
+            15.2, 10,
+            17, 12.5,
+            18.5, 15
+          ],
+          'text-allow-overlap': false,
+          'text-ignore-placement': false,
+          'text-padding': 2,
+          'text-offset': [0, -0.2]
+        },
+        paint: {
+          'text-color': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], '#ffffff',
+            ['==', ['get', 'number'], hoveredPlotNumber], '#ffffff',
+            '#ecfdf5'
+          ],
+          'text-halo-color': 'rgba(2, 18, 12, 0.9)',
+          'text-halo-width': 1.7,
+          'text-opacity': [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], 1,
+            ['==', ['get', 'number'], hoveredPlotNumber], 1,
+            0.86
+          ]
+        }
+      });
+
+      setLayoutVisible(true);
+
+      // Flat fill first — always readable
+      map.addLayer({
+        id: 'sale-fill', type: 'fill', source: 'sale-data',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': 0.85
+        }
+      });
+
+      map.addLayer({
+        id: 'sale-extrusion', type: 'fill-extrusion', source: 'sale-data',
+        paint: {
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': ['coalesce', ['get', 'base'], 0],
+          'fill-extrusion-opacity': 0.88,
+          'fill-extrusion-vertical-gradient': true
+        }
+      });
+
+      map.addLayer({
+        id: 'sale-outline', type: 'line', source: 'sale-data',
+        paint: {
+          'line-color': ['match', ['get', 'status'], 'available', '#b2f2bb', '#ffffff'],
+          'line-width': ['match', ['get', 'status'], 'available', 2.4, 1.4],
+          'line-opacity': 1
+        }
+      });
+
+      map.addLayer({
+        id: 'connect-glow', type: 'line', source: 'connect-lines',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-color': '#ffffff', 'line-width': 16, 'line-opacity': 0.3, 'line-blur': 1.2 }
+      });
+
+      map.addLayer({
+        id: 'connect-line', type: 'line', source: 'connect-lines',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': 5,
+          'line-dasharray': [2, 1.2],
+          'line-opacity': 1
+        }
+      });
+
+      createPlaceLabels();
+      bindPlotInteractions();
+
+      map.on('click', 'connect-line', (e) => {
+        focusDestination(e.features[0].properties.id);
+      });
+
+      const showSalePopup = (e) => {
+        const p = e.features[0].properties;
+        new maplibregl.Popup({ offset: 12 })
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div class="popup-title">${p.title}</div>
+            <div class="popup-metric"><strong>Status</strong> — ${p.status}</div>
+            <div class="popup-metric"><strong>Area</strong> — ${p.area_sqft}</div>
+            <div class="popup-metric"><strong>Price</strong> — ${p.price}</div>
+          `)
+          .addTo(map);
+      };
+      map.on('click', 'sale-extrusion', showSalePopup);
+      map.on('click', 'sale-fill', showSalePopup);
+
+      ['connect-line', 'sale-extrusion', 'sale-fill'].forEach((id) => {
+        map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
+      });
+
+      // Only real pointer/wheel gestures — not programmatic camera events
+      // (setBearing / fitBounds fire rotatestart/zoomstart and would freeze the orbit)
+      map.on('mousedown', noteUserInteraction);
+      map.on('touchstart', noteUserInteraction);
+      map.on('wheel', noteUserInteraction);
+      map.on('dragstart', noteUserInteraction);
+
+      setYear(2026, false);
+      // Keep the camera on the Sark Green layout — skip demo connectivity tour.
+      hideDemoSaleLayers();
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Loading Sark Green Plains layout…';
+      setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+
+      loadPropertyLayout();
+    }
+
+    const PROPERTY_LAYOUT_LAYER_IDS = [
+      'property-boundary-fill',
+      'property-boundary-outline',
+      'sark-main-roads-fill',
+      'sark-main-roads-casing',
+      'sark-main-roads-outline',
+      'sark-main-roads-inner-edge',
+      'sark-main-roads-center',
+      'property-common-fill',
+      'property-common-outline',
+      'property-roads-fill',
+      'property-roads-casing',
+      'property-roads-outline',
+      'property-roads-center',
+      'property-roads-line',
+      'property-plots-shadow',
+      'property-plots-shadow-soft',
+      'property-plots-fill',
+      'property-plots-extrusion',
+      'property-plots-glow',
+      'property-plots-outline',
+      'property-plots-hover',
+      'property-plot-labels'
+    ];
+
+    // Kept off on purpose — debug / old CAD overlays
+    const HIDDEN_OVERLAY_LAYER_IDS = [
+      'sark-boundary-fill',
+      'sark-boundary-outline',
+      'sark-boundary-vertices',
+      'sale-fill',
+      'sale-extrusion',
+      'sale-outline',
+      'connect-glow',
+      'connect-line'
+    ];
+
+    function forceHideOverlayLayers() {
+      HIDDEN_OVERLAY_LAYER_IDS.forEach((id) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+      });
+    }
+
+    const SARK_BOUNDARY_URL = './data/sark-green-plains.geojson';
+    let sarkBoundaryData = null;
+    let boundaryCheckOn = false;
+    const boundaryVertexMarkers = [];
+
+    function clearBoundaryVertexMarkers() {
+      while (boundaryVertexMarkers.length) {
+        boundaryVertexMarkers.pop().remove();
+      }
+    }
+
+    function buildVertexFeatures(polygonFeature) {
+      const ring = polygonFeature?.geometry?.coordinates?.[0];
+      if (!Array.isArray(ring) || ring.length < 4) return [];
+      // Last point repeats first — skip duplicate for markers 1..N
+      const verts = ring.slice(0, -1);
+      return verts.map((coord, i) => ({
+        type: 'Feature',
+        properties: { n: i + 1, label: String(i + 1) },
+        geometry: { type: 'Point', coordinates: coord }
+      }));
+    }
+
+    function setBoundaryCheckVisible(on) {
+      boundaryCheckOn = on;
+      const btn = document.getElementById('boundaryCheckBtn');
+      if (btn) {
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        const state = btn.querySelector('.layout-toggle-state');
+        if (state) state.textContent = on ? 'ON' : 'OFF';
+      }
+
+      if (map.getLayer('sark-boundary-vertices')) {
+        map.setLayoutProperty('sark-boundary-vertices', 'visibility', on ? 'visible' : 'none');
+      }
+
+      clearBoundaryVertexMarkers();
+      if (!on || !sarkBoundaryData?.features?.length) return;
+
+      const verts = buildVertexFeatures(sarkBoundaryData.features[0]);
+      verts.forEach((f) => {
+        const el = document.createElement('div');
+        el.className = 'boundary-vertex-marker';
+        el.textContent = String(f.properties.n);
+        const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat(f.geometry.coordinates)
+          .addTo(map);
+        boundaryVertexMarkers.push(marker);
+      });
+    }
+
+    function frameSarkBoundary(duration = 1600) {
+      const feature = sarkBoundaryData?.features?.[0];
+      if (!feature?.geometry) return false;
+      const bounds = new maplibregl.LngLatBounds();
+      const walk = (node) => {
+        if (!Array.isArray(node)) return;
+        if (typeof node[0] === 'number' && typeof node[1] === 'number') {
+          bounds.extend([node[0], node[1]]);
+          return;
+        }
+        node.forEach(walk);
+      };
+      walk(feature.geometry.coordinates);
+      if (bounds.isEmpty()) return false;
+      map.fitBounds(bounds, {
+        padding: { top: 48, bottom: 72, left: 40, right: 40 },
+        pitch: 48,
+        bearing: -18,
+        duration,
+        maxZoom: 17.2
+      });
+      return true;
+    }
+
+    async function loadSarkPropertyBoundary({ frame = false } = {}) {
+      try {
+        const res = await fetch(SARK_BOUNDARY_URL, { cache: 'no-cache' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        sarkBoundaryData = await res.json();
+        if (map.getSource('sark-green-plains-boundary')) {
+          map.getSource('sark-green-plains-boundary').setData(sarkBoundaryData);
+        }
+
+        const verts = buildVertexFeatures(sarkBoundaryData.features[0]);
+        if (map.getSource('sark-boundary-vertices')) {
+          map.getSource('sark-boundary-vertices').setData({
+            type: 'FeatureCollection',
+            features: verts
+          });
+        }
+
+        // Prefer real QGIS boundary over the provisional property1.json ring
+        if (map.getSource('property-boundary')) {
+          map.getSource('property-boundary').setData({ type: 'FeatureCollection', features: [] });
+        }
+
+        const ring0 = sarkBoundaryData.features[0]?.geometry?.coordinates?.[0];
+        if (ring0?.length) {
+          const xs = ring0.map((p) => p[0]);
+          const ys = ring0.map((p) => p[1]);
+          projectCenter = [
+            (Math.min(...xs) + Math.max(...xs)) / 2,
+            (Math.min(...ys) + Math.max(...ys)) / 2
+          ];
+        }
+
+        if (frame) frameSarkBoundary();
+        // Never show vertex dots / cyan CAD outline on the hero map
+        if (map.getLayer('sark-boundary-vertices')) {
+          map.setLayoutProperty('sark-boundary-vertices', 'visibility', 'none');
+        }
+        if (map.getLayer('sark-boundary-outline')) {
+          map.setLayoutProperty('sark-boundary-outline', 'visibility', 'none');
+        }
+        if (map.getLayer('sark-boundary-fill')) {
+          map.setLayoutProperty('sark-boundary-fill', 'visibility', 'none');
+        }
+        clearBoundaryVertexMarkers();
+
+        return true;
+      } catch (err) {
+        console.error('[sark-green-plains.geojson]', err);
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Could not load data/sark-green-plains.geojson';
+        return false;
+      }
+    }
+
+    let plotFloatBob = 0;
+    let plotFloatRaf = null;
+
+    function plotStatusColor(bright) {
+      return [
+        'match', ['get', 'status'],
+        'available', bright ? '#6ee7b7' : '#34d399',
+        'reserved', bright ? '#fcd34d' : '#fbbf24',
+        'sold', bright ? '#fca5a5' : '#f87171',
+        bright ? '#6ee7b7' : '#34d399'
+      ];
+    }
+
+    function refreshPlotHighlightPaint() {
+      if (!map.getLayer('property-plots-extrusion')) return;
+
+      const idleBase = 3.1 + plotFloatBob;
+      const hoverBase = 5.2 + plotFloatBob * 0.6;
+      const selectBase = 6.8 + plotFloatBob * 0.35;
+      const plate = 1.2; // thin card thickness
+      const hasHover = hoveredPlotNumber != null;
+
+      map.setPaintProperty('property-plots-extrusion', 'fill-extrusion-base', [
+        'case',
+        ['==', ['get', 'number'], selectedPlotNumber], selectBase,
+        ['==', ['get', 'number'], hoveredPlotNumber], hoverBase,
+        idleBase
+      ]);
+      map.setPaintProperty('property-plots-extrusion', 'fill-extrusion-height', [
+        'case',
+        ['==', ['get', 'number'], selectedPlotNumber], selectBase + plate + 0.4,
+        ['==', ['get', 'number'], hoveredPlotNumber], hoverBase + plate + 0.2,
+        idleBase + plate
+      ]);
+      map.setPaintProperty('property-plots-extrusion', 'fill-extrusion-opacity', [
+        'case',
+        ['==', ['get', 'number'], selectedPlotNumber], 0.9,
+        ['==', ['get', 'number'], hoveredPlotNumber], 0.84,
+        hasHover ? 0.4 : 0.72
+      ]);
+      map.setPaintProperty('property-plots-extrusion', 'fill-extrusion-color', [
+        'case',
+        ['==', ['get', 'number'], selectedPlotNumber], '#ecfdf5',
+        ['==', ['get', 'number'], hoveredPlotNumber], '#bbf7d0',
+        plotStatusColor(true)
+      ]);
+
+      if (map.getLayer('property-plots-fill')) {
+        map.setPaintProperty('property-plots-fill', 'fill-color', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], '#d1fae5',
+          ['==', ['get', 'number'], hoveredPlotNumber], '#a7f3d0',
+          plotStatusColor(false)
+        ]);
+        map.setPaintProperty('property-plots-fill', 'fill-opacity', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 0.82,
+          ['==', ['get', 'number'], hoveredPlotNumber], 0.74,
+          hasHover ? 0.26 : 0.48
+        ]);
+      }
+
+      if (map.getLayer('property-plots-shadow')) {
+        map.setPaintProperty('property-plots-shadow', 'fill-opacity', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 0.45,
+          ['==', ['get', 'number'], hoveredPlotNumber], 0.36,
+          0.26
+        ]);
+        map.setPaintProperty('property-plots-shadow', 'fill-translate', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], ['literal', [14, 18]],
+          ['==', ['get', 'number'], hoveredPlotNumber], ['literal', [10, 13]],
+          ['literal', [7, 9]]
+        ]);
+      }
+
+      if (map.getLayer('property-plots-shadow-soft')) {
+        map.setPaintProperty('property-plots-shadow-soft', 'line-width', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 14,
+          ['==', ['get', 'number'], hoveredPlotNumber], 11,
+          7
+        ]);
+        map.setPaintProperty('property-plots-shadow-soft', 'line-opacity', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 0.22,
+          ['==', ['get', 'number'], hoveredPlotNumber], 0.16,
+          0.1
+        ]);
+        map.setPaintProperty('property-plots-shadow-soft', 'line-translate', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], ['literal', [10, 14]],
+          ['==', ['get', 'number'], hoveredPlotNumber], ['literal', [7, 10]],
+          ['literal', [4, 6]]
+        ]);
+      }
+
+      if (map.getLayer('property-plots-glow')) {
+        map.setPaintProperty('property-plots-glow', 'line-width', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 10,
+          ['==', ['get', 'number'], hoveredPlotNumber], 8,
+          4
+        ]);
+        map.setPaintProperty('property-plots-glow', 'line-opacity', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 0.45,
+          ['==', ['get', 'number'], hoveredPlotNumber], 0.32,
+          0.12
+        ]);
+      }
+
+      if (map.getLayer('property-plots-outline')) {
+        map.setPaintProperty('property-plots-outline', 'line-width', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 2.4,
+          ['==', ['get', 'number'], hoveredPlotNumber], 2,
+          1.15
+        ]);
+        map.setPaintProperty('property-plots-outline', 'line-color', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], '#ffffff',
+          ['==', ['get', 'number'], hoveredPlotNumber], '#f0fdf4',
+          'rgba(255,255,255,0.88)'
+        ]);
+      }
+
+      if (map.getLayer('property-plots-hover')) {
+        map.setPaintProperty('property-plots-hover', 'line-width', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 1.2,
+          ['==', ['get', 'number'], hoveredPlotNumber], 1,
+          0
+        ]);
+        map.setPaintProperty('property-plots-hover', 'line-opacity', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 0.95,
+          ['==', ['get', 'number'], hoveredPlotNumber], 0.85,
+          0
+        ]);
+      }
+
+      if (map.getLayer('property-plot-labels')) {
+        map.setPaintProperty('property-plot-labels', 'text-opacity', [
+          'case',
+          ['==', ['get', 'number'], selectedPlotNumber], 1,
+          ['==', ['get', 'number'], hoveredPlotNumber], 1,
+          hasHover ? 0.32 : 0.86
+        ]);
+      }
+    }
+
+    function startPlotFloatAnimation() {
+      if (plotFloatRaf) return;
+      const tick = (now) => {
+        plotFloatBob = Math.sin(now / 900) * 0.55;
+        if (map.getLayer('property-plots-extrusion')) {
+          const idleBase = 3.1 + plotFloatBob;
+          const hoverBase = 5.2 + plotFloatBob * 0.6;
+          const selectBase = 6.8 + plotFloatBob * 0.35;
+          const plate = 1.2;
+          map.setPaintProperty('property-plots-extrusion', 'fill-extrusion-base', [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], selectBase,
+            ['==', ['get', 'number'], hoveredPlotNumber], hoverBase,
+            idleBase
+          ]);
+          map.setPaintProperty('property-plots-extrusion', 'fill-extrusion-height', [
+            'case',
+            ['==', ['get', 'number'], selectedPlotNumber], selectBase + plate + 0.4,
+            ['==', ['get', 'number'], hoveredPlotNumber], hoverBase + plate + 0.2,
+            idleBase + plate
+          ]);
+        }
+        plotFloatRaf = requestAnimationFrame(tick);
+      };
+      plotFloatRaf = requestAnimationFrame(tick);
+    }
+
+    function notifyParentPlot(type, plot = null) {
+      try {
+        window.parent?.postMessage(
+          {
+            source: 'ila-master-plan',
+            channel: MAP_CHANNEL,
+            type,
+            plot
+          },
+          '*'
+        );
+      } catch (_) {
+        /* ignore cross-frame errors */
+      }
+    }
+
+    function notifyParentReady() {
+      try {
+        window.parent?.postMessage(
+          {
+            source: 'ila-master-plan',
+            channel: MAP_CHANNEL,
+            type: 'map-ready'
+          },
+          '*'
+        );
+      } catch (_) {
+        /* ignore cross-frame errors */
+      }
+    }
+
+    let connectivityMarkers = [];
+
+    function connectivityStatusClass(status) {
+      const value = String(status || '').toLowerCase();
+      if (value.includes('operational') || value.includes('existing')) return 'is-operational';
+      if (value.includes('construction') || value.includes('active')) return 'is-construction';
+      return 'is-planned';
+    }
+
+    function connectivityGlyph(icon) {
+      const key = String(icon || '');
+      if (key === 'school') return 'S';
+      if (key === 'hospital') return 'H';
+      if (key === 'metro') return 'T';
+      if (key === 'amenities') return 'M';
+      if (key === 'building' || key === 'it') return 'B';
+      return 'R';
+    }
+
+    function ensureConnectivityLayers() {
+      if (!map.getSource('neighbourhood-links')) {
+        map.addSource('neighbourhood-links', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+      }
+      if (!map.getSource('neighbourhood-points')) {
+        map.addSource('neighbourhood-points', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+      }
+      if (!map.getLayer('neighbourhood-links-line')) {
+        map.addLayer({
+          id: 'neighbourhood-links-line',
+          type: 'line',
+          source: 'neighbourhood-links',
+          paint: {
+            'line-color': '#C9A84C',
+            'line-width': 1.6,
+            'line-opacity': 0.7,
+            'line-dasharray': [1.6, 1.4]
+          }
+        });
+      }
+      if (!map.getLayer('neighbourhood-points-glow')) {
+        map.addLayer({
+          id: 'neighbourhood-points-glow',
+          type: 'circle',
+          source: 'neighbourhood-points',
+          paint: {
+            'circle-radius': 14,
+            'circle-color': [
+              'match',
+              ['get', 'status'],
+              'is-operational', '#2D8C50',
+              'is-construction', '#C9A84C',
+              '#3B6EB4'
+            ],
+            'circle-opacity': 0.18
+          }
+        });
+      }
+      if (!map.getLayer('neighbourhood-points-core')) {
+        map.addLayer({
+          id: 'neighbourhood-points-core',
+          type: 'circle',
+          source: 'neighbourhood-points',
+          paint: {
+            'circle-radius': 5,
+            'circle-color': [
+              'match',
+              ['get', 'status'],
+              'is-operational', '#2D8C50',
+              'is-construction', '#C9A84C',
+              '#3B6EB4'
+            ],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff'
+          }
+        });
+      }
+    }
+
+    function clearConnectivityOverlay() {
+      connectivityMarkers.forEach((marker) => marker.remove());
+      connectivityMarkers = [];
+      if (map.getSource('neighbourhood-links')) {
+        map.getSource('neighbourhood-links').setData({ type: 'FeatureCollection', features: [] });
+      }
+      if (map.getSource('neighbourhood-points')) {
+        map.getSource('neighbourhood-points').setData({ type: 'FeatureCollection', features: [] });
+      }
+    }
+
+    function setConnectivityOverlay({ origin, infrastructure }) {
+      if (!map.isStyleLoaded()) return;
+      ensureConnectivityLayers();
+      clearConnectivityOverlay();
+
+      if (!Array.isArray(origin) || origin.length < 2 || !Array.isArray(infrastructure) || !infrastructure.length) {
+        return;
+      }
+
+      const [originLng, originLat] = origin;
+      const pointFeatures = [];
+      const lineFeatures = [];
+      const bounds = new maplibregl.LngLatBounds();
+      bounds.extend([originLng, originLat]);
+
+      infrastructure.forEach((item, index) => {
+        const [dLng, dLat] = item.offset || [0, 0];
+        const coordinates = [originLng + dLng, originLat + dLat];
+        const status = connectivityStatusClass(item.status);
+        bounds.extend(coordinates);
+
+        pointFeatures.push({
+          type: 'Feature',
+          properties: { id: item.id || `infra-${index}`, status },
+          geometry: { type: 'Point', coordinates }
+        });
+        lineFeatures.push({
+          type: 'Feature',
+          properties: { id: `${item.id || index}-link` },
+          geometry: {
+            type: 'LineString',
+            coordinates: [[originLng, originLat], coordinates]
+          }
+        });
+
+        const el = document.createElement('div');
+        el.className = `connectivity-marker ${status}`;
+        el.innerHTML = `
+          <span class="connectivity-marker__icon">${connectivityGlyph(item.icon)}</span>
+          <span class="connectivity-marker__copy">
+            <span class="connectivity-marker__label">${item.label || 'Amenity'}</span>
+            <span class="connectivity-marker__meta">${item.distance || ''} · ${item.status || ''}</span>
+          </span>
+        `;
+        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat(coordinates)
+          .addTo(map);
+        connectivityMarkers.push(marker);
+      });
+
+      map.getSource('neighbourhood-links').setData({
+        type: 'FeatureCollection',
+        features: lineFeatures
+      });
+      map.getSource('neighbourhood-points').setData({
+        type: 'FeatureCollection',
+        features: pointFeatures
+      });
+
+      if (MAP_CHANNEL === 'neighbourhood' && !bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: { top: 64, bottom: 72, left: 48, right: 48 },
+          duration: 900,
+          maxZoom: 14.8,
+          pitch: IS_LIGHT_THEME ? 38 : map.getPitch(),
+          bearing: map.getBearing()
+        });
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (!data || data.source !== 'ila-host') return;
+      if (data.type === 'set-connectivity') {
+        setConnectivityOverlay({
+          origin: data.origin,
+          infrastructure: data.infrastructure
+        });
+      }
+    });
+
+    function hidePlotPanel() {
+      selectedPlotNumber = null;
+      if (plotPanel) {
+        plotPanel.classList.remove('visible');
+        plotPanel.hidden = true;
+      }
+      refreshPlotHighlightPaint();
+      notifyParentPlot('plot-clear');
+    }
+
+    function openPlotPanel(props) {
+      if (!props) return;
+      selectedPlotNumber = Number(props.number);
+      const plotLabel = props.plot_no || props.label || props.number;
+      const area = props.area_sqyd != null ? props.area_sqyd : props.sq_yards;
+      const statusLabel = String(props.status || 'available');
+      // Keep selection highlight on the map; details render in the host PropertyPanel.
+      if (plotPanel) {
+        plotPanel.classList.remove('visible');
+        plotPanel.hidden = true;
+      }
+      refreshPlotHighlightPaint();
+      notifyParentPlot('plot-select', {
+        number: selectedPlotNumber,
+        plotNo: String(plotLabel),
+        areaSqyd: area != null && area !== '' && Number.isFinite(Number(area)) ? Number(area) : null,
+        facing: props.facing || null,
+        status: statusLabel.toLowerCase()
+      });
+    }
+
+    const PLOT_HIT_LAYERS = ['property-plots-extrusion', 'property-plots-fill'];
+
+    function bindPlotInteractions() {
+      const onEnter = () => {
+        if (boundaryDrawMode) return;
+        map.getCanvas().style.cursor = 'pointer';
+      };
+      const onLeave = () => {
+        if (boundaryDrawMode) return;
+        map.getCanvas().style.cursor = '';
+        hoveredPlotNumber = null;
+        refreshPlotHighlightPaint();
+      };
+
+      const onMove = (e) => {
+        if (boundaryDrawMode) return;
+        if (!e.features?.length) return;
+        const num = Number(e.features[0].properties.number);
+        if (hoveredPlotNumber !== num) {
+          hoveredPlotNumber = num;
+          refreshPlotHighlightPaint();
+        }
+      };
+
+      const selectPlotAtPoint = (point) => {
+        if (boundaryDrawMode || penPickMode) return false;
+        const layers = PLOT_HIT_LAYERS.filter((id) => map.getLayer(id));
+        if (!layers.length) return false;
+        const hits = map.queryRenderedFeatures(point, { layers });
+        if (!hits.length) return false;
+        openPlotPanel(hits[0].properties);
+        return true;
+      };
+
+      const onClick = (e) => {
+        if (boundaryDrawMode) return;
+        if (!e.features?.length) return;
+        e.originalEvent?.stopPropagation?.();
+        openPlotPanel(e.features[0].properties);
+      };
+
+      PLOT_HIT_LAYERS.forEach((layerId) => {
+        map.on('mousemove', layerId, onMove);
+        map.on('mouseenter', layerId, onEnter);
+        map.on('mouseleave', layerId, onLeave);
+        map.on('click', layerId, onClick);
+      });
+
+      map.on('click', (e) => {
+        if (boundaryDrawMode || penPickMode) return;
+        if (selectPlotAtPoint(e.point)) return;
+        hidePlotPanel();
+      });
+
+      // Reliable mobile tap: MapLibre click can miss when pan is disabled / page scrolls
+      if (IS_MOBILE_HERO) {
+        let touchStart = null;
+        map.on('touchstart', (e) => {
+          if (!e.points?.length) return;
+          touchStart = { x: e.points[0].x, y: e.points[0].y, t: Date.now() };
+        });
+        map.on('touchend', (e) => {
+          if (!touchStart) return;
+          const touch = e.originalEvent?.changedTouches?.[0];
+          const point = touch
+            ? (() => {
+                const rect = map.getCanvas().getBoundingClientRect();
+                return {
+                  x: touch.clientX - rect.left,
+                  y: touch.clientY - rect.top,
+                };
+              })()
+            : touchStart;
+          const dx = point.x - touchStart.x;
+          const dy = point.y - touchStart.y;
+          const dt = Date.now() - touchStart.t;
+          touchStart = null;
+          if (dt > 450 || Math.hypot(dx, dy) > 14) return;
+          if (!selectPlotAtPoint(point)) hidePlotPanel();
+        });
+      }
+    }
+
+    function extendBoundsFromGeometry(bounds, geometry) {
+      if (!geometry || !geometry.coordinates) return;
+      const walk = (node) => {
+        if (!Array.isArray(node)) return;
+        if (typeof node[0] === 'number' && typeof node[1] === 'number') {
+          bounds.extend([node[0], node[1]]);
+          return;
+        }
+        node.forEach(walk);
+      };
+      walk(geometry.coordinates);
+    }
+
+    function framePropertyLayout() {
+      if (frameSarkBoundary(1600)) return;
+
+      const bounds = new maplibregl.LngLatBounds();
+      let hasGeom = false;
+      const collections = [
+        propertyBundle?.boundary,
+        propertyBundle?.plots,
+        propertyBundle?.commonAreas,
+        propertyBundle?.roads
+      ];
+      collections.forEach((fc) => {
+        (fc?.features || []).forEach((f) => {
+          if (!f.geometry) return;
+          extendBoundsFromGeometry(bounds, f.geometry);
+          hasGeom = true;
+        });
+      });
+
+      if (hasGeom && !bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: { top: 56, bottom: 96, left: 48, right: 48 },
+          pitch: 45,
+          bearing: 0,
+          duration: 1600,
+          maxZoom: 17.5
+        });
+        return;
+      }
+
+      const center = projectCenter || window.getProjectCenter?.(propertyBundle?.raw) || [78.453805556, 17.209444444];
+      map.flyTo({ center, zoom: 16, pitch: 45, bearing: 0, duration: 1400 });
+    }
+
+    function setLayoutVisible(visible) {
+      layoutVisible = visible;
+      const vis = visible ? 'visible' : 'none';
+      PROPERTY_LAYOUT_LAYER_IDS.forEach((id) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+      });
+      forceHideOverlayLayers();
+      if (layoutToggle) {
+        layoutToggle.classList.toggle('active', visible);
+        layoutToggle.setAttribute('aria-pressed', visible ? 'true' : 'false');
+        const state = layoutToggle.querySelector('.layout-toggle-state');
+        if (state) state.textContent = visible ? 'ON' : 'OFF';
+      }
+      if (!visible) hidePlotPanel();
+    }
+
+    async function waitForPropertyLoader(timeoutMs = 10000) {
+      if (window.loadPropertyData) return true;
+      return new Promise((resolve) => {
+        const t = setTimeout(() => resolve(false), timeoutMs);
+        window.addEventListener('property-data-ready', () => {
+          clearTimeout(t);
+          resolve(true);
+        }, { once: true });
+      });
+    }
+
+    function classifyMainRoad(name) {
+      const n = String(name || '').toLowerCase();
+      if (n.includes('green')) return 'greenbelt';
+      if (n.includes('orr')) return 'orr';
+      return 'arterial';
+    }
+
+    function normalizeStatus(raw) {
+      const key = String(raw || '').trim().toUpperCase();
+      if (key === 'AVL' || key === 'AVAILABLE' || key === '') return 'available';
+      if (key === 'RES' || key === 'RESERVED') return 'reserved';
+      if (key === 'SOLD') return 'sold';
+      return 'available';
+    }
+
+    function formatPlotNo(raw, fallback) {
+      const s = String(raw ?? '').trim();
+      if (!s) return String(fallback);
+      const stripped = s.replace(/^0+(?=\d)/, '');
+      return stripped || String(fallback);
+    }
+
+    function ringCentroidLocal(ring) {
+      if (!Array.isArray(ring) || ring.length < 3) return null;
+      let sx = 0;
+      let sy = 0;
+      const n = ring.length - (
+        ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? 1 : 0
+      );
+      if (n < 1) return null;
+      for (let i = 0; i < n; i++) {
+        sx += ring[i][0];
+        sy += ring[i][1];
+      }
+      return [sx / n, sy / n];
+    }
+
+    function normalizePlotCollection(fc) {
+      const features = (fc?.features || []).map((f) => {
+        const p = f.properties || {};
+        const fid = Number(p.fid);
+        const number = Number.isFinite(fid) ? fid : Number(p.plot_no) || Math.random();
+        const plotNo = formatPlotNo(p.plot_no, number);
+        const status = normalizeStatus(p.status);
+        const area = p.sq_yards != null && p.sq_yards !== '' ? Number(p.sq_yards) : null;
+        return {
+          type: 'Feature',
+          properties: {
+            ...p,
+            number,
+            plot_no: plotNo,
+            label: plotNo,
+            area_sqyd: Number.isFinite(area) ? area : null,
+            status,
+            color: status === 'available' ? '#34d399' : status === 'reserved' ? '#fbbf24' : '#f87171'
+          },
+          geometry: f.geometry
+        };
+      });
+      return { type: 'FeatureCollection', features };
+    }
+
+    function buildPlotLabels(plotsFc) {
+      const features = [];
+      (plotsFc?.features || []).forEach((f) => {
+        const ring = f.geometry?.type === 'Polygon' ? f.geometry.coordinates?.[0] : null;
+        const c = ringCentroidLocal(ring);
+        if (!c) return;
+        features.push({
+          type: 'Feature',
+          properties: {
+            label: f.properties.plot_no || f.properties.label || String(f.properties.number),
+            number: f.properties.number
+          },
+          geometry: { type: 'Point', coordinates: c }
+        });
+      });
+      return { type: 'FeatureCollection', features };
+    }
+
+    function dist2(a, b) {
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      return dx * dx + dy * dy;
+    }
+
+    function lerpLngLat(a, b, t) {
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    }
+
+    /** Approximate centerline for elongated road corridor polygons (for lane striping). */
+    function polygonRoadCenterline(geometry) {
+      if (!geometry || geometry.type !== 'Polygon') return null;
+      const ring = geometry.coordinates?.[0];
+      if (!ring || ring.length < 4) return null;
+      const pts = ring.slice(0, -1);
+      if (pts.length < 4) return null;
+
+      const n = pts.length;
+      const edges = [];
+      for (let i = 0; i < n; i++) {
+        const a = pts[i];
+        const b = pts[(i + 1) % n];
+        edges.push({ i, a, b, len: Math.sqrt(dist2(a, b)) });
+      }
+      edges.sort((x, y) => y.len - x.len);
+
+      const e1 = edges[0];
+      let e2 = null;
+      for (let k = 1; k < edges.length; k++) {
+        const e = edges[k];
+        const verts1 = new Set([e1.i, (e1.i + 1) % n]);
+        const verts2 = new Set([e.i, (e.i + 1) % n]);
+        const share = [...verts1].some((v) => verts2.has(v));
+        if (!share) {
+          e2 = e;
+          break;
+        }
+      }
+      if (!e2) e2 = edges[1];
+      if (!e2 || e1.len < 1e-9) return null;
+
+      const reverse =
+        dist2(e1.a, e2.b) + dist2(e1.b, e2.a) <
+        dist2(e1.a, e2.a) + dist2(e1.b, e2.b);
+      const e2a = reverse ? e2.b : e2.a;
+      const e2b = reverse ? e2.a : e2.b;
+
+      const samples = Math.max(2, Math.min(28, Math.ceil(e1.len / 0.00004)));
+      const line = [];
+      for (let s = 0; s <= samples; s++) {
+        const t = s / samples;
+        const p1 = lerpLngLat(e1.a, e1.b, t);
+        const p2 = lerpLngLat(e2a, e2b, t);
+        line.push([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2]);
+      }
+      if (line.length < 2) return null;
+      return { type: 'LineString', coordinates: line };
+    }
+
+    function buildRoadCenterlines(fc, { skipKinds = [] } = {}) {
+      const features = [];
+      (fc?.features || []).forEach((f, idx) => {
+        const kind = f.properties?.kind;
+        if (kind && skipKinds.includes(kind)) return;
+        const geom = polygonRoadCenterline(f.geometry);
+        if (!geom) return;
+        features.push({
+          type: 'Feature',
+          properties: {
+            ...(f.properties || {}),
+            id: f.properties?.fid ?? f.properties?.id ?? idx
+          },
+          geometry: geom
+        });
+      });
+      return { type: 'FeatureCollection', features };
+    }
+
+    function normalizeRoadCollection(fc) {
+      return {
+        type: 'FeatureCollection',
+        features: (fc?.features || []).map((f) => ({
+          type: 'Feature',
+          properties: {
+            ...(f.properties || {}),
+            name: f.properties?.road_name || 'Internal road'
+          },
+          geometry: f.geometry
+        }))
+      };
+    }
+
+    function normalizeMainRoadCollection(fc) {
+      return {
+        type: 'FeatureCollection',
+        features: (fc?.features || []).map((f) => ({
+          type: 'Feature',
+          properties: {
+            ...(f.properties || {}),
+            kind: classifyMainRoad(f.properties?.road_name),
+            name: f.properties?.road_name || 'Main road'
+          },
+          geometry: f.geometry
+        }))
+      };
+    }
+
+    async function fetchGeoJson(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Failed ${url}: ${res.status}`);
+      return res.json();
+    }
+
+    function hideDemoSaleLayers() {
+      forceHideOverlayLayers();
+    }
+
+    function frameLayoutCollections(collections, duration = 1600) {
+      const bounds = new maplibregl.LngLatBounds();
+      let hasGeom = false;
+      collections.forEach((fc) => {
+        (fc?.features || []).forEach((f) => {
+          if (!f.geometry) return;
+          extendBoundsFromGeometry(bounds, f.geometry);
+          hasGeom = true;
+        });
+      });
+      if (!hasGeom || bounds.isEmpty()) return false;
+      map.fitBounds(bounds, {
+        padding: IS_MOBILE_HERO
+          ? { top: 64, bottom: 48, left: 18, right: 18 }
+          : { top: 48, bottom: 72, left: 40, right: 40 },
+        duration,
+        pitch: IS_MOBILE_HERO ? 48 : 48,
+        bearing: -18,
+        maxZoom: IS_MOBILE_HERO ? 17.85 : 17.2
+      });
+      return true;
+    }
+
+    function finishMobileHeroFrame() {
+      if (!IS_MOBILE_HERO) return;
+      const targetZoom = Math.min(map.getZoom() + 0.35, 18.05);
+      map.easeTo({
+        zoom: targetZoom,
+        pitch: 48,
+        duration: 700,
+        essential: true
+      });
+      map.once('moveend', () => beginAutoOrbitSoon(300));
+    }
+
+    async function loadPropertyLayout() {
+      try {
+        // Metadata from property1.json (name, approval, totals)
+        try {
+          const ok = await waitForPropertyLoader();
+          if (ok && window.loadPropertyData) {
+            propertyBundle = await window.loadPropertyData(PROPERTY_URL);
+            projectCenter = propertyBundle.center;
+          }
+        } catch (metaErr) {
+          console.warn('[property1.json metadata]', metaErr);
+        }
+
+        const [plotsRaw, roadsRaw, mainRaw] = await Promise.all([
+          fetchGeoJson('./data/sark-green-plots.geojson'),
+          fetchGeoJson('./data/sark-green-road.geojson'),
+          fetchGeoJson('./data/sark-green-main-road.geojson')
+        ]);
+
+        const plots = normalizePlotCollection(plotsRaw);
+        const roads = normalizeRoadCollection(roadsRaw);
+        const mainRoads = normalizeMainRoadCollection(mainRaw);
+        const labels = buildPlotLabels(plots);
+        const roadStripes = buildRoadCenterlines(roads);
+        const mainStripes = buildRoadCenterlines(mainRoads);
+
+        if (map.getSource('property-plots')) map.getSource('property-plots').setData(plots);
+        if (map.getSource('property-plot-labels')) map.getSource('property-plot-labels').setData(labels);
+        if (map.getSource('property-roads')) map.getSource('property-roads').setData(roads);
+        if (map.getSource('property-road-stripes')) map.getSource('property-road-stripes').setData(roadStripes);
+        if (map.getSource('sark-main-roads')) map.getSource('sark-main-roads').setData(mainRoads);
+        if (map.getSource('sark-main-road-stripes')) map.getSource('sark-main-road-stripes').setData(mainStripes);
+        if (map.getSource('property-common') && propertyBundle?.commonAreas) {
+          map.getSource('property-common').setData(propertyBundle.commonAreas);
+        }
+
+        hideDemoSaleLayers();
+
+        const name = propertyBundle?.project?.name || 'Sark Green Plains';
+        if (!IS_MOBILE_HERO) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = `${name} · ${plots.features.length} plots · layout live`;
+          setTimeout(() => { statusEl.style.display = 'none'; }, 4200);
+        }
+
+        await loadSarkPropertyBoundary();
+        // Mobile: frame plots only so the layout fills the screen more tightly
+        frameLayoutCollections(
+          IS_MOBILE_HERO ? [plots, sarkBoundaryData] : [plots, roads, mainRoads, sarkBoundaryData],
+          1700
+        );
+        refreshPlotHighlightPaint();
+        startPlotFloatAnimation();
+        applyHeroMobileInteractions();
+        if (IS_MOBILE_HERO) {
+          map.once('moveend', finishMobileHeroFrame);
+        } else {
+          map.once('moveend', () => beginAutoOrbitSoon(200));
+          beginAutoOrbitSoon(2000);
+        }
+      } catch (err) {
+        console.error('[sark-green geojson]', err);
+        if (!IS_MOBILE_HERO) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Could not load Sark Green layout GeoJSON';
+        }
+        const hasSark = await loadSarkPropertyBoundary();
+        if (!hasSark) {
+          map.flyTo({
+            center: [78.4553, 17.2076],
+            zoom: IS_MOBILE_HERO ? 16.9 : 16.2,
+            pitch: IS_MOBILE_HERO ? 48 : 48,
+            bearing: -18,
+            duration: 1200
+          });
+        }
+        applyHeroMobileInteractions();
+        beginAutoOrbitSoon(1400);
+      }
+    }
+
+    connectList.addEventListener('click', (e) => {
+      const item = e.target.closest('.connect-item');
+      if (!item || item.disabled) return;
+      pauseTour();
+      focusDestination(item.dataset.id);
+    });
+
+    modeBike.addEventListener('click', () => setMode('bike'));
+    modeCar.addEventListener('click', () => setMode('car'));
+
+    document.getElementById('yearGrid').addEventListener('click', (e) => {
+      const btn = e.target.closest('.year-btn');
+      if (!btn) return;
+      pauseTour(); pauseYearPlay();
+      setYear(Number(btn.dataset.year));
+    });
+
+    document.getElementById('timelineTrack').addEventListener('click', (e) => {
+      const btn = e.target.closest('.timeline-dot');
+      if (!btn) return;
+      pauseTour(); pauseYearPlay();
+      setYear(Number(btn.dataset.year));
+    });
+
+    tourToggle.addEventListener('click', () => tourRunning ? pauseTour() : startTour());
+    playYearsBtn.addEventListener('click', () => yearPlaying ? pauseYearPlay() : playYears());
+
+    clearRouteBtn.addEventListener('click', () => {
+      pauseTour();
+      pauseYearPlay();
+      routeLockedByUser = false;
+      activeDest = null;
+      updateConnectivity();
+      routeChip.classList.remove('visible');
+      if (gltfLayer) gltfLayer.focus(null);
+      startRouteCycle();
+    });
+
+    layoutToggle?.addEventListener('click', () => {
+      setLayoutVisible(!layoutVisible);
+      if (layoutVisible) framePropertyLayout();
+    });
+
+    (function initBoundaryCheckControl() {
+      const btn = document.getElementById('boundaryCheckBtn');
+      if (!btn || !DEBUG_BOUNDARY) {
+        if (btn) btn.hidden = true;
+        return;
+      }
+      btn.hidden = false;
+      btn.addEventListener('click', () => {
+        setBoundaryCheckVisible(!boundaryCheckOn);
+        if (boundaryCheckOn) {
+          setSatelliteVisible(true);
+          frameSarkBoundary(900);
+        }
+      });
+    })();
+
+    plotPanelClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hidePlotPanel();
+    });
+
+    // ── Temporary developer tool: trace Sark Green Plains outer boundary ──
+    const drawBoundaryBtn = document.getElementById('drawBoundaryBtn');
+    const penPickBtn = document.getElementById('penPickBtn');
+    const coordPickPanel = document.getElementById('coordPickPanel');
+    const coordPickLive = document.getElementById('coordPickLive');
+    const coordPickLocked = document.getElementById('coordPickLocked');
+    const coordCopyBtn = document.getElementById('coordCopyBtn');
+    const coordClearBtn = document.getElementById('coordClearBtn');
+    const satelliteToggleBtn = document.getElementById('satelliteToggleBtn');
+    const finishBoundaryBtn = document.getElementById('finishBoundaryBtn');
+    const clearBoundaryBtn = document.getElementById('clearBoundaryBtn');
+    const boundaryDrawMeta = document.getElementById('boundaryDrawMeta');
+    const boundaryPointCountEl = document.getElementById('boundaryPointCount');
+
+    let boundaryDrawMode = false;
+    let penPickMode = false;
+    let satelliteOn = !IS_LIGHT_THEME;
+    let boundaryVertices = []; // [[lng, lat], ...] editable corners
+    let lastPickedCoord = null;
+    let penPickMarker = null;
+    let vertexMarkers = [];
+    let midpointMarkers = [];
+    let suppressNextMapClick = false;
+
+    function formatCoord(lng, lat) {
+      return `[${lng.toFixed(10)}, ${lat.toFixed(10)}]`;
+    }
+
+    function setPenPickMode(on) {
+      penPickMode = on;
+      document.body.classList.toggle('is-pen-pick', on);
+      if (penPickBtn) {
+        penPickBtn.classList.toggle('active', on);
+        penPickBtn.textContent = on ? 'Pen ON · click map' : 'Pen · Pick Coord';
+      }
+      if (coordPickPanel) coordPickPanel.classList.toggle('visible', on);
+      if (on && boundaryDrawMode) setBoundaryDrawMode(false);
+      if (!on) {
+        if (penPickMarker) {
+          penPickMarker.remove();
+          penPickMarker = null;
+        }
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Pen mode — move for live coords, click to lock [lng, lat].';
+      }
+    }
+
+    function upsertPenMarker(lngLat) {
+      if (!penPickMarker) {
+        const el = document.createElement('div');
+        el.style.width = '10px';
+        el.style.height = '10px';
+        el.style.borderRadius = '50%';
+        el.style.background = '#facc15';
+        el.style.border = '2px solid #111';
+        el.style.boxShadow = '0 0 0 3px rgba(250,204,21,0.35)';
+        penPickMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat(lngLat)
+          .addTo(map);
+      } else {
+        penPickMarker.setLngLat(lngLat);
+      }
+    }
+
+    map.on('mousemove', (e) => {
+      if (!penPickMode) return;
+      coordPickLive.textContent = formatCoord(e.lngLat.lng, e.lngLat.lat);
+    });
+
+    map.on('click', (e) => {
+      if (!penPickMode || boundaryDrawMode) return;
+      const lng = e.lngLat.lng;
+      const lat = e.lngLat.lat;
+      lastPickedCoord = [lng, lat];
+      coordPickLocked.textContent = formatCoord(lng, lat);
+      upsertPenMarker([lng, lat]);
+      statusEl.style.display = 'block';
+      statusEl.textContent = `Captured ${formatCoord(lng, lat)}`;
+      console.info('[pen-pick]', { longitude: lng, latitude: lat, pair: lastPickedCoord });
+    });
+
+    penPickBtn?.addEventListener('click', () => setPenPickMode(!penPickMode));
+
+    coordCopyBtn?.addEventListener('click', async () => {
+      if (!lastPickedCoord) return;
+      const text = formatCoord(lastPickedCoord[0], lastPickedCoord[1]);
+      try {
+        await navigator.clipboard.writeText(text);
+        statusEl.style.display = 'block';
+        statusEl.textContent = `Copied ${text}`;
+      } catch {
+        statusEl.style.display = 'block';
+        statusEl.textContent = text;
+      }
+    });
+
+    coordClearBtn?.addEventListener('click', () => {
+      lastPickedCoord = null;
+      coordPickLocked.textContent = 'Click the map to capture [lng, lat]';
+      if (penPickMarker) {
+        penPickMarker.remove();
+        penPickMarker = null;
+      }
+    });
+
+    function emptyFc() {
+      return { type: 'FeatureCollection', features: [] };
+    }
+
+    function buildDrawCollections(points) {
+      const pts = {
+        type: 'FeatureCollection',
+        features: points.map((coord, i) => ({
+          type: 'Feature',
+          properties: { i },
+          geometry: { type: 'Point', coordinates: coord }
+        }))
+      };
+
+      const lineCoords = points.length >= 2 ? [...points] : [];
+      // While editing with 2+ points, also show close-to-first preview when >= 3
+      const line = {
+        type: 'FeatureCollection',
+        features: lineCoords.length
+          ? [{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: points.length >= 3 ? [...points, points[0]] : lineCoords
+              }
+            }]
+          : []
+      };
+
+      const poly = {
+        type: 'FeatureCollection',
+        features: []
+      };
+      if (points.length >= 3) {
+        const ring = [...points, points[0]];
+        poly.features.push({
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'Polygon', coordinates: [ring] }
+        });
+      }
+
+      return { pts, line, poly };
+    }
+
+    function clearEditHandles() {
+      while (vertexMarkers.length) vertexMarkers.pop().remove();
+      while (midpointMarkers.length) midpointMarkers.pop().remove();
+    }
+
+    function rebuildEditHandles() {
+      clearEditHandles();
+      if (!boundaryDrawMode) return;
+
+      boundaryVertices.forEach((coord, index) => {
+        const el = document.createElement('div');
+        el.className = 'boundary-vertex-handle';
+        el.title = `Corner ${index + 1} — drag to reshape`;
+        const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: 'center' })
+          .setLngLat(coord)
+          .addTo(map);
+
+        marker.on('drag', () => {
+          const ll = marker.getLngLat();
+          boundaryVertices[index] = [ll.lng, ll.lat];
+          refreshBoundaryDrawLayers(false);
+          // Keep midpoints in sync without rebuilding this vertex mid-drag
+          syncMidpointPositions();
+        });
+        marker.on('dragend', () => {
+          const ll = marker.getLngLat();
+          boundaryVertices[index] = [ll.lng, ll.lat];
+          refreshBoundaryDrawLayers(true);
+          suppressNextMapClick = true;
+        });
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          suppressNextMapClick = true;
+        });
+        vertexMarkers.push(marker);
+      });
+
+      // Midpoints on each straight segment — click to insert a bend point
+      if (boundaryVertices.length >= 2) {
+        const edgeCount = boundaryVertices.length >= 3
+          ? boundaryVertices.length // include closing edge
+          : boundaryVertices.length - 1;
+
+        for (let i = 0; i < edgeCount; i++) {
+          const a = boundaryVertices[i];
+          const b = boundaryVertices[(i + 1) % boundaryVertices.length];
+          if (boundaryVertices.length < 3 && i === boundaryVertices.length - 1) break;
+          const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+          const el = document.createElement('div');
+          el.className = 'boundary-midpoint-handle';
+          el.title = 'Click to add bend point, then drag';
+          const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: 'center' })
+            .setLngLat(mid)
+            .addTo(map);
+
+          const insertAt = i + 1;
+          const promoteToVertex = (lngLat) => {
+            boundaryVertices.splice(insertAt, 0, [lngLat.lng, lngLat.lat]);
+            refreshBoundaryDrawLayers(true);
+            suppressNextMapClick = true;
+            statusEl.style.display = 'block';
+            statusEl.textContent = `Bend point added (${boundaryVertices.length} corners). Drag yellow handles to reshape.`;
+          };
+
+          el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
+            const ll = marker.getLngLat();
+            promoteToVertex(ll);
+          });
+          marker.on('dragstart', () => {
+            suppressNextMapClick = true;
+          });
+          marker.on('dragend', () => {
+            const ll = marker.getLngLat();
+            promoteToVertex(ll);
+          });
+          midpointMarkers.push(marker);
+        }
+      }
+    }
+
+    function syncMidpointPositions() {
+      if (!midpointMarkers.length || boundaryVertices.length < 2) return;
+      const edgeCount = boundaryVertices.length >= 3
+        ? boundaryVertices.length
+        : boundaryVertices.length - 1;
+      for (let i = 0; i < midpointMarkers.length && i < edgeCount; i++) {
+        const a = boundaryVertices[i];
+        const b = boundaryVertices[(i + 1) % boundaryVertices.length];
+        midpointMarkers[i].setLngLat([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+      }
+    }
+
+    function refreshBoundaryDrawLayers(rebuildHandles = true) {
+      if (!map.getSource('boundary-draw-points')) return;
+      const { pts, line, poly } = buildDrawCollections(boundaryVertices);
+      map.getSource('boundary-draw-points').setData(pts);
+      map.getSource('boundary-draw-line').setData(line);
+      map.getSource('boundary-draw-fill').setData(poly);
+      boundaryPointCountEl.textContent = String(boundaryVertices.length);
+      finishBoundaryBtn.disabled = boundaryVertices.length < 3;
+      clearBoundaryBtn.disabled = boundaryVertices.length === 0 && !boundaryDrawMode;
+      if (rebuildHandles) rebuildEditHandles();
+    }
+
+    function ensureBoundaryDrawLayers() {
+      if (map.getSource('boundary-draw-points')) return;
+
+      // Free Esri imagery raster — temporary overlay (not Mapbox/MapTiler)
+      if (!map.getSource('dev-satellite')) {
+        map.addSource('dev-satellite', {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          ],
+          tileSize: 256,
+          attribution: 'Tiles © Esri'
+        });
+        // Place satellite under labels/UI layers but above basemap fills when possible
+        const beforeId = map.getLayer('property-boundary-fill')
+          ? 'property-boundary-fill'
+          : (map.getLayer('sale-fill') ? 'sale-fill' : undefined);
+        map.addLayer({
+          id: 'dev-satellite',
+          type: 'raster',
+          source: 'dev-satellite',
+          layout: { visibility: 'visible' },
+          paint: { 'raster-opacity': 1 }
+        }, beforeId);
+      }
+
+      map.addSource('boundary-draw-fill', { type: 'geojson', data: emptyFc() });
+      map.addSource('boundary-draw-line', { type: 'geojson', data: emptyFc() });
+      map.addSource('boundary-draw-points', { type: 'geojson', data: emptyFc() });
+
+      map.addLayer({
+        id: 'boundary-draw-fill',
+        type: 'fill',
+        source: 'boundary-draw-fill',
+        paint: {
+          'fill-color': '#facc15',
+          'fill-opacity': 0.22
+        }
+      });
+      map.addLayer({
+        id: 'boundary-draw-line',
+        type: 'line',
+        source: 'boundary-draw-line',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#facc15',
+          'line-width': 3,
+          'line-opacity': 1
+        }
+      });
+      map.addLayer({
+        id: 'boundary-draw-points',
+        type: 'circle',
+        source: 'boundary-draw-points',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#fef08a',
+          'circle-stroke-color': '#111',
+          'circle-stroke-width': 2
+        }
+      });
+    }
+
+    function setSatelliteVisible(on) {
+      satelliteOn = on;
+      ensureBoundaryDrawLayers();
+      if (map.getLayer('dev-satellite')) {
+        map.setLayoutProperty('dev-satellite', 'visibility', on ? 'visible' : 'none');
+      }
+      satelliteToggleBtn.textContent = on ? 'Satellite ON' : 'Satellite OFF';
+      satelliteToggleBtn.classList.toggle('active', on);
+    }
+
+    function setBoundaryDrawMode(on) {
+      ensureBoundaryDrawLayers();
+      boundaryDrawMode = on;
+      document.body.classList.toggle('is-drawing-boundary', on);
+      if (drawBoundaryBtn) {
+        drawBoundaryBtn.classList.toggle('active', on);
+        drawBoundaryBtn.textContent = on ? 'Editing boundary…' : 'Draw Boundary';
+      }
+      if (boundaryDrawMeta) boundaryDrawMeta.hidden = !on && boundaryVertices.length === 0;
+      if (on) {
+        if (penPickMode) setPenPickMode(false);
+        setSatelliteVisible(true);
+        statusEl.style.display = 'block';
+        statusEl.textContent =
+          'Click to add corners. White dots on a line = click to bend. Drag yellow dots to reshape.';
+      } else {
+        clearEditHandles();
+        if (boundaryVertices.length === 0) statusEl.style.display = 'none';
+      }
+      refreshBoundaryDrawLayers(true);
+    }
+
+    function clearBoundaryDrawing() {
+      boundaryVertices = [];
+      clearEditHandles();
+      refreshBoundaryDrawLayers(true);
+      boundaryDrawMeta.hidden = !boundaryDrawMode;
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Boundary cleared — click to place corners again.';
+      setTimeout(() => {
+        if (!boundaryDrawMode) statusEl.style.display = 'none';
+      }, 2200);
+    }
+
+    function downloadBoundaryGeoJSON() {
+      if (boundaryVertices.length < 3) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Need at least 3 points to finish the boundary.';
+        return;
+      }
+
+      const ring = boundaryVertices.map((pt) => [pt[0], pt[1]]);
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      if (first[0] !== last[0] || first[1] !== last[1]) {
+        ring.push([first[0], first[1]]);
+      }
+
+      const geojson = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: {
+              id: 'sark-green-plains',
+              name: 'Sark Green Plains'
+            },
+            geometry: {
+              type: 'Polygon',
+              coordinates: [ring]
+            }
+          }
+        ]
+      };
+
+      const blob = new Blob([JSON.stringify(geojson, null, 2)], {
+        type: 'application/geo+json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sark-property.geojson';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      statusEl.style.display = 'block';
+      statusEl.textContent =
+        `Downloaded sark-property.geojson (${boundaryVertices.length} vertices). Import into property1.json boundary next.`;
+      setBoundaryDrawMode(false);
+    }
+
+    function onBoundaryDrawClick(e) {
+      if (!boundaryDrawMode) return;
+      if (suppressNextMapClick) {
+        suppressNextMapClick = false;
+        return;
+      }
+      // Don't add a point when clicking UI / handles
+      if (e.originalEvent?.target?.closest?.(
+        '.boundary-draw-wrap, .layout-toggle-wrap, .coord-pick-panel, .plot-panel, .timeline-bar, .maplibregl-ctrl, .boundary-vertex-handle, .boundary-midpoint-handle'
+      )) {
+        return;
+      }
+      boundaryVertices.push([e.lngLat.lng, e.lngLat.lat]);
+      boundaryDrawMeta.hidden = false;
+      refreshBoundaryDrawLayers(true);
+    }
+
+    drawBoundaryBtn?.addEventListener('click', () => {
+      setBoundaryDrawMode(!boundaryDrawMode);
+    });
+    satelliteToggleBtn?.addEventListener('click', () => {
+      ensureBoundaryDrawLayers();
+      setSatelliteVisible(!satelliteOn);
+    });
+    finishBoundaryBtn?.addEventListener('click', downloadBoundaryGeoJSON);
+    clearBoundaryBtn?.addEventListener('click', clearBoundaryDrawing);
+
+    map.on('click', onBoundaryDrawClick);
+
+    async function waitForGltfLoader(timeoutMs = 15000) {
+      if (window.createModelBuildingsLayer) return true;
+      return new Promise((resolve) => {
+        const t = setTimeout(() => resolve(false), timeoutMs);
+        window.addEventListener('gltf-ready', () => {
+          clearTimeout(t);
+          resolve(true);
+        }, { once: true });
+      });
+    }
+
+    map.on('load', async () => {
+      statusEl.style.display = 'block';
+      statusEl.textContent = IS_LIGHT_THEME
+        ? 'Loading Sark Green Plains layout…'
+        : 'Loading local GLB/GLTF icons on black map…';
+
+      addLayers();
+      ensureBoundaryDrawLayers();
+      setSatelliteVisible(!IS_LIGHT_THEME);
+      notifyParentReady();
+
+      const ok = await waitForGltfLoader();
+      if (!ok || !window.createModelBuildingsLayer) {
+        statusEl.textContent = 'Map ready. Icons failed — check Three.js CDN or open via localhost.';
+        notifyParentReady();
+        return;
+      }
+
+      try {
+        gltfLayer = await window.createModelBuildingsLayer(maplibregl, modelPlacements);
+        map.addLayer(gltfLayer);
+        gltfLayer.setYear(currentYear);
+        if (activeDest) gltfLayer.focus(activeDest);
+
+        if (gltfLayer.whenReady) {
+          gltfLayer.whenReady().then(() => {
+            statusEl.textContent = 'Large 3D icons ready.';
+            setTimeout(() => { statusEl.style.display = 'none'; }, 2800);
+            notifyParentReady();
+          });
+        } else {
+          notifyParentReady();
+        }
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Icon load error — see console.';
+        notifyParentReady();
+      }
+    });
+    map.on('error', (e) => {
+      console.error(e);
+    });
+  </script>
+</body>
+</html>

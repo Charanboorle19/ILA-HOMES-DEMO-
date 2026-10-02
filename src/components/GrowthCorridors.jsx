@@ -56,12 +56,15 @@ function applyCorridorMapInteractions(map, mobile) {
   }
 }
 
+const ACTIVE_CORRIDOR_ID = 'thukkuguda'
+
 const CORRIDOR_CONTENT = [
   {
     id: 'south-hyderabad',
     name: 'South Hyderabad',
     tag: 'Growth epicentre',
     image: southImage,
+    available: false,
     description:
       'The next Gachibowli. ORR and airport corridor infrastructure is already in place. The window to buy before prices reflect it is narrowing fast.',
     infrastructure: [
@@ -99,6 +102,7 @@ const CORRIDOR_CONTENT = [
     name: 'Maheshwaram',
     tag: 'ORR · Srisailam highway',
     image: maheshwaramImage,
+    available: false,
     description:
       '3 km from ORR Exit 14. IT corridor expansion actively drawing residential demand. Land prices up 38% over 3 years.',
     infrastructure: [
@@ -136,6 +140,7 @@ const CORRIDOR_CONTENT = [
     name: 'Thukkuguda',
     tag: 'ORR Exit 14 · Employment hub',
     image: thukkugudaImage,
+    available: true,
     description:
       'Just 1.5 km from ORR Exit 14. Infrastructure-led residential boom with strong employment hub proximity and rising buyer demand.',
     infrastructure: [
@@ -173,6 +178,7 @@ const CORRIDOR_CONTENT = [
     name: 'Mansanpally',
     tag: 'Srisailam highway · Value zone',
     image: mansanpallyImage,
+    available: false,
     description:
       'Strong appreciation at competitive entry pricing. Industrial and residential mix driving consistent long-term growth along the Srisailam corridor.',
     infrastructure: [
@@ -210,6 +216,7 @@ const CORRIDOR_CONTENT = [
     name: 'Future City',
     tag: 'Master planned · Airport corridor',
     image: futureCityImage,
+    available: false,
     description:
       'Government master plan active. 1.5 million residents projected. Long-horizon planning zones designed for the next phase of Hyderabad’s expansion.',
     infrastructure: [
@@ -295,7 +302,20 @@ const CORRIDORS = CORRIDOR_CONTENT.map((item) => {
     coordinates: location?.coordinates ?? [78.44, 17.25],
     zoom: location?.zoom ?? 12,
   }
+}).sort((a, b) => {
+  if (a.id === ACTIVE_CORRIDOR_ID) return -1
+  if (b.id === ACTIVE_CORRIDOR_ID) return 1
+  return 0
 })
+
+const ACTIVE_CORRIDOR_INDEX = Math.max(
+  0,
+  CORRIDORS.findIndex((corridor) => corridor.id === ACTIVE_CORRIDOR_ID),
+)
+
+function isCorridorAvailable(corridor) {
+  return Boolean(corridor && corridor.available !== false)
+}
 
 function buildHighlightCircle([lng, lat], radiusKm = 2.4, steps = 64) {
   const coordinates = []
@@ -351,7 +371,7 @@ function MapIcon() {
 export default function GrowthCorridors() {
   const mapRef = useRef(null)
   const sectionRef = useRef(null)
-  const [active, setActive] = useState(0)
+  const [active, setActive] = useState(ACTIVE_CORRIDOR_INDEX)
   const [showMap, setShowMap] = useState(false)
   const [isMobileView, setIsMobileView] = useState(() => isMobileMapViewport())
   const [viewState, setViewState] = useState({
@@ -479,11 +499,14 @@ export default function GrowthCorridors() {
   }, [active, flyToCorridor])
 
   const selectCorridor = (index) => {
+    const corridor = CORRIDORS[index]
+    if (!isCorridorAvailable(corridor)) return
     setActive(index)
   }
 
   const openMap = (index = active) => {
     const corridor = CORRIDORS[index] ?? CORRIDORS[active]
+    if (!isCorridorAvailable(corridor)) return
     if (corridor?.coordinates) {
       const [longitude, latitude] = corridor.coordinates
       setViewState((prev) => ({
@@ -576,12 +599,13 @@ export default function GrowthCorridors() {
               <div className="growth-corridors__list" role="list">
                 {CORRIDORS.map((corridor, index) => {
                   const isActive = index === active
+                  const isAvailable = isCorridorAvailable(corridor)
                   const num = String(index + 1).padStart(2, '0')
 
                   return (
                     <div
                       key={corridor.id}
-                      className={`growth-corridors__item${isActive ? ' is-active' : ''}`}
+                      className={`growth-corridors__item${isActive ? ' is-active' : ''}${isAvailable ? '' : ' is-soon'}`}
                       role="listitem"
                     >
                       <button
@@ -590,13 +614,19 @@ export default function GrowthCorridors() {
                         aria-expanded={isActive}
                         aria-controls={`growth-corridor-panel-${corridor.id}`}
                         id={`growth-corridor-trigger-${corridor.id}`}
+                        aria-disabled={!isAvailable}
+                        disabled={!isAvailable}
                         onClick={() => selectCorridor(index)}
                       >
                         <span className="growth-corridors__trigger-main">
                           <span className="growth-corridors__num">{num}</span>
                           <span className="growth-corridors__titles">
-                            <span className="growth-corridors__name">{corridor.name}</span>
-                            <span className="growth-corridors__tag">{corridor.tag}</span>
+                            <span className="growth-corridors__name">
+                              {isAvailable ? corridor.name : 'Adding soon'}
+                            </span>
+                            <span className="growth-corridors__tag">
+                              {isAvailable ? corridor.tag : 'Details coming soon'}
+                            </span>
                           </span>
                         </span>
                         <span className="growth-corridors__icon-wrap" aria-hidden="true">
@@ -746,15 +776,17 @@ export default function GrowthCorridors() {
                       </Marker>
                     ))}
 
-                    {CORRIDORS.map((corridor, index) => (
+                    {CORRIDORS.map((corridor, index) => {
+                      const isAvailable = isCorridorAvailable(corridor)
+                      return (
                       <Marker
                         key={corridor.id}
                         longitude={corridor.coordinates[0]}
                         latitude={corridor.coordinates[1]}
                         anchor="bottom"
-                        style={isMobileView ? { pointerEvents: 'none' } : undefined}
+                        style={isMobileView || !isAvailable ? { pointerEvents: 'none' } : undefined}
                         onClick={
-                          isMobileView
+                          isMobileView || !isAvailable
                             ? undefined
                             : (event) => {
                                 event.originalEvent.stopPropagation()
@@ -764,16 +796,20 @@ export default function GrowthCorridors() {
                       >
                         <button
                           type="button"
-                          className={`growth-corridors__marker${index === active ? ' is-active' : ''}`}
-                          aria-label={`Select ${corridor.name}`}
-                          tabIndex={isMobileView ? -1 : 0}
-                          onClick={isMobileView ? undefined : () => selectCorridor(index)}
+                          className={`growth-corridors__marker${index === active ? ' is-active' : ''}${isAvailable ? '' : ' is-soon'}`}
+                          aria-label={isAvailable ? `Select ${corridor.name}` : 'Adding soon'}
+                          tabIndex={isMobileView || !isAvailable ? -1 : 0}
+                          disabled={!isAvailable}
+                          onClick={isMobileView || !isAvailable ? undefined : () => selectCorridor(index)}
                         >
                           <span className="growth-corridors__marker-dot" aria-hidden="true" />
-                          <span className="growth-corridors__marker-label">{corridor.name}</span>
+                          <span className="growth-corridors__marker-label">
+                            {isAvailable ? corridor.name : 'Adding soon'}
+                          </span>
                         </button>
                       </Marker>
-                    ))}
+                      )
+                    })}
 
                     {current.infrastructure.map((item) => {
                       const [longitude, latitude] = getInfraCoordinates(current, item)
@@ -857,18 +893,21 @@ export default function GrowthCorridors() {
             <div className="growth-corridors__picker" role="list">
               {CORRIDORS.map((corridor, index) => {
                 const isActive = index === active
+                const isAvailable = isCorridorAvailable(corridor)
                 const num = String(index + 1).padStart(2, '0')
 
                 return (
                   <div
                     key={corridor.id}
                     role="listitem"
-                    className={`growth-corridors__pick${isActive ? ' is-active' : ''}`}
+                    className={`growth-corridors__pick${isActive ? ' is-active' : ''}${isAvailable ? '' : ' is-soon'}`}
                   >
                     <button
                       type="button"
                       className="growth-corridors__pick-select"
                       aria-pressed={isActive}
+                      aria-disabled={!isAvailable}
+                      disabled={!isAvailable}
                       onClick={() => selectCorridor(index)}
                     >
                       <img
@@ -881,49 +920,64 @@ export default function GrowthCorridors() {
                       <span className="growth-corridors__pick-content">
                         <span className="growth-corridors__num">{num}</span>
                         <span className="growth-corridors__titles">
-                          <span className="growth-corridors__name">{corridor.name}</span>
-                          <span className="growth-corridors__tag">{corridor.tag}</span>
+                          <span className="growth-corridors__name">
+                            {isAvailable ? corridor.name : 'Adding soon'}
+                          </span>
+                          <span className="growth-corridors__tag">
+                            {isAvailable ? corridor.tag : 'Coming online soon'}
+                          </span>
                         </span>
                       </span>
+                      {!isAvailable ? (
+                        <span className="growth-corridors__soon-badge">Adding soon</span>
+                      ) : null}
                     </button>
-                    <button
-                      type="button"
-                      className="growth-corridors__pick-map growth-corridors__pick-map--on-image"
-                      onClick={() => openMap(index)}
-                    >
-                      <span className="growth-corridors__pick-map-label">View on map</span>
-                      <span className="growth-corridors__pick-map-arrow" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M5 12h12.5M13 6.5 18.5 12 13 17.5"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </span>
-                    </button>
-                    <div className="growth-corridors__pick-foot">
-                      <button
-                        type="button"
-                        className="growth-corridors__pick-map growth-corridors__pick-map--foot"
-                        onClick={() => openMap(index)}
-                      >
-                        <span className="growth-corridors__pick-map-label">View on map</span>
-                        <span className="growth-corridors__pick-map-arrow" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" fill="none">
-                            <path
-                              d="M5 12h12.5M13 6.5 18.5 12 13 17.5"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                      </button>
-                    </div>
+                    {isAvailable ? (
+                      <>
+                        <button
+                          type="button"
+                          className="growth-corridors__pick-map growth-corridors__pick-map--on-image"
+                          onClick={() => openMap(index)}
+                        >
+                          <span className="growth-corridors__pick-map-label">View on map</span>
+                          <span className="growth-corridors__pick-map-arrow" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M5 12h12.5M13 6.5 18.5 12 13 17.5"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </span>
+                        </button>
+                        <div className="growth-corridors__pick-foot">
+                          <button
+                            type="button"
+                            className="growth-corridors__pick-map growth-corridors__pick-map--foot"
+                            onClick={() => openMap(index)}
+                          >
+                            <span className="growth-corridors__pick-map-label">View on map</span>
+                            <span className="growth-corridors__pick-map-arrow" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="none">
+                                <path
+                                  d="M5 12h12.5M13 6.5 18.5 12 13 17.5"
+                                  stroke="currentColor"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="growth-corridors__pick-foot">
+                        <span className="growth-corridors__pick-soon">Adding soon</span>
+                      </div>
+                    )}
                   </div>
                 )
               })}

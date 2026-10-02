@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, NavLink } from 'react-router-dom'
 import { navLinks } from '../data/site'
+import ilaHomesLogo from '../assets/ila-homes-logo-.png'
 
 function isRouteLink(href) {
   return href.startsWith('/') && !href.includes('#')
@@ -96,8 +97,8 @@ export default function Navbar() {
   return (
     <header className={`nav${scrolled ? ' nav--scrolled' : ''}${open ? ' is-menu-open' : ''}`}>
       <div className="nav__inner">
-        <Link className="nav__brand" to="/" onClick={close}>
-          ILA HOMES
+        <Link className="nav__brand" to="/" onClick={close} aria-label="ILA Homes">
+          <img className="nav__brand-logo" src={ilaHomesLogo} alt="ILA Homes" />
         </Link>
 
         <nav className="nav__links" aria-label="Primary">

@@ -378,6 +378,39 @@
   display: block;
 }
 
+.ila-marker__soon {
+  display: block;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  opacity: 0.95;
+}
+
+.ila-marker.is-disabled {
+  opacity: 0;
+}
+
+.ila-marker.is-disabled.is-visible {
+  opacity: 0.72;
+}
+
+.ila-marker.is-disabled .ila-marker__label {
+  border-color: rgba(156, 163, 175, 0.45);
+  background: rgba(30, 34, 40, 0.88);
+  color: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.ila-marker.is-disabled.is-selected .ila-marker__label {
+  border-color: rgba(156, 163, 175, 0.45);
+  background: rgba(30, 34, 40, 0.88);
+  color: #9ca3af;
+  box-shadow: none;
+}
+
 .ila-marker__hint {
   display: none;
 }

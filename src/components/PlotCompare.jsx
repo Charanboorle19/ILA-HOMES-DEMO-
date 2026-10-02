@@ -152,7 +152,13 @@ export default function PlotCompare() {
   }
 
   return (
-    <section className="plot-compare" id="compare-plots" aria-label="Compare plots">
+    <section
+      className="plot-compare"
+      id="compare-plots"
+      aria-label="Compare plots"
+      hidden
+      aria-hidden="true"
+    >
       <div className="plot-compare__frame">
         <header className="plot-compare__intro">
           <h2 className="plot-compare__heading">

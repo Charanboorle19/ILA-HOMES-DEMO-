@@ -1,0 +1,109 @@
+{
+  "project": {
+    "name": "Sark Green Plains",
+    "location": {
+      "name": "Tukkuguda, Hyderabad",
+      "latitude": 17.209444444,
+      "longitude": 78.453805556
+    },
+    "approval": {
+      "authority": "HMDA",
+      "lp_number": "20/LO/ORRGC/PLG/HMDA/2016",
+      "approved_date": "2016-09-08"
+    },
+    "total_area": "22 Acres, 16 Guntas, 95 Sq.Yds",
+    "total_plots": 239
+  },
+
+  "boundary": {
+    "name": "Sark Green Plains",
+    "geometry": [
+      [78.4538056, 17.2094444],
+      [78.4541, 17.2098],
+      [78.4545, 17.2095],
+      [78.4542, 17.209],
+      [78.4538056, 17.2094444]
+    ]
+  },
+
+  "plots": [
+    {
+      "number": 1,
+      "area_sqyd": 394,
+      "facing": "S/E",
+      "status": "available",
+      "geometry": []
+    },
+    {
+      "number": 2,
+      "area_sqyd": 513,
+      "facing": "E",
+      "status": "available",
+      "geometry": []
+    }
+  ],
+
+  "common_areas": [
+    {
+      "name": "Open Area A",
+      "area_sqyd": 5605,
+      "geometry": []
+    },
+    {
+      "name": "Open Area B",
+      "area_sqyd": 1019,
+      "geometry": []
+    },
+    {
+      "name": "Open Area C",
+      "area_sqyd": 1486,
+      "geometry": []
+    },
+    {
+      "name": "Social Infrastructure 1",
+      "area_sqyd": 1888,
+      "geometry": []
+    },
+    {
+      "name": "Social Infrastructure 2",
+      "area_sqyd": 816,
+      "geometry": []
+    },
+    {
+      "name": "Utility Area",
+      "area_sqyd": 111,
+      "geometry": []
+    }
+  ],
+
+  "roads": [
+    {
+      "width_ft": 30,
+      "type": "proposed",
+      "geometry": []
+    },
+    {
+      "width_ft": 40,
+      "type": "proposed",
+      "geometry": []
+    },
+    {
+      "width_ft": 50,
+      "type": "proposed",
+      "geometry": []
+    }
+  ],
+
+  "features": [
+    "Vaastu Layout",
+    "HMDA Approved Layout",
+    "Entrance Arch",
+    "Black Top Roads",
+    "Electricity",
+    "Underground Sewerage",
+    "Avenue Plantation",
+    "Overhead Water Tank",
+    "Children Park",
+    "Compound Wall"
+  ]
+}

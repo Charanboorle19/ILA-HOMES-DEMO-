@@ -1,0 +1,31 @@
+{
+  "type": "FeatureCollection",
+  "name": "Sark Green Plains",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "sark-green-plains-boundary",
+      "properties": {
+        "name": "Sark Green Plains",
+        "type": "property-boundary",
+        "project": "Sark Green Plains"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [78.4535748211, 17.2061502453],
+            [78.4518752086, 17.2064840508],
+            [78.4518662255, 17.2082191433],
+            [78.4539601984, 17.2092874785],
+            [78.4547291563, 17.2091330208],
+            [78.4538613837, 17.2073387275],
+            [78.4572165913, 17.2066633960],
+            [78.4552214330, 17.2056628367],
+            [78.4535748211, 17.2061502453]
+          ]
+        ]
+      }
+    }
+  ]
+}

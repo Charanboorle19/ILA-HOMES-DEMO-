@@ -716,6 +716,54 @@
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
 }
 
+.find-your-plot__match.is-soon {
+  filter: grayscale(1);
+  border-color: rgba(156, 163, 175, 0.28);
+}
+
+.find-your-plot__match.is-soon:hover {
+  border-color: rgba(156, 163, 175, 0.35);
+  background:
+    linear-gradient(180deg, rgba(40, 44, 50, 0.45) 0%, rgba(30, 34, 40, 0.78) 55%, rgba(24, 28, 34, 0.94) 100%),
+    var(--match-image) center / cover no-repeat;
+  box-shadow: none;
+}
+
+.find-your-plot__match.is-soon .find-your-plot__match-shade {
+  background: linear-gradient(
+    180deg,
+    rgba(40, 44, 50, 0.45) 0%,
+    rgba(30, 34, 40, 0.75) 45%,
+    rgba(24, 28, 34, 0.94) 100%
+  );
+}
+
+.find-your-plot__match.is-soon .find-your-plot__match-name,
+.find-your-plot__match.is-soon .find-your-plot__match-meta,
+.find-your-plot__match.is-soon .find-your-plot__match-reason,
+.find-your-plot__match.is-soon .find-your-plot__match-price {
+  color: #c5cad3;
+}
+
+.find-your-plot__match.is-soon .find-your-plot__match-index {
+  background: rgba(156, 163, 175, 0.9);
+  color: #1f2430;
+}
+
+.find-your-plot__match.is-soon .find-your-plot__match-tag {
+  border-color: rgba(156, 163, 175, 0.4);
+  background: rgba(107, 114, 128, 0.25);
+  color: #d1d5db;
+}
+
+.find-your-plot__match-link.is-disabled {
+  pointer-events: none;
+  opacity: 0.7;
+  color: #9ca3af;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 .find-your-plot__match-index {
   position: relative;
   z-index: 1;

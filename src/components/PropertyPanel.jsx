@@ -12,6 +12,9 @@ const STATUS_CLASS = {
   'Limited Plots': 'limited-plots',
   'Fast Moving': 'fast-moving',
   'Almost Sold Out': 'almost-sold-out',
+  'Updating Soon': 'updating-soon',
+  Viewing: 'viewing',
+  Booked: 'booked',
 }
 
 export default function PropertyPanel({
@@ -68,10 +71,20 @@ export default function PropertyPanel({
             ) : null}
 
             <div className="property-panel__header property-panel__block">
-              <span className="property-panel__tag">{property.tag}</span>
               <p className="property-panel__location">
                 <span className="property-panel__dot" aria-hidden="true" />
-                {property.location}
+                {property.mapsUrl ? (
+                  <a
+                    className="property-panel__maps-link"
+                    href={property.mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    📍 {property.location}
+                  </a>
+                ) : (
+                  property.location
+                )}
               </p>
             </div>
 
@@ -92,33 +105,62 @@ export default function PropertyPanel({
 
             <div className="property-panel__price property-panel__block">
               <div className="property-panel__price-copy">
-                <span>Price Range</span>
+                <span>Rate</span>
                 <strong>{property.priceRange}</strong>
               </div>
-              <Link
-                className="property-panel__view"
-                to={`/properties/${property.id}`}
+              <span
+                className={`property-panel__status-pill property-panel__status-pill--${STATUS_CLASS[property.status] ?? 'limited-plots'}`}
               >
-                View
-                <svg
-                  className="property-panel__view-arrow"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M3.5 8h9M8.5 4l4 4-4 4"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
+                {property.status}
+              </span>
             </div>
 
+            <section className="property-panel__details property-panel__block" aria-label="Plot details">
+              <h3 className="property-panel__section-title">Details</h3>
+              <dl className="property-panel__facts">
+                {property.plotNumber != null ? (
+                  <div className="property-panel__fact">
+                    <dt>Plot</dt>
+                    <dd>{property.plotNumber}</dd>
+                  </div>
+                ) : null}
+                <div className="property-panel__fact">
+                  <dt>Area</dt>
+                  <dd>{property.plotSizes}</dd>
+                </div>
+                <div className="property-panel__fact">
+                  <dt>Facing</dt>
+                  <dd>{property.facing}</dd>
+                </div>
+                <div className="property-panel__fact">
+                  <dt>Road</dt>
+                  <dd>{property.road}</dd>
+                </div>
+                {property.plotNumber == null ? (
+                  <div className="property-panel__fact">
+                    <dt>Plots</dt>
+                    <dd>{property.plots}</dd>
+                  </div>
+                ) : null}
+                <div className="property-panel__fact property-panel__fact--wide">
+                  <dt>Water</dt>
+                  <dd>{property.water}</dd>
+                </div>
+                <div className="property-panel__fact property-panel__fact--wide">
+                  <dt>Power</dt>
+                  <dd>{property.power}</dd>
+                </div>
+              </dl>
+              {property.highlight ? (
+                <p className="property-panel__highlight">
+                  <span className="property-panel__accent" aria-hidden="true" />
+                  {property.highlight}
+                </p>
+              ) : null}
+            </section>
+
             {score ? (
-              <div className="property-panel__connect property-panel__block">
+              <section className="property-panel__connect property-panel__block" aria-label="Location score">
                 <div className="property-panel__connect-head">
                   <div>
                     <p className="property-panel__connect-label">Location score</p>
@@ -134,58 +176,31 @@ export default function PropertyPanel({
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
             ) : null}
 
-            <div className="property-panel__divider" aria-hidden="true" />
-
-            <dl className="property-panel__specs property-panel__block">
-              <div>
-                <dt>Plot Sizes</dt>
-                <dd>{property.plotSizes}</dd>
-              </div>
-              <div>
-                <dt>Total Plots</dt>
-                <dd>{property.plots}</dd>
-              </div>
-              <div>
-                <dt>Facing</dt>
-                <dd>{property.facing}</dd>
-              </div>
-              <div>
-                <dt>Road Width</dt>
-                <dd>{property.road}</dd>
-              </div>
-              <div>
-                <dt>Water Supply</dt>
-                <dd>{property.water}</dd>
-              </div>
-              <div>
-                <dt>Power Supply</dt>
-                <dd>{property.power}</dd>
-              </div>
-            </dl>
-
-            <div className="property-panel__divider" aria-hidden="true" />
-
-            <p className="property-panel__highlight property-panel__block">
-              <span className="property-panel__accent" aria-hidden="true" />
-              {property.highlight}
-            </p>
-
-            <div className="property-panel__status property-panel__block">
-              <span
-                className={`property-panel__status-pill property-panel__status-pill--${STATUS_CLASS[property.status] ?? 'limited-plots'}`}
+            {property.mapsUrl ? (
+              <a
+                className="property-panel__location-card property-panel__block"
+                href={property.mapsUrl}
+                target="_blank"
+                rel="noreferrer"
               >
-                {property.status}
-              </span>
-            </div>
+                <span className="property-panel__location-card-label">📍 Location</span>
+                <span className="property-panel__location-card-text">
+                  Open in Google Maps
+                </span>
+              </a>
+            ) : null}
           </div>
 
           <div className="property-panel__cta-wrap property-panel__block">
-            <button type="button" className="property-panel__cta">
-              Request Site Visit
-            </button>
+            <Link
+              className="property-panel__cta"
+              to={`/properties/${property.id}`}
+            >
+              Visit Property
+            </Link>
           </div>
         </>
       ) : null}

@@ -5,9 +5,9 @@ export function usePropertyPanel() {
   const [activeProperty, setActiveProperty] = useState(null)
 
   const openPanel = useCallback((propertyId) => {
-    setActiveProperty(
-      propertyLayouts.find((property) => property.id === propertyId) ?? null,
-    )
+    const property = propertyLayouts.find((item) => item.id === propertyId) ?? null
+    if (property && property.available === false) return
+    setActiveProperty(property)
   }, [])
 
   const closePanel = useCallback(() => {

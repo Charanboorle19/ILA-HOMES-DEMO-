@@ -59,9 +59,26 @@
   line-height: 1.55;
 }
 
+.plots-pulse__updating {
+  margin: 1rem 0 0;
+  max-width: 36rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 10px;
+  background: rgba(201, 168, 76, 0.12);
+  color: #8a7040;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.plots-pulse__updating strong {
+  color: #6e5830;
+  font-weight: 700;
+}
+
 .plots-pulse__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 
@@ -75,6 +92,29 @@
 .plots-pulse__card:hover {
   border-color: rgba(201, 168, 76, 0.45);
   box-shadow: 0 10px 28px rgba(15, 17, 20, 0.06);
+}
+
+.plots-pulse__card.is-soon {
+  filter: grayscale(1);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.plots-pulse__card.is-soon:hover {
+  border-color: var(--pp-line);
+  box-shadow: none;
+}
+
+.plots-pulse__live--soon {
+  background: rgba(30, 34, 40, 0.75);
+  color: #d1d5db;
+}
+
+.plots-pulse__soon-copy {
+  margin: 0.75rem 0 0;
+  color: var(--pp-fog);
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .plots-pulse__image {
@@ -373,7 +413,7 @@
 
 @media (min-width: 901px) and (max-width: 1100px) {
   .plots-pulse__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 0.75rem;
   }
 

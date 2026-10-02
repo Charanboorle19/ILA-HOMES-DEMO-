@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { footerLinks } from '../data/site'
+import ilaHomesLogo from '../assets/ila-homes-logo-.png'
 
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer__inner">
         <div className="footer__brand">
-          <p className="footer__name">ILA HOMES</p>
+          <img className="footer__logo" src={ilaHomesLogo} alt="ILA Homes" />
           <p className="footer__tagline">
             Verified properties across Telangana.
           </p>

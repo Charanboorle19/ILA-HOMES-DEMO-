@@ -1,0 +1,70 @@
+{
+    "project": {
+      "name": "Sark Green Plains",
+      "location": {
+        "latitude": 17.209444444,
+        "longitude": 78.453805556
+      },
+      "total_area": "22 Acres, 16 Guntas, 95 Sq.Yds",
+      "total_plots": 239,
+      "approval": {
+        "authority": "HMDA",
+        "lp_number": "20/LO/ORRGC/PLG/HMDA/2016",
+        "approved_date": "2016-09-08"
+      }
+    },
+  
+    "plots": [
+      {
+        "number": 1,
+        "area_sqyd": 394,
+        "facing": "S/E",
+        "status": "available",
+        "geometry": [
+          [78.453000, 17.209000],
+          [78.453100, 17.209000],
+          [78.453100, 17.208900],
+          [78.453000, 17.208900],
+          [78.453000, 17.209000]
+        ]
+      },
+      {
+        "number": 2,
+        "area_sqyd": 513,
+        "facing": "E",
+        "status": "available",
+        "geometry": [
+          [78.453100, 17.209000],
+          [78.453200, 17.209000],
+          [78.453200, 17.208900],
+          [78.453100, 17.208900],
+          [78.453100, 17.209000]
+        ]
+      }
+    ],
+  
+    "common_areas": [
+      {
+        "name": "Open Area A",
+        "area_sqyd": 5605,
+        "geometry": [
+          [78.453000, 17.209500],
+          [78.453500, 17.209500],
+          [78.453500, 17.209000],
+          [78.453000, 17.209000],
+          [78.453000, 17.209500]
+        ]
+      }
+    ],
+  
+    "roads": [
+      {
+        "name": "40 Ft Road",
+        "width_ft": 40,
+        "geometry": [
+          [78.453000, 17.209000],
+          [78.454000, 17.209000]
+        ]
+      }
+    ]
+  }

@@ -5,13 +5,25 @@ import plotImageB7 from '../assets/extra-image-5.png'
 import plotImageC3 from '../assets/extra-image-8.png'
 import plotImageKokapet from '../assets/extra-image-6.png'
 import plotImageMansanpally from '../assets/IMAGE-6-ORG.png'
+import plotImageSarkGreen from '../assets/about-panel/hero-property.jpg'
 import './EmiAppreciation.css'
 
 const ANNUAL_RATE = 0.085
 const TENURE_YEARS = 20
 const APPRECIATION_3YR = 0.38
+const ACTIVE_PLOT_ID = 'sark-green-plains'
 
 const PLOTS = [
+  {
+    id: 'sark-green-plains',
+    name: 'Sark Green Plains',
+    location: 'Tukkuguda',
+    size: '435 sq.yd',
+    price: 20880000,
+    priceLabel: '₹2.09 Cr',
+    image: plotImageSarkGreen,
+    available: true,
+  },
   {
     id: 'a12',
     name: 'Plot A12',
@@ -20,6 +32,7 @@ const PLOTS = [
     price: 5200000,
     priceLabel: '₹52 Lakhs',
     image: plotImageA12,
+    available: false,
   },
   {
     id: 'b7',
@@ -29,6 +42,7 @@ const PLOTS = [
     price: 3800000,
     priceLabel: '₹38 Lakhs',
     image: plotImageB7,
+    available: false,
   },
   {
     id: 'c3',
@@ -38,6 +52,7 @@ const PLOTS = [
     price: 4400000,
     priceLabel: '₹44 Lakhs',
     image: plotImageC3,
+    available: false,
   },
   {
     id: 'kokapet',
@@ -47,6 +62,7 @@ const PLOTS = [
     price: 6800000,
     priceLabel: '₹68 Lakhs',
     image: plotImageKokapet,
+    available: false,
   },
   {
     id: 'mansanpally',
@@ -56,6 +72,7 @@ const PLOTS = [
     price: 2900000,
     priceLabel: '₹29 Lakhs',
     image: plotImageMansanpally,
+    available: false,
   },
 ]
 
@@ -115,18 +132,19 @@ function buildStory(plot, downPct) {
 }
 
 export default function EmiAppreciation() {
-  const [selectedId, setSelectedId] = useState(null)
+  const [selectedId, setSelectedId] = useState(ACTIVE_PLOT_ID)
   const [downPct, setDownPct] = useState(20)
   const [hint, setHint] = useState(false)
   const [storyOpen, setStoryOpen] = useState(false)
   const [budgetOpen, setBudgetOpen] = useState(false)
 
   const plot = useMemo(
-    () => PLOTS.find((item) => item.id === selectedId) ?? null,
+    () => PLOTS.find((item) => item.id === selectedId && item.available !== false) ?? null,
     [selectedId],
   )
 
   const isLocked = !plot
+  const showUpdatingNotice = Boolean(plot)
 
   const story = useMemo(() => {
     if (!plot) return null
@@ -175,14 +193,18 @@ export default function EmiAppreciation() {
               <p className="emi-appreciation__picker-label">Select a property</p>
               <div className="emi-appreciation__chips">
                 {PLOTS.map((item) => {
-                  const isOn = item.id === selectedId
+                  const isOn = item.id === selectedId && item.available !== false
+                  const isAvailable = item.available !== false
                   return (
                     <button
                       key={item.id}
                       type="button"
-                      className={`emi-appreciation__chip${isOn ? ' is-on' : ''}`}
+                      className={`emi-appreciation__chip${isOn ? ' is-on' : ''}${isAvailable ? '' : ' is-soon'}`}
                       aria-pressed={isOn}
+                      aria-disabled={!isAvailable}
+                      disabled={!isAvailable}
                       onClick={() => {
+                        if (!isAvailable) return
                         setSelectedId(item.id)
                         setHint(false)
                       }}
@@ -191,15 +213,28 @@ export default function EmiAppreciation() {
                         <img src={item.image} alt="" loading="lazy" />
                       </span>
                       <span className="emi-appreciation__chip-copy">
-                        <span className="emi-appreciation__chip-name">{item.name}</span>
-                        <small className="emi-appreciation__chip-size">{item.size}</small>
-                        <small className="emi-appreciation__chip-price">{item.priceLabel}</small>
+                        <span className="emi-appreciation__chip-name">
+                          {isAvailable ? item.name : 'Coming soon'}
+                        </span>
+                        <small className="emi-appreciation__chip-size">
+                          {isAvailable ? item.size : 'Adding soon'}
+                        </small>
+                        <small className="emi-appreciation__chip-price">
+                          {isAvailable ? item.priceLabel : '—'}
+                        </small>
                       </span>
                     </button>
                   )
                 })}
               </div>
             </div>
+
+            {showUpdatingNotice ? (
+              <p className="emi-appreciation__updating" role="status">
+                <strong>Updating this calculator.</strong> Figures shown for{' '}
+                {plot.name} are provisional demo estimates — not accurate or final pricing.
+              </p>
+            ) : null}
 
             {hint && (
               <p className="emi-appreciation__hint" role="status">
@@ -315,8 +350,8 @@ export default function EmiAppreciation() {
                   </div>
 
                   <p className="emi-appreciation__disclaimer">
-                    Estimated from 3 years of corridor growth data. Indicative only, not a
-                    guaranteed return.
+                    We are still updating this section. These numbers are illustrative only and
+                    are not accurate market data or a guaranteed return.
                   </p>
                 </div>
               </div>

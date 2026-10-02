@@ -5,6 +5,97 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import './AboutVault.css'
 import PropertyPanel from './PropertyPanel'
 import { propertyLayouts } from '../data/propertyLayouts'
+
+const AVAILABLE_LAYOUTS = propertyLayouts.filter((layout) => layout.available !== false)
+
+function isLayoutAvailable(layoutId) {
+  if (!layoutId) return false
+  const layout = propertyLayouts.find((item) => item.id === layoutId)
+  return Boolean(layout && layout.available !== false)
+}
+
+/** Data-driven fill: active green / available gold / unavailable grey */
+function availabilityFillColor(selectedId = null) {
+  if (selectedId) {
+    return [
+      'case',
+      ['==', ['get', 'parentId'], selectedId],
+      '#3D9B5F',
+      ['==', ['get', 'available'], 1],
+      '#C9A84C',
+      '#6B7280',
+    ]
+  }
+  return [
+    'case',
+    ['==', ['get', 'available'], 1],
+    '#C9A84C',
+    '#6B7280',
+  ]
+}
+
+function availabilityBoundaryFillColor(selectedId = null) {
+  if (selectedId) {
+    return [
+      'case',
+      ['==', ['get', 'id'], selectedId],
+      '#4AA064',
+      ['==', ['get', 'available'], 1],
+      '#C9A84C',
+      '#6B7280',
+    ]
+  }
+  return [
+    'case',
+    ['==', ['get', 'available'], 1],
+    '#C9A84C',
+    '#6B7280',
+  ]
+}
+
+function availabilityOutlineColor(selectedId = null, { selected, available, unavailable } = {}) {
+  const sel = selected ?? '#8FDBA8'
+  const avail = available ?? '#E2C97E'
+  const unavail = unavailable ?? '#9CA3AF'
+  if (selectedId) {
+    return [
+      'case',
+      ['==', ['get', 'parentId'], selectedId],
+      sel,
+      ['==', ['get', 'available'], 1],
+      avail,
+      unavail,
+    ]
+  }
+  return [
+    'case',
+    ['==', ['get', 'available'], 1],
+    avail,
+    unavail,
+  ]
+}
+
+function availabilityBoundaryOutlineColor(selectedId = null, { selected, available, unavailable } = {}) {
+  const sel = selected ?? '#7ED99A'
+  const avail = available ?? '#E2C97E'
+  const unavail = unavailable ?? '#9CA3AF'
+  if (selectedId) {
+    return [
+      'case',
+      ['==', ['get', 'id'], selectedId],
+      sel,
+      ['==', ['get', 'available'], 1],
+      avail,
+      unavail,
+    ]
+  }
+  return [
+    'case',
+    ['==', ['get', 'available'], 1],
+    avail,
+    unavail,
+  ]
+}
 import { usePropertyPanel } from '../hooks/usePropertyPanel'
 
 const MAPBOX_TOKEN = import.meta.env.MAPBOX_ACCESS_TOKEN
@@ -145,16 +236,18 @@ function buildLayoutsGeoJSON() {
   propertyLayouts.forEach((layout) => {
     const geometry = buildLayoutGeometry(layout)
 
+    const available = layout.available !== false ? 1 : 0
+
     boundaries.push({
       type: 'Feature',
-      properties: { id: layout.id, label: layout.label },
+      properties: { id: layout.id, label: layout.label, available },
       geometry: { type: 'Polygon', coordinates: [geometry.boundary] },
     })
 
     geometry.plots.forEach((ring, index) => {
       plots.push({
         type: 'Feature',
-        properties: { id: layout.id, parentId: layout.id, plotIndex: index },
+        properties: { id: layout.id, parentId: layout.id, plotIndex: index, available },
         geometry: { type: 'Polygon', coordinates: [ring] },
       })
     })
@@ -162,14 +255,14 @@ function buildLayoutsGeoJSON() {
     geometry.roads.forEach((line, index) => {
       roads.push({
         type: 'Feature',
-        properties: { id: layout.id, parentId: layout.id, roadIndex: index },
+        properties: { id: layout.id, parentId: layout.id, roadIndex: index, available },
         geometry: { type: 'LineString', coordinates: line },
       })
     })
 
     labels.push({
       type: 'Feature',
-      properties: { id: layout.id, label: layout.label },
+      properties: { id: layout.id, label: layout.label, available },
       geometry: { type: 'Point', coordinates: [layout.lng, layout.lat] },
     })
   })
@@ -356,10 +449,12 @@ function resolveLabelPlacements(layouts) {
 
 function createMarkerElement(layout) {
   const element = document.createElement('div')
-  element.className = 'ila-marker'
+  const isAvailable = layout.available !== false
+  element.className = isAvailable ? 'ila-marker' : 'ila-marker is-disabled'
   element.dataset.layoutId = layout.id
   // Inner wrapper holds animation transforms — never transform the Mapbox root node
-  element.innerHTML = `
+  element.innerHTML = isAvailable
+    ? `
     <div class="ila-marker__inner">
       <div class="ila-marker__hint" aria-hidden="true">
         <span class="ila-marker__hint-text">Click here</span>
@@ -370,7 +465,21 @@ function createMarkerElement(layout) {
       </button>
     </div>
   `
-  element.setAttribute('aria-label', `${layout.label}, view details`)
+    : `
+    <div class="ila-marker__inner">
+      <div class="ila-marker__hint" aria-hidden="true">
+        <span class="ila-marker__hint-text">Updating soon</span>
+        <span class="ila-marker__hint-line"></span>
+      </div>
+      <button type="button" class="ila-marker__label" disabled tabindex="-1">
+        <span class="ila-marker__soon">Updating soon</span>
+      </button>
+    </div>
+  `
+  element.setAttribute(
+    'aria-label',
+    isAvailable ? `${layout.label}, view details` : 'Updating soon',
+  )
   return element
 }
 
@@ -429,106 +538,157 @@ function stopLayoutShine(pulseRef) {
 function highlightSelectedLayout(map, selectedId, pulseRef) {
   if (!map?.getLayer('about-plots-fill')) return
 
-  const hasSelection = Boolean(selectedId)
+  const hasSelection = Boolean(selectedId) && isLayoutAvailable(selectedId)
   const layout = hasSelection
     ? propertyLayouts.find((item) => item.id === selectedId) ?? null
     : null
+  const activeId = hasSelection ? selectedId : null
 
-  // 1) Recolor the already-visible layout layers (this is what users see)
-  if (hasSelection) {
-    map.setPaintProperty('about-plots-fill', 'fill-color', [
-      'case',
-      ['==', ['get', 'parentId'], selectedId],
-      '#3D9B5F',
-      '#C9A84C',
-    ])
-    map.setPaintProperty('about-plots-fill', 'fill-opacity', [
-      'case',
-      ['==', ['get', 'parentId'], selectedId],
-      0.9,
-      0.12,
-    ])
-    map.setPaintProperty('about-plots-outline', 'line-color', [
-      'case',
-      ['==', ['get', 'parentId'], selectedId],
-      '#8FDBA8',
-      '#E2C97E',
-    ])
-    map.setPaintProperty('about-plots-outline', 'line-width', [
-      'case',
-      ['==', ['get', 'parentId'], selectedId],
-      2.4,
-      0.6,
-    ])
-    map.setPaintProperty('about-plots-outline', 'line-opacity', [
-      'case',
-      ['==', ['get', 'parentId'], selectedId],
-      1,
-      0.25,
-    ])
-    map.setPaintProperty('about-boundary-outline', 'line-color', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      '#7ED99A',
-      '#E2C97E',
-    ])
-    map.setPaintProperty('about-boundary-outline', 'line-width', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      4,
-      1.2,
-    ])
-    map.setPaintProperty('about-boundary-outline', 'line-opacity', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      1,
-      0.2,
-    ])
-    map.setPaintProperty('about-boundary-glow', 'line-color', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      '#4AA064',
-      '#C9A84C',
-    ])
-    map.setPaintProperty('about-boundary-glow', 'line-opacity', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      0.55,
-      0.05,
-    ])
-    map.setPaintProperty('about-boundary-glow', 'line-width', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      18,
-      4,
-    ])
-    map.setPaintProperty('about-boundary-fill', 'fill-color', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      '#4AA064',
-      '#C9A84C',
-    ])
-    map.setPaintProperty('about-boundary-fill', 'fill-opacity', [
-      'case',
-      ['==', ['get', 'id'], selectedId],
-      0.28,
-      0.04,
-    ])
-  } else {
-    map.setPaintProperty('about-plots-fill', 'fill-color', '#C9A84C')
-    map.setPaintProperty('about-plots-fill', 'fill-opacity', 0.42)
-    map.setPaintProperty('about-plots-outline', 'line-color', '#E2C97E')
-    map.setPaintProperty('about-plots-outline', 'line-width', 0.9)
-    map.setPaintProperty('about-plots-outline', 'line-opacity', 0.85)
-    map.setPaintProperty('about-boundary-outline', 'line-color', '#E2C97E')
-    map.setPaintProperty('about-boundary-outline', 'line-width', 2)
-    map.setPaintProperty('about-boundary-outline', 'line-opacity', 1)
-    map.setPaintProperty('about-boundary-glow', 'line-color', '#C9A84C')
-    map.setPaintProperty('about-boundary-glow', 'line-opacity', 0.22)
-    map.setPaintProperty('about-boundary-glow', 'line-width', 6)
-    map.setPaintProperty('about-boundary-fill', 'fill-color', '#C9A84C')
-    map.setPaintProperty('about-boundary-fill', 'fill-opacity', 0.12)
-  }
+  map.setPaintProperty('about-plots-fill', 'fill-color', availabilityFillColor(activeId))
+  map.setPaintProperty('about-plots-fill', 'fill-opacity', activeId
+    ? [
+        'case',
+        ['==', ['get', 'parentId'], activeId],
+        0.9,
+        ['==', ['get', 'available'], 1],
+        0.28,
+        0.2,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        0.42,
+        0.22,
+      ])
+  map.setPaintProperty(
+    'about-plots-outline',
+    'line-color',
+    availabilityOutlineColor(activeId),
+  )
+  map.setPaintProperty('about-plots-outline', 'line-width', activeId
+    ? [
+        'case',
+        ['==', ['get', 'parentId'], activeId],
+        2.4,
+        ['==', ['get', 'available'], 1],
+        0.8,
+        0.5,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        0.9,
+        0.6,
+      ])
+  map.setPaintProperty('about-plots-outline', 'line-opacity', activeId
+    ? [
+        'case',
+        ['==', ['get', 'parentId'], activeId],
+        1,
+        ['==', ['get', 'available'], 1],
+        0.45,
+        0.35,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        0.85,
+        0.5,
+      ])
+  map.setPaintProperty(
+    'about-boundary-outline',
+    'line-color',
+    availabilityBoundaryOutlineColor(activeId),
+  )
+  map.setPaintProperty('about-boundary-outline', 'line-width', activeId
+    ? [
+        'case',
+        ['==', ['get', 'id'], activeId],
+        4,
+        ['==', ['get', 'available'], 1],
+        1.6,
+        1.1,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        2,
+        1.2,
+      ])
+  map.setPaintProperty('about-boundary-outline', 'line-opacity', activeId
+    ? [
+        'case',
+        ['==', ['get', 'id'], activeId],
+        1,
+        ['==', ['get', 'available'], 1],
+        0.45,
+        0.4,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        1,
+        0.55,
+      ])
+  map.setPaintProperty(
+    'about-boundary-glow',
+    'line-color',
+    availabilityBoundaryOutlineColor(activeId, {
+      selected: '#4AA064',
+      available: '#C9A84C',
+      unavailable: '#6B7280',
+    }),
+  )
+  map.setPaintProperty('about-boundary-glow', 'line-opacity', activeId
+    ? [
+        'case',
+        ['==', ['get', 'id'], activeId],
+        0.55,
+        ['==', ['get', 'available'], 1],
+        0.1,
+        0.06,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        0.22,
+        0.1,
+      ])
+  map.setPaintProperty('about-boundary-glow', 'line-width', activeId
+    ? [
+        'case',
+        ['==', ['get', 'id'], activeId],
+        18,
+        ['==', ['get', 'available'], 1],
+        5,
+        4,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        6,
+        4,
+      ])
+  map.setPaintProperty(
+    'about-boundary-fill',
+    'fill-color',
+    availabilityBoundaryFillColor(activeId),
+  )
+  map.setPaintProperty('about-boundary-fill', 'fill-opacity', activeId
+    ? [
+        'case',
+        ['==', ['get', 'id'], activeId],
+        0.28,
+        ['==', ['get', 'available'], 1],
+        0.06,
+        0.05,
+      ]
+    : [
+        'case',
+        ['==', ['get', 'available'], 1],
+        0.12,
+        0.08,
+      ])
 
   // 2) Extra green overlay source (backup, always on top)
   const selectedSource = map.getSource('about-selected')
@@ -684,8 +844,13 @@ export default function AboutVault() {
         source: 'about-boundaries',
         filter: ['==', 'id', ''],
         paint: {
-          'fill-color': '#C9A84C',
-          'fill-opacity': 0.12,
+          'fill-color': availabilityBoundaryFillColor(),
+          'fill-opacity': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            0.12,
+            0.08,
+          ],
         },
       })
 
@@ -695,8 +860,13 @@ export default function AboutVault() {
         source: 'about-plots',
         filter: ['==', 'parentId', ''],
         paint: {
-          'fill-color': '#C9A84C',
-          'fill-opacity': 0.42,
+          'fill-color': availabilityFillColor(),
+          'fill-opacity': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            0.42,
+            0.22,
+          ],
         },
       })
 
@@ -706,9 +876,19 @@ export default function AboutVault() {
         source: 'about-plots',
         filter: ['==', 'parentId', ''],
         paint: {
-          'line-color': '#E2C97E',
-          'line-width': 0.9,
-          'line-opacity': 0.85,
+          'line-color': availabilityOutlineColor(),
+          'line-width': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            0.9,
+            0.6,
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            0.85,
+            0.5,
+          ],
         },
       })
 
@@ -718,9 +898,19 @@ export default function AboutVault() {
         source: 'about-roads',
         filter: ['==', 'parentId', ''],
         paint: {
-          'line-color': '#F7F8FA',
+          'line-color': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            '#F7F8FA',
+            '#9CA3AF',
+          ],
           'line-width': 2.2,
-          'line-opacity': 0.35,
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            0.35,
+            0.18,
+          ],
         },
       })
 
@@ -730,9 +920,22 @@ export default function AboutVault() {
         source: 'about-boundaries',
         filter: ['==', 'id', ''],
         paint: {
-          'line-color': '#C9A84C',
-          'line-width': 6,
-          'line-opacity': 0.22,
+          'line-color': availabilityBoundaryOutlineColor(null, {
+            available: '#C9A84C',
+            unavailable: '#6B7280',
+          }),
+          'line-width': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            6,
+            4,
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            0.22,
+            0.1,
+          ],
           'line-blur': 2,
         },
       })
@@ -743,9 +946,19 @@ export default function AboutVault() {
         source: 'about-boundaries',
         filter: ['==', 'id', ''],
         paint: {
-          'line-color': '#E2C97E',
-          'line-width': 2,
-          'line-opacity': 1,
+          'line-color': availabilityBoundaryOutlineColor(),
+          'line-width': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            2,
+            1.2,
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'available'], 1],
+            1,
+            0.55,
+          ],
         },
       })
 
@@ -815,12 +1028,21 @@ export default function AboutVault() {
       }
 
       const applyHover = (layoutId) => {
-        if (hoveredIdRef.current === layoutId) return
-        hoveredIdRef.current = layoutId
-        isHoveringRef.current = Boolean(layoutId)
-        setHoveredIdRef.current(layoutId)
-        if (layoutId && !isMobileMapViewport()) openPanelRef.current(layoutId)
-        map.getCanvas().style.cursor = layoutId ? 'pointer' : ''
+        const nextId = isLayoutAvailable(layoutId) ? layoutId : null
+        if (hoveredIdRef.current === nextId) {
+          if (layoutId && !nextId) map.getCanvas().style.cursor = 'not-allowed'
+          else if (!layoutId) map.getCanvas().style.cursor = ''
+          return
+        }
+        hoveredIdRef.current = nextId
+        isHoveringRef.current = Boolean(nextId)
+        setHoveredIdRef.current(nextId)
+        if (nextId && !isMobileMapViewport()) openPanelRef.current(nextId)
+        map.getCanvas().style.cursor = nextId
+          ? 'pointer'
+          : layoutId
+            ? 'not-allowed'
+            : ''
       }
 
       map.on('mousemove', (event) => {
@@ -831,8 +1053,8 @@ export default function AboutVault() {
       map.on('click', (event) => {
         if (!isMobileMapViewport()) return
         const layoutId = readLayoutIdFromPoint(event.point)
-        if (!layoutId) {
-          // Empty-map tap: clear hover pause and keep the auto tour running.
+        if (!layoutId || !isLayoutAvailable(layoutId)) {
+          // Empty-map / disabled tap: clear hover pause and keep the auto tour running.
           applyHover(null)
           return
         }
@@ -847,10 +1069,15 @@ export default function AboutVault() {
 
       markerElementsRef.current = labelPlacements.map((placement) => {
         const element = createMarkerElement(placement.layout)
+        const available = placement.layout.available !== false
         element.style.pointerEvents = 'auto'
-        element.style.cursor = 'pointer'
+        element.style.cursor = available ? 'pointer' : 'not-allowed'
         element.addEventListener('mouseenter', () => {
           if (isMobileMapViewport()) return
+          if (!available) {
+            map.getCanvas().style.cursor = 'not-allowed'
+            return
+          }
           applyHover(placement.layout.id)
         })
         element.addEventListener('mouseleave', () => {
@@ -860,6 +1087,7 @@ export default function AboutVault() {
         element.addEventListener('click', (event) => {
           if (!isMobileMapViewport()) return
           event.stopPropagation()
+          if (!available) return
           applyHover(placement.layout.id)
           openPanelRef.current(placement.layout.id)
         })
@@ -943,7 +1171,7 @@ export default function AboutVault() {
         return
       }
 
-      const layout = propertyLayouts[index]
+      const layout = AVAILABLE_LAYOUTS[index]
       if (!layout) return
 
       setAutoIndex(index)
@@ -978,8 +1206,8 @@ export default function AboutVault() {
         })
       }
 
-      // Advance to the next layout after a 2s viewing gap (covers all layouts, then loops)
-      index = (index + 1) % propertyLayouts.length
+      // Advance to the next available layout after a 2s viewing gap
+      index = (index + 1) % Math.max(AVAILABLE_LAYOUTS.length, 1)
       timeoutId = window.setTimeout(showNext, 2000)
     }
 
@@ -996,7 +1224,7 @@ export default function AboutVault() {
   useEffect(() => {
     const selectedId = (
       hoveredId
-      ?? (isAutoSelecting ? propertyLayouts[autoIndex]?.id : null)
+      ?? (isAutoSelecting ? AVAILABLE_LAYOUTS[autoIndex]?.id : null)
       ?? activeProperty?.id
       ?? null
     )
@@ -1107,7 +1335,7 @@ export default function AboutVault() {
     closePanel()
 
     if (isMobileView && isAutoSelecting) {
-      const tourId = propertyLayouts[autoIndex]?.id ?? null
+      const tourId = AVAILABLE_LAYOUTS[autoIndex]?.id ?? null
       highlightSelectedLayout(mapRef.current, tourId, shinePulseRef)
       syncMarkerSelection(markerElementsRef.current, tourId)
       return
@@ -1173,8 +1401,9 @@ export default function AboutVault() {
 
   const factsProperty =
     hoveredProperty
-    ?? (isAutoSelecting ? propertyLayouts[autoIndex] ?? null : null)
+    ?? (isAutoSelecting ? AVAILABLE_LAYOUTS[autoIndex] ?? null : null)
     ?? activeProperty
+    ?? AVAILABLE_LAYOUTS[0]
     ?? propertyLayouts[0]
     ?? null
 
@@ -1182,7 +1411,7 @@ export default function AboutVault() {
   const panelProperty = isMobileView
     ? activeProperty
     : (hoveredProperty
-      ?? (isAutoSelecting ? propertyLayouts[autoIndex] ?? activeProperty : activeProperty))
+      ?? (isAutoSelecting ? AVAILABLE_LAYOUTS[autoIndex] ?? activeProperty : activeProperty))
 
   const panelAutoSelecting = !isMobileView && isAutoSelecting && !hoveredId
   // Show once the About map is open on mobile (doors open / split), with selected layout facts.
@@ -1374,7 +1603,7 @@ export default function AboutVault() {
                 onClose={handleClosePanel}
                 autoSelecting={false}
                 autoIndex={autoIndex}
-                autoTotal={propertyLayouts.length}
+                autoTotal={AVAILABLE_LAYOUTS.length}
                 sheet
               />
             </>,
@@ -1386,7 +1615,7 @@ export default function AboutVault() {
             onClose={handleClosePanel}
             autoSelecting={panelAutoSelecting}
             autoIndex={autoIndex}
-            autoTotal={propertyLayouts.length}
+            autoTotal={AVAILABLE_LAYOUTS.length}
           />
         )}
     </section>

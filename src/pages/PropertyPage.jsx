@@ -3,7 +3,6 @@ import { Navigate, useParams } from 'react-router-dom'
 import { getPropertyById, properties } from '../data/properties'
 import {
   BuyingJourneySteps,
-  Connectivity,
   FutureNeighbourhoodMap,
   LegalDocuments,
   LifeStageMatch,
@@ -56,8 +55,7 @@ export default function PropertyPage() {
       <PropertyHero property={property} heroRef={heroRef} />
       <LifeStageMatch property={property} />
       <FutureNeighbourhoodMap property={property} />
-      <Lifestyle />
-      <Connectivity property={property} />
+      <Lifestyle property={property} />
       <PriceEmiFuture property={property} />
       <LegalDocuments property={property} />
       <SatelliteBeforeAfter property={property} />

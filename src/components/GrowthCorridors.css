@@ -242,6 +242,95 @@
     0 16px 34px rgba(15, 17, 20, 0.16);
 }
 
+.growth-corridors__pick.is-soon {
+  filter: grayscale(1);
+  opacity: 0.72;
+}
+
+.growth-corridors__pick.is-soon:hover {
+  background: inherit;
+  box-shadow: none;
+  transform: none;
+}
+
+.growth-corridors__pick.is-soon:hover .growth-corridors__pick-image {
+  transform: scale(1.02);
+}
+
+.growth-corridors__pick.is-soon .growth-corridors__pick-select {
+  cursor: not-allowed;
+}
+
+.growth-corridors__pick.is-soon .growth-corridors__pick-image {
+  filter: grayscale(1) brightness(0.85);
+}
+
+.growth-corridors__pick.is-soon .growth-corridors__pick-shade {
+  background:
+    linear-gradient(180deg, rgba(40, 44, 50, 0.35) 0%, rgba(40, 44, 50, 0.7) 48%, rgba(30, 34, 40, 0.92) 100%);
+}
+
+.growth-corridors__pick.is-soon .growth-corridors__num {
+  background: rgba(156, 163, 175, 0.9);
+  color: #1f2430;
+}
+
+.growth-corridors__pick.is-soon .growth-corridors__name,
+.growth-corridors__pick.is-soon .growth-corridors__tag {
+  color: #c5cad3;
+}
+
+.growth-corridors__soon-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid rgba(156, 163, 175, 0.45);
+  border-radius: 999px;
+  background: rgba(30, 34, 40, 0.82);
+  color: #d1d5db;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.growth-corridors__pick-soon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0;
+  color: #8b93a0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.growth-corridors__item.is-soon {
+  opacity: 0.55;
+  filter: grayscale(0.85);
+}
+
+.growth-corridors__item.is-soon .growth-corridors__trigger {
+  cursor: not-allowed;
+}
+
+.growth-corridors__item.is-soon .growth-corridors__num {
+  background: rgba(156, 163, 175, 0.35);
+  color: #6b7280;
+}
+
+.growth-corridors__item.is-soon .growth-corridors__name,
+.growth-corridors__item.is-soon .growth-corridors__tag {
+  color: #8b93a0;
+}
+
+.growth-corridors__item.is-soon .growth-corridors__icon-wrap {
+  opacity: 0.35;
+}
+
 .growth-corridors__pick .growth-corridors__name {
   color: #fff;
   font-size: clamp(0.92rem, 1.2vw, 1.05rem);
@@ -776,6 +865,23 @@
 .growth-corridors__marker.is-active .growth-corridors__marker-label {
   border-color: rgba(201, 168, 76, 0.5);
   color: var(--accent-dark);
+}
+
+.growth-corridors__marker.is-soon {
+  cursor: not-allowed;
+  opacity: 0.7;
+  filter: grayscale(1);
+}
+
+.growth-corridors__marker.is-soon .growth-corridors__marker-dot {
+  background: #9ca3af;
+  box-shadow: none;
+}
+
+.growth-corridors__marker.is-soon .growth-corridors__marker-label {
+  border-color: rgba(120, 128, 138, 0.35);
+  background: rgba(243, 244, 246, 0.95);
+  color: #6b7280;
 }
 
 .growth-corridors__infra-marker {

@@ -1,24 +1,47 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import mainPhoto from '../../assets/G1.webp'
 import thumbDrone from '../../assets/extra-image-3.png'
 import thumbView from '../../assets/extra-image-4.png'
 import thumbSite from '../../assets/extra-image-5.png'
+import sarkGreen1 from '../../assets/Sark Green Plains-1.png'
+import sarkGreen2 from '../../assets/Sark Green Plains-2.png'
+import sarkGreen3 from '../../assets/Sark Green Plains-3.png'
 import { computeConnectivityScore } from '../../lib/connectivity'
 import { formatPrice } from '../../lib/format'
 import './PropertyHero.css'
 
-const GALLERY = [
+const DEFAULT_GALLERY = [
   { id: 'main', src: mainPhoto, label: 'Entrance gate' },
   { id: 'drone', src: thumbDrone, label: 'Site view' },
   { id: 'plot', src: thumbView, label: 'Plot view' },
   { id: 'open', src: thumbSite, label: 'Open land' },
 ]
 
+const SARK_GREEN_GALLERY = [
+  { id: 'overview', src: sarkGreen1, label: 'Site overview' },
+  { id: 'landscape', src: sarkGreen2, label: 'Landscaped plots' },
+  { id: 'roads', src: sarkGreen3, label: 'Layout roads' },
+]
+
+function getGalleryForProperty(propertyId) {
+  if (propertyId === 'sark-green-plains') return SARK_GREEN_GALLERY
+  return DEFAULT_GALLERY
+}
+
 export default function PropertyHero({ property, heroRef }) {
-  const [activeId, setActiveId] = useState(GALLERY[0].id)
-  const active = GALLERY.find((item) => item.id === activeId) ?? GALLERY[0]
-  const thumbs = GALLERY.filter((item) => item.id !== activeId).slice(0, 3)
+  const gallery = useMemo(
+    () => getGalleryForProperty(property?.id),
+    [property?.id],
+  )
+  const [activeId, setActiveId] = useState(gallery[0].id)
+
+  useEffect(() => {
+    setActiveId(gallery[0].id)
+  }, [gallery])
+
+  const active = gallery.find((item) => item.id === activeId) ?? gallery[0]
+  const thumbs = gallery.filter((item) => item.id !== activeId).slice(0, 3)
   const score = computeConnectivityScore(property)
 
   const whatsappText = encodeURIComponent(

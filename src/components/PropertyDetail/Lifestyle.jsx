@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import InfraIcon from './InfraIcon'
 import lifestyle1 from '../../assets/extra-image-6.png'
 import lifestyle2 from '../../assets/extra-image-7.png'
 import lifestyle3 from '../../assets/extra-image-8.png'
 import lifestyle4 from '../../assets/extra-image-9.png'
+import sarkGreen1 from '../../assets/Sark Green Plains-1.png'
+import sarkGreen2 from '../../assets/Sark Green Plains-2.png'
+import sarkGreen3 from '../../assets/Sark Green Plains-3.png'
 import './Lifestyle.css'
 
-const ITEMS = [
+const DEFAULT_ITEMS = [
   {
     id: 'family',
     caption: 'Space for your family',
@@ -33,19 +36,59 @@ const ITEMS = [
   },
 ]
 
+const SARK_GREEN_ITEMS = [
+  {
+    id: 'overview',
+    caption: 'Site overview',
+    icon: 'opportunity',
+    src: sarkGreen1,
+  },
+  {
+    id: 'landscape',
+    caption: 'Green surroundings',
+    icon: 'green',
+    src: sarkGreen2,
+  },
+  {
+    id: 'roads',
+    caption: 'Ready layout roads',
+    icon: 'amenities',
+    src: sarkGreen3,
+  },
+  {
+    id: 'family',
+    caption: 'Space for your family',
+    icon: 'family',
+    src: sarkGreen1,
+  },
+]
+
 const ROTATE_MS = 4000
 
-export default function Lifestyle() {
+function getLifestyleItems(propertyId) {
+  if (propertyId === 'sark-green-plains') return SARK_GREEN_ITEMS
+  return DEFAULT_ITEMS
+}
+
+export default function Lifestyle({ property }) {
+  const items = useMemo(
+    () => getLifestyleItems(property?.id),
+    [property?.id],
+  )
   const [active, setActive] = useState(0)
   const [tick, setTick] = useState(0)
-  const current = ITEMS[active]
+  const current = items[active] ?? items[0]
+
+  useEffect(() => {
+    setActive(0)
+  }, [items])
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setActive((prev) => (prev + 1) % ITEMS.length)
+      setActive((prev) => (prev + 1) % items.length)
     }, ROTATE_MS)
     return () => window.clearInterval(id)
-  }, [tick])
+  }, [tick, items.length])
 
   function selectItem(index) {
     setActive(index)
@@ -70,7 +113,7 @@ export default function Lifestyle() {
           </header>
 
           <ul className="pd-lifestyle__list" role="list">
-            {ITEMS.map((item, index) => (
+            {items.map((item, index) => (
               <li key={item.id}>
                 <button
                   type="button"
@@ -89,9 +132,9 @@ export default function Lifestyle() {
         </div>
 
         <div className="pd-lifestyle__stage" aria-live="polite">
-          {ITEMS.map((item, index) => (
+          {items.map((item, index) => (
             <img
-              key={item.id}
+              key={`${item.id}-${item.src}`}
               src={item.src}
               alt={item.caption}
               className={`pd-lifestyle__img${index === active ? ' is-active' : ''}`}
@@ -104,7 +147,7 @@ export default function Lifestyle() {
             {current.caption}
           </div>
           <div className="pd-lifestyle__dots" aria-hidden="true">
-            {ITEMS.map((item, index) => (
+            {items.map((item, index) => (
               <span
                 key={item.id}
                 className={`pd-lifestyle__dot${index === active ? ' is-active' : ''}`}

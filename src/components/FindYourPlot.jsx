@@ -99,6 +99,8 @@ function IconArrow() {
   )
 }
 
+const FEATURED_MATCH_ID = 'sark-green-plains'
+
 const LIFE_STAGES = [
   {
     id: 'family',
@@ -108,8 +110,15 @@ const LIFE_STAGES = [
     description:
       'Looking for a safe, growing neighbourhood with schools and parks nearby.',
     totalMatched: 12,
-    matchIds: ['nallagandla-enclave', 'mansanpally-meadows', 'singapore-township'],
+    matchIds: [
+      'sark-green-plains',
+      'nallagandla-enclave',
+      'mansanpally-meadows',
+      'singapore-township',
+    ],
     reasons: {
+      'sark-green-plains':
+        'HMDA-approved Sark Green Plains at Tukkuguda — Plot 203, east facing, family-ready road and utilities.',
       'nallagandla-enclave': 'Near campus belt — schools, parks, and family amenities within reach.',
       'mansanpally-meadows': 'Quiet southern layout with room to grow as the household expands.',
       'singapore-township': 'Gated compound and approved layout for a secure first home base.',
@@ -123,8 +132,15 @@ const LIFE_STAGES = [
     description:
       'Buying for appreciation. High-growth corridors near upcoming infrastructure.',
     totalMatched: 8,
-    matchIds: ['kokapet-heights', 'patancheru-gateway', 'mansanpally-meadows'],
+    matchIds: [
+      'sark-green-plains',
+      'kokapet-heights',
+      'patancheru-gateway',
+      'mansanpally-meadows',
+    ],
     reasons: {
+      'sark-green-plains':
+        'Tukkuguda growth corridor with ORR and airport spillover — open for booking now.',
       'kokapet-heights': 'ORR + Financial District belt — strong infra-led appreciation story.',
       'patancheru-gateway': 'Pharma City corridor with early-entry pricing still open.',
       'mansanpally-meadows': 'Airport-adjacent demand with HMDA backing for resale clarity.',
@@ -139,16 +155,17 @@ const LIFE_STAGES = [
       'Ready to build. Need a clear layout, approved plan, and builder connections.',
     totalMatched: 17,
     matchIds: [
+      'sark-green-plains',
       'singapore-township',
       'khajaguda-residency',
       'nallagandla-enclave',
-      'kokapet-heights',
     ],
     reasons: {
+      'sark-green-plains':
+        'Clear plot geometry, 40 ft road, sewerage and power planned — ready to start your build.',
       'singapore-township': 'Ready-to-register plots with roads, water, and power already planned.',
       'khajaguda-residency': 'Larger plot sizes suited to custom home design.',
       'nallagandla-enclave': 'Approved enclave with clear facing and road hierarchy.',
-      'kokapet-heights': 'Service-road access for construction logistics without city-centre friction.',
     },
   },
   {
@@ -159,8 +176,10 @@ const LIFE_STAGES = [
     description:
       'Gated community, low density, peaceful surroundings outside the city noise.',
     totalMatched: 6,
-    matchIds: ['khajaguda-residency', 'mansanpally-meadows'],
+    matchIds: ['sark-green-plains', 'khajaguda-residency', 'mansanpally-meadows'],
     reasons: {
+      'sark-green-plains':
+        'Plains living at Tukkuguda — quieter than the city core, still reachable via ORR.',
       'khajaguda-residency': 'Low plot count, park-facing options, calmer density.',
       'mansanpally-meadows': 'Shamshabad belt space — away from the city rush, still connected.',
     },
@@ -181,6 +200,18 @@ const FEEL_TAGS = [
 ]
 
 const FEEL_SCORES = {
+  'sark-green-plains': {
+    quiet: 86,
+    kids: 90,
+    temple: 72,
+    resale: 88,
+    corner: 70,
+    gated: 82,
+    'main-road': 84,
+    school: 78,
+    early: 55,
+    weekend: 68,
+  },
   'singapore-township': {
     quiet: 78,
     kids: 88,
@@ -266,6 +297,48 @@ function scoreFeelMatch(layoutId, selectedTags) {
   return Math.round(total / selectedTags.length)
 }
 
+/** Always lead with Sark Green Plains; remaining matches show as Coming soon. */
+function withFeaturedFirst(rawMatches, { feelMode = false, stage = null, feelTags = [] } = {}) {
+  const featuredLayout = getLayoutById(FEATURED_MATCH_ID)
+  if (!featuredLayout) return rawMatches
+
+  const fromRaw = rawMatches.find((item) => item.id === FEATURED_MATCH_ID)
+  const feelScore = feelMode ? scoreFeelMatch(FEATURED_MATCH_ID, feelTags) : 0
+  const featured = {
+    ...featuredLayout,
+    ...fromRaw,
+    label: featuredLayout.label,
+    location: featuredLayout.location,
+    plotSizes: featuredLayout.plotSizes,
+    priceRange: featuredLayout.priceRange,
+    tag: featuredLayout.tag,
+    image: featuredLayout.image,
+    reason:
+      stage?.reasons?.[FEATURED_MATCH_ID]
+      ?? fromRaw?.reason
+      ?? featuredLayout.highlight,
+    matchPct: feelMode ? Math.max(fromRaw?.matchPct ?? 0, feelScore, 90) : undefined,
+    comingSoon: false,
+  }
+
+  const comingSoon = rawMatches
+    .filter((item) => item.id !== FEATURED_MATCH_ID)
+    .slice(0, 3)
+    .map((item) => ({
+      ...item,
+      label: 'Coming soon',
+      location: 'South Hyderabad',
+      plotSizes: 'Details soon',
+      priceRange: '—',
+      tag: 'Coming soon',
+      reason: 'More layouts are being added soon.',
+      matchPct: undefined,
+      comingSoon: true,
+    }))
+
+  return [featured, ...comingSoon]
+}
+
 const MATCH_LOAD_MS = 900
 const MOBILE_SHEET_QUERY = '(max-width: 980px)'
 
@@ -307,7 +380,7 @@ export default function FindYourPlot() {
 
   const stageMatches = useMemo(() => {
     if (!stage) return []
-    return stage.matchIds
+    const raw = stage.matchIds
       .map((id) => {
         const layout = getLayoutById(id)
         if (!layout) return null
@@ -317,18 +390,24 @@ export default function FindYourPlot() {
         }
       })
       .filter(Boolean)
+    return withFeaturedFirst(raw, { stage })
   }, [stage])
 
   const feelMatches = useMemo(() => {
     if (revealedFeels.length === 0) return []
-    return propertyLayouts
+    const raw = propertyLayouts
       .map((layout) => ({
         ...layout,
         matchPct: scoreFeelMatch(layout.id, revealedFeels),
         reason: layout.highlight,
       }))
-      .sort((a, b) => b.matchPct - a.matchPct)
+      .sort((a, b) => {
+        if (a.id === FEATURED_MATCH_ID) return -1
+        if (b.id === FEATURED_MATCH_ID) return 1
+        return b.matchPct - a.matchPct
+      })
       .slice(0, 4)
+    return withFeaturedFirst(raw, { feelMode: true, feelTags: revealedFeels })
   }, [revealedFeels])
 
   const matches = mode === 'feel' ? feelMatches : stageMatches
@@ -608,8 +687,8 @@ export default function FindYourPlot() {
                 <div className="find-your-plot__matches">
                   {matches.map((match, index) => (
                     <article
-                      key={`${isFeelMode ? 'feel' : stage?.id}-${match.id}`}
-                      className="find-your-plot__match"
+                      key={`${isFeelMode ? 'feel' : stage?.id}-${match.id}-${match.comingSoon ? 'soon' : 'live'}`}
+                      className={`find-your-plot__match${match.comingSoon ? ' is-soon' : ''}`}
                       style={{
                         '--match-i': index,
                         '--match-image': `url(${match.image})`,
@@ -620,7 +699,9 @@ export default function FindYourPlot() {
                         <span className="find-your-plot__match-index">
                           {String(index + 1).padStart(2, '0')}
                         </span>
-                        {isFeelMode ? (
+                        {match.comingSoon ? (
+                          <span className="find-your-plot__match-tag">Coming soon</span>
+                        ) : isFeelMode ? (
                           <span className="find-your-plot__match-pct">{match.matchPct}% match</span>
                         ) : (
                           <span className="find-your-plot__match-tag">{match.tag}</span>
@@ -629,17 +710,27 @@ export default function FindYourPlot() {
                       <div className="find-your-plot__match-body">
                         <h3 className="find-your-plot__match-name">{match.label}</h3>
                         <p className="find-your-plot__match-meta">
-                          {match.location} · {match.plotSizes}
+                          {match.comingSoon
+                            ? 'More layouts coming soon'
+                            : `${match.location} · ${match.plotSizes}`}
                         </p>
                         <p className="find-your-plot__match-reason">{match.reason}</p>
                         <div className="find-your-plot__match-foot">
-                          <span className="find-your-plot__match-price">{match.priceRange}</span>
-                          <Link
-                            className="find-your-plot__match-link"
-                            to={`/properties/${match.id}`}
-                          >
-                            View property
-                          </Link>
+                          <span className="find-your-plot__match-price">
+                            {match.comingSoon ? 'Adding soon' : match.priceRange}
+                          </span>
+                          {match.comingSoon ? (
+                            <span className="find-your-plot__match-link is-disabled">
+                              Coming soon
+                            </span>
+                          ) : (
+                            <Link
+                              className="find-your-plot__match-link"
+                              to={`/properties/${match.id}`}
+                            >
+                              View property
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </article>

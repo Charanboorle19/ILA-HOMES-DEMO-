@@ -176,6 +176,44 @@
   color: rgba(232, 217, 168, 0.7);
 }
 
+.emi-appreciation__chip.is-soon {
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.emi-appreciation__chip.is-soon:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: inherit;
+}
+
+.emi-appreciation__chip.is-soon:hover .emi-appreciation__chip-media img {
+  transform: none;
+}
+
+.emi-appreciation__chip.is-soon .emi-appreciation__chip-name,
+.emi-appreciation__chip.is-soon .emi-appreciation__chip-size,
+.emi-appreciation__chip.is-soon .emi-appreciation__chip-price {
+  color: #9ca3af;
+}
+
+.emi-appreciation__updating {
+  margin: 0.85rem 0 0.65rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(201, 169, 110, 0.4);
+  border-radius: 10px;
+  background: rgba(201, 169, 110, 0.12);
+  color: #e8d9a8;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.emi-appreciation__updating strong {
+  color: #f0e2b0;
+  font-weight: 700;
+}
+
 .emi-appreciation__row strong.is-blank,
 .emi-appreciation__point strong.is-blank,
 .emi-appreciation__story-lead.is-blank,
